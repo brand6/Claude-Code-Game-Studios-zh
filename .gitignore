@@ -22,6 +22,9 @@ expansions/
 # Created on first use by /consistency-check and /architecture-review
 docs/consistency-failures.md
 
+# Translation validation reports
+auto/reports/
+
 # === Build Output ===
 build/
 builds/
@@ -139,3 +142,9 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.lnk
+
+
+
+
+# Ignore Smart Environment folder
+.smart-env

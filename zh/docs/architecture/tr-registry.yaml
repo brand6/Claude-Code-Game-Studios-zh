@@ -1,0 +1,56 @@
+# 技术需求 ID 注册表
+#
+# 用途：为每条 GDD 技术需求提供持久、稳定的 ID。
+# 防止 /architecture-review 运行时 TR-ID 重新编号，
+# 否则会破坏 Story 中的引用。
+#
+# 规则：
+#   - ID 是永久性的。永远不要重新编号，永远不要删除（使用 status: deprecated）。
+#   - 只在每个系统列表的末尾添加新条目。
+#   - 当 GDD 需求被重新措辞（意图不变）时：更新 `requirement`
+#     文本并添加 `revised` 日期。ID 保持不变。
+#   - 当需求从 GDD 中移除时：将 status 设为 deprecated。
+#   - 当需求被拆分或替换时：将 status 设为 superseded-by，
+#     并填写新的 TR-ID。
+#
+# 写入方：/architecture-review（追加新条目，从不覆盖）
+# 读取方：    /create-stories（将 ID 嵌入 Story）
+#             /story-done（在评审时查阅当前需求文本）
+#             /story-readiness（验证 TR-ID 存在且处于 active 状态）
+#
+# ID 格式：TR-[system-slug]-[NNN]
+#   system-slug = 与 GDD 系统名称匹配的短 slug
+#   NNN = 每个系统从 001 开始的三位零填充序列号
+#
+# 状态值：active | deprecated | superseded-by: TR-[system]-NNN
+
+version: 1
+last_updated: ""
+
+requirements: []
+
+# --- 示例条目（添加第一条真实条目时删除）---
+#
+# - id: TR-combat-001
+#   system: combat
+#   gdd: design/gdd/combat-system.md
+#   requirement: "玩家根据攻击力减去防御值承受来自敌人的伤害"
+#   created: 2026-03-10
+#   revised: ""
+#   status: active
+#
+# - id: TR-combat-002
+#   system: combat
+#   gdd: design/gdd/combat-system.md
+#   requirement: "连击窗口时间为两次攻击之间 0.4 秒"
+#   created: 2026-03-10
+#   revised: "2026-04-01"
+#   status: active
+#
+# - id: TR-combat-003
+#   system: combat
+#   gdd: design/gdd/combat-system.md
+#   requirement: "使用原始属性的旧版伤害公式"
+#   created: 2026-03-10
+#   revised: ""
+#   status: superseded-by: TR-combat-001

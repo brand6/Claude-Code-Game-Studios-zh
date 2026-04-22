@@ -1,0 +1,167 @@
+# 架构决策注册表
+#
+# 用途：存储所有 ADR 必须遵守的关键架构立场的单一可信来源。
+# Skills 在编写新 ADR 之前会检查此文件，以便在撰写时检测冲突——
+# 在 Story 被创建到相互矛盾的决策之前发现问题。
+#
+# 规则：
+#   - 当某个立场约束了其他系统的构建方式时进行注册。
+#     仅影响单个 ADR 的内部实现细节无需注册。
+#   - 永远不要删除条目——将 status 设为 superseded_by: ADR-NNNN 即可。
+#   - 立场发生变化时：更新条目，将 revised: 设为今日日期，
+#     添加旧值注释，并运行 /architecture-review 检查哪些 ADR 现已失效。
+#   - adr: 是权威来源。依赖此立场的所有其他 ADR 将自身列入 referenced_by。
+#
+# 写入方：/architecture-decision（第 5 阶段——ADR 获批后）
+# 读取方：    /architecture-decision（第 2 步——撰写开始前）
+#             /architecture-review（第 4 阶段——跨 ADR 冲突基准）
+#             /create-stories（将架构约束嵌入 Story）
+#             /dev-story（检查实现是否符合已接受的立场）
+#
+# 搜索模式（供使用 Grep 的 skills 参考）：
+#   所有状态归属：      Grep pattern="^  - state:" path="docs/registry/architecture.yaml"
+#   谁拥有 player_health: Grep pattern="state: player_health"
+#   所有信号契约：       Grep pattern="pattern: signal"
+#   combat 的预算：      Grep pattern="system: combat"
+#   所有禁止模式：       Grep pattern="^  - pattern:"（forbidden_patterns 区段）
+#   已废弃条目：         Grep pattern="status: superseded"
+
+version: 1
+last_updated: ""
+
+# ─── 状态归属 ─────────────────────────────────────────────────────────────────
+# 每块共享游戏状态的权威拥有者。
+# 冲突：两个 ADR 声称拥有同一状态 = 数据竞争 / 权威性 Bug。
+#
+# 当某状态被多个系统读取或写入时进行注册。
+# 仅由单个系统访问的内部状态无需注册。
+#
+# 必填字段：state, owner_system, adr, interface, referenced_by[], added
+# interface: 其他系统访问此状态的方式（只读属性、方法调用、
+#   信号、共享资源等）——这是其他 ADR 依赖的契约。
+
+state_ownership: []
+
+# 示例：
+#
+# state_ownership:
+#   - state: player_health
+#     status: active           # active | superseded_by: ADR-NNNN
+#     owner_system: health-system
+#     adr: docs/architecture/adr-0001-health-system.md
+#     interface: "HealthComponent.current_health（只读浮点数，范围 0–max_health）"
+#     write_access: health-system-only   # 只有拥有者可写；其他系统只读
+#     referenced_by:
+#       - docs/architecture/adr-0001-health-system.md
+#       - docs/architecture/adr-0003-combat-system.md   # 读取以应用伤害
+#       - docs/architecture/adr-0007-ui-system.md       # 读取以显示 HUD
+#     added: 2026-03-26
+#     revised: ""
+
+
+# ─── 接口契约 ──────────────────────────────────────────────────────────────────
+# 系统之间要求的通信方式。
+# 冲突：一个 ADR 期望信号，另一个期望直接调用 = 集成 Bug。
+#
+# 当两个系统之间的通信模式在 ADR 中被明确决定，
+# 且其他系统必须遵循相同模式时进行注册。
+#
+# pattern 选项：signal | direct_call | event_bus | shared_resource | rpc | none
+
+interfaces: []
+
+# 示例：
+#
+# interfaces:
+#   - contract: damage_delivery
+#     status: active
+#     pattern: signal          # 生产者通知消费者的方式
+#     producer: combat-system
+#     consumers:
+#       - health-system        # 接收 damage_dealt 信号，应用到生命值
+#       - ui-system            # 接收 damage_dealt 信号，显示伤害数字
+#       - audio-system         # 接收 damage_dealt 信号，播放音效
+#     adr: docs/architecture/adr-0003-combat-system.md
+#     signal_signature: "damage_dealt(amount: float, target: Node, is_crit: bool)"
+#     referenced_by:
+#       - docs/architecture/adr-0003-combat-system.md
+#       - docs/architecture/adr-0001-health-system.md
+#     added: 2026-03-26
+#     revised: ""
+
+
+# ─── 性能预算 ──────────────────────────────────────────────────────────────────
+# 每个系统的帧时间分配，以定义的总帧预算为基准。
+# 冲突：分配总和超过总预算 = 无法发布。
+#
+# 当 ADR 明确声明帧时间分配时进行注册。
+# 注册表允许 /architecture-review 验证总量不超过目标值。
+
+performance_budgets: []
+
+# 示例：
+#
+# performance_budgets:
+#   - target_fps: 60
+#     total_frame_budget_ms: 16.6
+#     platform: PC             # PC | Console | Mobile | All
+#     adr: docs/architecture/adr-0000-performance-targets.md
+#     added: 2026-03-26
+#     revised: ""
+#
+#   - system: combat
+#     status: active
+#     budget_ms: 2.0
+#     adr: docs/architecture/adr-0003-combat-system.md
+#     notes: "包括物理查询、判定盒计算和伤害计算"
+#     referenced_by:
+#       - docs/architecture/adr-0003-combat-system.md
+#     added: 2026-03-26
+#     revised: ""
+
+
+# ─── API 决策 ───────────────────────────────────────────────────────────────
+# 项目中各用途选择的引擎 API。
+# 冲突：两个 ADR 对同一用途使用不同 API = 实现不一致，
+# 当一个系统期望另一系统的 API 时会出现故障。
+#
+# 当某项 API 选择并非显而易见，且其他 ADR 可能在不知情的情况下
+# 为同一用途做出不同选择时进行注册。
+
+api_decisions: []
+
+# 示例：
+#
+# api_decisions:
+#   - purpose: physics_raycast
+#     status: active
+#     api: PhysicsServer3D.space_get_direct_state()
+#     not: RayCast3D node     # 此用途明确禁止
+#     adr: docs/architecture/adr-0002-physics-architecture.md
+#     reason: "直接调用服务器避免了每帧节点开销；性能分析中快 3 倍"
+#     referenced_by:
+#       - docs/architecture/adr-0002-physics-architecture.md
+#       - docs/architecture/adr-0003-combat-system.md
+#     added: 2026-03-26
+#     revised: ""
+
+
+# ─── 禁止模式 ──────────────────────────────────────────────────────────────────
+# 已接受的 ADR 明确禁止的架构反模式。
+# 编写新 ADR 时请检查此列表——如果提议方案与某个禁止模式匹配，
+# 则该 ADR 必须修改后方可被接受。
+#
+# 当 ADR 明确禁止某模式，且其他 ADR 可能在不知情的情况下使用它时进行注册
+# （即，这是一种诱人但对本项目而言错误的方案）。
+
+forbidden_patterns: []
+
+# 示例：
+#
+# forbidden_patterns:
+#   - pattern: autoload_singleton_coupling
+#     status: active
+#     description: "系统不得通过名称直接引用 Autoload 单例。
+#       请改用依赖注入或信号。"
+#     why: "与 Autoload 的紧密耦合导致系统无法隔离测试，
+#       并产生隐式依赖，在 Autoload 加载顺序变化时会引发故障。"
