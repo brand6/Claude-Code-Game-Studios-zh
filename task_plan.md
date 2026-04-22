@@ -531,7 +531,13 @@ Unreal 核心 + 模块：
 
 ### 阶段 12：发布准备
 
-状态：`not_started`
+状态：`in_progress`
+
+当前进展：
+
+- `origin` 已指向 `https://github.com/brand6/Claude-Code-Game-Studios-zh.git`，"把 zh/ 目录连接到远程仓库" 这一步已具备条件
+- 根目录 `README.md` 已开始切换为中文入口文档，并补充原仓库说明
+- "用中文文件覆盖原英文文件" 与 "写更新日志" 待下一步继续执行
 
 - 写中文版 README（加上是原仓库翻译的说明：https://github.com/Donchitos/Claude-Code-Game-Studios/）
 - 把 zh/ 目录 连接到远程仓库：https://github.com/brand6/Claude-Code-Game-Studios-zh.git

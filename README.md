@@ -1,77 +1,79 @@
 <p align="center">
   <h1 align="center">Claude Code Game Studios</h1>
   <p align="center">
-    Turn a single Claude Code session into a full game development studio.
+    将一次 Claude Code 会话，变成一支完整的游戏开发工作室。
     <br />
-    49 agents. 72 skills. One coordinated AI team.
+    49 个 Agent。72 个技能。一支协同作战的 AI 团队。
   </p>
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
-  <a href=".claude/agents"><img src="https://img.shields.io/badge/agents-49-blueviolet" alt="49 Agents"></a>
-  <a href=".claude/skills"><img src="https://img.shields.io/badge/skills-72-green" alt="72 Skills"></a>
-  <a href=".claude/hooks"><img src="https://img.shields.io/badge/hooks-12-orange" alt="12 Hooks"></a>
-  <a href=".claude/rules"><img src="https://img.shields.io/badge/rules-11-red" alt="11 Rules"></a>
-  <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/built%20for-Claude%20Code-f5f5f5?logo=anthropic" alt="Built for Claude Code"></a>
-  <a href="https://www.buymeacoffee.com/donchitos3"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support%20this%20project-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT 许可证"></a>
+  <a href=".claude/agents"><img src="https://img.shields.io/badge/agents-49-blueviolet" alt="49 个 Agent"></a>
+  <a href=".claude/skills"><img src="https://img.shields.io/badge/skills-72-green" alt="72 个技能"></a>
+  <a href=".claude/hooks"><img src="https://img.shields.io/badge/hooks-12-orange" alt="12 个钩子"></a>
+  <a href=".claude/rules"><img src="https://img.shields.io/badge/rules-11-red" alt="11 条规则"></a>
+  <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/built%20for-Claude%20Code-f5f5f5?logo=anthropic" alt="基于 Claude Code 构建"></a>
+  <a href="https://www.buymeacoffee.com/donchitos3"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support%20this%20project-FFDD00?logo=buymeacoffee&logoColor=black" alt="请我喝咖啡"></a>
   <a href="https://github.com/sponsors/Donchitos"><img src="https://img.shields.io/badge/GitHub%20Sponsors-Support%20this%20project-ea4aaa?logo=githubsponsors&logoColor=white" alt="GitHub Sponsors"></a>
 </p>
 
----
-
-## Why This Exists
-
-Building a game solo with AI is powerful — but a single chat session has no structure. No one stops you from hardcoding magic numbers, skipping design docs, or writing spaghetti code. There's no QA pass, no design review, no one asking "does this actually fit the game's vision?"
-
-**Claude Code Game Studios** solves this by giving your AI session the structure of a real studio. Instead of one general-purpose assistant, you get 49 specialized agents organized into a studio hierarchy — directors who guard the vision, department leads who own their domains, and specialists who do the hands-on work. Each agent has defined responsibilities, escalation paths, and quality gates.
-
-The result: you still make every decision, but now you have a team that asks the right questions, catches mistakes early, and keeps your project organized from first brainstorm to launch.
+> 这是对原始仓库 [Donchitos/Claude-Code-Game-Studios](https://github.com/Donchitos/Claude-Code-Game-Studios/) 的中文翻译与本地化发布版本。若需对照英文原版或查看上游更新，请参考原仓库。
 
 ---
 
-## Table of Contents
+## 为什么要做这个项目
 
-- [What's Included](#whats-included)
-- [Studio Hierarchy](#studio-hierarchy)
-- [Slash Commands](#slash-commands)
-- [Getting Started](#getting-started)
-- [Upgrading](#upgrading)
-- [Project Structure](#project-structure)
-- [How It Works](#how-it-works)
-- [Design Philosophy](#design-philosophy)
-- [Customization](#customization)
-- [Platform Support](#platform-support)
-- [Community](#community)
-- [Supporting This Project](#supporting-this-project)
-- [License](#license)
+用 AI 独自开发游戏是一种很强大的方式——但单次聊天会话没有任何结构。没有人阻止你硬编码魔法数字、跳过设计文档，或写出面条代码。没有 QA 环节，没有设计评审，也没有人问你"这真的符合游戏的愿景吗？"
+
+**Claude Code Game Studios** 通过赋予你的 AI 会话真实工作室的结构来解决这个问题。你不再只有一个万能助手，而是拥有 49 个专业 Agent，按工作室层级组织——守护愿景的总监层、各司其职的主管层，以及实际动手的专家层。每个 Agent 都有明确的职责范围、上报路径和质量门禁。
+
+结果是：你仍然做每一个决定，但现在你有了一支会问对问题、早期发现错误、并从第一次头脑风暴到发布上线都保持项目条理的团队。
 
 ---
 
-## What's Included
+## 目录
 
-| Category | Count | Description |
-|----------|-------|-------------|
-| **Agents** | 49 | Specialized subagents across design, programming, art, audio, narrative, QA, and production |
-| **Skills** | 72 | Slash commands for every workflow phase (`/start`, `/design-system`, `/create-epics`, `/create-stories`, `/dev-story`, `/story-done`, etc.) |
-| **Hooks** | 12 | Automated validation on commits, pushes, asset changes, session lifecycle, agent audit trail, and gap detection |
-| **Rules** | 11 | Path-scoped coding standards enforced when editing gameplay, engine, AI, UI, network code, and more |
-| **Templates** | 39 | Document templates for GDDs, UX specs, ADRs, sprint plans, HUD design, accessibility, and more |
+- [包含内容](#包含内容)
+- [工作室层级](#工作室层级)
+- [斜杠命令](#斜杠命令)
+- [快速开始](#快速开始)
+- [升级迁移](#升级迁移)
+- [项目结构](#项目结构)
+- [运作原理](#运作原理)
+- [设计哲学](#设计哲学)
+- [自定义配置](#自定义配置)
+- [平台支持](#平台支持)
+- [社区](#社区)
+- [支持本项目](#支持本项目)
+- [许可证](#许可证)
 
-## Studio Hierarchy
+---
 
-Agents are organized into three tiers, matching how real studios operate:
+## 包含内容
+
+| 类别                | 数量  | 说明                                                                                                       |
+| ----------------- | --- | -------------------------------------------------------------------------------------------------------- |
+| **Agent（智能体）**    | 49  | 覆盖设计、编程、美术、音频、叙事、QA 和生产管理的专业子智能体                                                                         |
+| **技能（Skill）**     | 72  | 每个工作流阶段对应的斜杠命令（`/start`、`/design-system`、`/create-epics`、`/create-stories`、`/dev-story`、`/story-done` 等） |
+| **钩子（Hook）**      | 12  | 在提交、推送、资产变更、会话生命周期、Agent 审计追踪和缺口检测时自动触发的验证逻辑                                                             |
+| **规则（Rules）**     | 11  | 按路径作用域划分的编码规范，在编辑游戏玩法、引擎、AI、UI、网络代码等时自动执行                                                                |
+| **模板（Templates）** | 39  | GDD（游戏设计文档）、UX 规格、ADR（架构决策记录）、迭代计划、HUD 设计、无障碍等文档模板                                                       |
+
+## 工作室层级
+
+Agent 按照真实工作室的运作方式组织为三个层级：
 
 ```
-Tier 1 — Directors (Opus)
+第一层 — 总监层（Opus）
   creative-director    technical-director    producer
 
-Tier 2 — Department Leads (Sonnet)
+第二层 — 主管层（Sonnet）
   game-designer        lead-programmer       art-director
   audio-director       narrative-director    qa-lead
   release-manager      localization-lead
 
-Tier 3 — Specialists (Sonnet/Haiku)
+第三层 — 专家层（Sonnet/Haiku）
   gameplay-programmer  engine-programmer     ai-programmer
   network-programmer   tools-programmer      ui-programmer
   systems-designer     level-designer        economy-designer
@@ -82,231 +84,228 @@ Tier 3 — Specialists (Sonnet/Haiku)
   live-ops-designer    community-manager
 ```
 
-### Engine Specialists
+### 引擎专家 Agent
 
-The template includes agent sets for all three major engines. Use the set that matches your project:
+模板包含三大主流引擎的 Agent 集合，按你的项目选择对应的那套：
 
-| Engine | Lead Agent | Sub-Specialists |
-|--------|-----------|-----------------|
-| **Godot 4** | `godot-specialist` | GDScript, Shaders, GDExtension |
-| **Unity** | `unity-specialist` | DOTS/ECS, Shaders/VFX, Addressables, UI Toolkit |
-| **Unreal Engine 5** | `unreal-specialist` | GAS, Blueprints, Replication, UMG/CommonUI |
+| 引擎 | 负责 Agent | 子专家 |
+|------|-----------|--------|
+| **Godot 4** | `godot-specialist` | GDScript、着色器、GDExtension |
+| **Unity** | `unity-specialist` | DOTS/ECS、Shader/VFX、Addressables、UI Toolkit |
+| **Unreal Engine 5** | `unreal-specialist` | GAS、Blueprints、网络同步、UMG/CommonUI |
 
-## Slash Commands
+## 斜杠命令
 
-Type `/` in Claude Code to access all 72 skills:
+在 Claude Code 中输入 `/` 即可使用全部 72 个技能：
 
-**Onboarding & Navigation**
+**入门与导航**
 `/start` `/help` `/project-stage-detect` `/setup-engine` `/adopt`
 
-**Game Design**
+**游戏设计**
 `/brainstorm` `/map-systems` `/design-system` `/quick-design` `/review-all-gdds` `/propagate-design-change`
 
-**Art & Assets**
+**美术与资产**
 `/art-bible` `/asset-spec` `/asset-audit`
 
-**UX & Interface Design**
+**UX 与界面设计**
 `/ux-design` `/ux-review`
 
-**Architecture**
+**架构**
 `/create-architecture` `/architecture-decision` `/architecture-review` `/create-control-manifest`
 
-**Stories & Sprints**
+**用户故事与迭代**
 `/create-epics` `/create-stories` `/dev-story` `/sprint-plan` `/sprint-status` `/story-readiness` `/story-done` `/estimate`
 
-**Reviews & Analysis**
+**评审与分析**
 `/design-review` `/code-review` `/balance-check` `/content-audit` `/scope-check` `/perf-profile` `/tech-debt` `/gate-check` `/consistency-check`
 
-**QA & Testing**
+**QA 与测试**
 `/qa-plan` `/smoke-check` `/soak-test` `/regression-suite` `/test-setup` `/test-helpers` `/test-evidence-review` `/test-flakiness` `/skill-test` `/skill-improve`
 
-**Production**
+**生产管理**
 `/milestone-review` `/retrospective` `/bug-report` `/bug-triage` `/reverse-document` `/playtest-report`
 
-**Release**
+**发布**
 `/release-checklist` `/launch-checklist` `/changelog` `/patch-notes` `/hotfix`
 
-**Creative & Content**
+**创意与内容**
 `/prototype` `/onboard` `/localize`
 
-**Team Orchestration** (coordinate multiple agents on a single feature)
+**团队协调**（多 Agent 协同处理单个功能）
 `/team-combat` `/team-narrative` `/team-ui` `/team-release` `/team-polish` `/team-audio` `/team-level` `/team-live-ops` `/team-qa`
 
-## Getting Started
+## 快速开始
 
-### Prerequisites
+### 前置条件
 
 - [Git](https://git-scm.com/)
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`npm install -g @anthropic-ai/claude-code`)
-- **Recommended**: [jq](https://jqlang.github.io/jq/) (for hook validation) and Python 3 (for JSON validation)
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code)（`npm install -g @anthropic-ai/claude-code`）
+- **推荐安装**：[jq](https://jqlang.github.io/jq/)（用于钩子验证）和 Python 3（用于 JSON 验证）
 
-All hooks fail gracefully if optional tools are missing — nothing breaks, you just lose validation.
+所有钩子在缺少可选工具时都会优雅降级——不会报错，只是不进行验证。
 
-### Setup
+### 安装步骤
 
-1. **Clone or use as template**:
+1. **克隆仓库或将其作为模板使用**：
    ```bash
    git clone https://github.com/Donchitos/Claude-Code-Game-Studios.git my-game
    cd my-game
    ```
 
-2. **Open Claude Code** and start a session:
+2. **打开 Claude Code** 并启动会话：
    ```bash
    claude
    ```
 
-3. **Run `/start`** — the system asks where you are (no idea, vague concept,
-   clear design, existing work) and guides you to the right workflow. No assumptions.
+3. **运行 `/start`** — 系统会询问你目前处于哪个阶段（毫无头绪、有模糊概念、有清晰设计、已有项目），然后引导你进入对应的工作流。不做任何假设。
 
-   Or jump directly to a specific skill if you already know what you need:
-   - `/brainstorm` — explore game ideas from scratch
-   - `/setup-engine godot 4.6` — configure your engine if you already know
-   - `/project-stage-detect` — analyze an existing project
+   也可以直接跳转到你需要的技能：
+   - `/brainstorm` — 从零开始探索游戏创意
+   - `/setup-engine godot 4.6` — 如果已知引擎，直接配置
+   - `/project-stage-detect` — 分析现有项目状态
 
-## Upgrading
+## 升级迁移
 
-Already using an older version of this template? See [UPGRADING.md](UPGRADING.md)
-for step-by-step migration instructions, a breakdown of what changed between
-versions, and which files are safe to overwrite vs. which need a manual merge.
+已在使用旧版本模板？请参阅 [UPGRADING.md](UPGRADING.md)，其中包含逐步迁移说明、各版本变更说明，以及哪些文件可以直接覆盖、哪些需要手动合并。
 
-## Project Structure
+## 项目结构
 
 ```
-CLAUDE.md                           # Master configuration
+CLAUDE.md                           # 主配置文件
 .claude/
-  settings.json                     # Hooks, permissions, safety rules
-  agents/                           # 49 agent definitions (markdown + YAML frontmatter)
-  skills/                           # 72 slash commands (subdirectory per skill)
-  hooks/                            # 12 hook scripts (bash, cross-platform)
-  rules/                            # 11 path-scoped coding standards
-  statusline.sh                     # Status line script (context%, model, stage, epic breadcrumb)
+  settings.json                     # 钩子、权限、安全规则
+  agents/                           # 49 个 Agent 定义（Markdown + YAML frontmatter）
+  skills/                           # 72 个斜杠命令（每个技能一个子目录）
+  hooks/                            # 12 个钩子脚本（bash，跨平台）
+  rules/                            # 11 条按路径作用域划分的编码规范
+  statusline.sh                     # 状态行脚本（上下文占比、模型、阶段、功能模块面包屑）
   docs/
-    workflow-catalog.yaml           # 7-phase pipeline definition (read by /help)
-    templates/                      # 39 document templates
-src/                                # Game source code
-assets/                             # Art, audio, VFX, shaders, data files
-design/                             # GDDs, narrative docs, level designs
-docs/                               # Technical documentation and ADRs
-tests/                              # Test suites (unit, integration, performance, playtest)
-tools/                              # Build and pipeline tools
-prototypes/                         # Throwaway prototypes (isolated from src/)
-production/                         # Sprint plans, milestones, release tracking
+    workflow-catalog.yaml           # 7 阶段流水线定义（由 /help 读取）
+    templates/                      # 39 个文档模板
+src/                                # 游戏源代码
+assets/                             # 美术、音频、VFX、着色器、数据文件
+design/                             # GDD、叙事文档、关卡设计
+docs/                               # 技术文档和 ADR
+tests/                              # 测试套件（单元测试、集成测试、性能测试、试玩测试）
+tools/                              # 构建和流水线工具
+prototypes/                         # 一次性原型（与 src/ 隔离）
+production/                         # 迭代计划、里程碑、发布跟踪
 ```
 
-## How It Works
+## 运作原理
 
-### Agent Coordination
+### Agent 协调机制
 
-Agents follow a structured delegation model:
+Agent 遵循结构化的委派模型：
 
-1. **Vertical delegation** — directors delegate to leads, leads delegate to specialists
-2. **Horizontal consultation** — same-tier agents can consult each other but can't make binding cross-domain decisions
-3. **Conflict resolution** — disagreements escalate up to the shared parent (`creative-director` for design, `technical-director` for technical)
-4. **Change propagation** — cross-department changes are coordinated by `producer`
-5. **Domain boundaries** — agents don't modify files outside their domain without explicit delegation
+1. **纵向委派** — 总监层委派给主管层，主管层委派给专家层
+2. **横向协商** — 同层 Agent 可以相互咨询，但不能就跨领域事项做出有约束力的决策
+3. **冲突解决** — 分歧会逐级上报给共同的上级（设计冲突报 `creative-director`，技术冲突报 `technical-director`）
+4. **变更传播** — 跨部门的变更由 `producer` 统筹协调
+5. **领域边界** — Agent 在未获明确授权时不得修改其领域以外的文件
 
-### Collaborative, Not Autonomous
+### 协作而非自主
 
-This is **not** an auto-pilot system. Every agent follows a strict collaboration protocol:
+这**不是**一个自动驾驶系统。每个 Agent 都遵循严格的协作协议：
 
-1. **Ask** — agents ask questions before proposing solutions
-2. **Present options** — agents show 2-4 options with pros/cons
-3. **You decide** — the user always makes the call
-4. **Draft** — agents show work before finalizing
-5. **Approve** — nothing gets written without your sign-off
+1. **提问** — Agent 在提出方案之前会先提问
+2. **展示选项** — Agent 会给出 2–4 个选项并说明各自的利弊
+3. **由你决定** — 最终决策权始终在用户手中
+4. **起草** — Agent 在定稿前会展示工作成果
+5. **审批** — 未经你签字同意，任何内容都不会被写入
 
-You stay in control. The agents provide structure and expertise, not autonomy.
+你始终掌握主导权。Agent 提供的是结构和专业能力，而非自主决策。
 
-### Automated Safety
+### 自动化安全保障
 
-**Hooks** run automatically on every session:
+**钩子**在每次会话中自动运行：
 
-| Hook | Trigger | What It Does |
-|------|---------|--------------|
-| `validate-commit.sh` | PreToolUse (Bash) | Checks for hardcoded values, TODO format, JSON validity, design doc sections — exits early if the command is not `git commit` |
-| `validate-push.sh` | PreToolUse (Bash) | Warns on pushes to protected branches — exits early if the command is not `git push` |
-| `validate-assets.sh` | PostToolUse (Write/Edit) | Validates naming conventions and JSON structure — exits early if the file is not in `assets/` |
-| `session-start.sh` | Session open | Shows current branch and recent commits for orientation |
-| `detect-gaps.sh` | Session open | Detects fresh projects (suggests `/start`) and missing design docs when code or prototypes exist |
-| `pre-compact.sh` | Before compaction | Preserves session progress notes |
-| `post-compact.sh` | After compaction | Reminds Claude to restore session state from `active.md` |
-| `notify.sh` | Notification event | Shows Windows toast notification via PowerShell |
-| `session-stop.sh` | Session close | Archives `active.md` to session log and records git activity |
-| `log-agent.sh` | Agent spawned | Audit trail start — logs subagent invocation |
-| `log-agent-stop.sh` | Agent stops | Audit trail stop — completes subagent record |
-| `validate-skill-change.sh` | PostToolUse (Write/Edit) | Advises running `/skill-test` after any `.claude/skills/` change |
+| 钩子 | 触发时机 | 作用 |
+|------|---------|------|
+| `validate-commit.sh` | PreToolUse（Bash） | 检查硬编码值、TODO 格式、JSON 有效性、设计文档章节——命令不是 `git commit` 时提前退出 |
+| `validate-push.sh` | PreToolUse（Bash） | 推送到受保护分支时发出警告——命令不是 `git push` 时提前退出 |
+| `validate-assets.sh` | PostToolUse（Write/Edit） | 验证命名规范和 JSON 结构——文件不在 `assets/` 下时提前退出 |
+| `session-start.sh` | 会话打开时 | 显示当前分支和近期提交，帮助快速定向 |
+| `detect-gaps.sh` | 会话打开时 | 检测全新项目（建议运行 `/start`），以及在已有代码或原型时检测缺失的设计文档 |
+| `pre-compact.sh` | 压缩前 | 保存会话进度笔记 |
+| `post-compact.sh` | 压缩后 | 提醒 Claude 从 `active.md` 恢复会话状态 |
+| `notify.sh` | 通知事件 | 通过 PowerShell 显示 Windows 系统弹窗通知 |
+| `session-stop.sh` | 会话关闭时 | 将 `active.md` 归档到会话日志，并记录 git 活动 |
+| `log-agent.sh` | Agent 启动时 | 审计追踪开始——记录子智能体调用信息 |
+| `log-agent-stop.sh` | Agent 停止时 | 审计追踪结束——完善子智能体记录 |
+| `validate-skill-change.sh` | PostToolUse（Write/Edit） | 在 `.claude/skills/` 下发生变更后，建议运行 `/skill-test` |
 
-> **Note**: `validate-commit.sh`, `validate-assets.sh`, and `validate-skill-change.sh` fire on every Bash/Write tool call and exit immediately (exit 0) when the command or file path is not relevant. This is normal hook behavior — not a performance concern.
+> **注意**：`validate-commit.sh`、`validate-assets.sh` 和 `validate-skill-change.sh` 会在每次 Bash/写入工具调用时触发，当命令或文件路径不相关时立即退出（exit 0）。这是正常的钩子行为，不会造成性能问题。
 
-**Permission rules** in `settings.json` auto-allow safe operations (git status, test runs) and block dangerous ones (force push, `rm -rf`, reading `.env` files).
+**`settings.json` 中的权限规则**会自动放行安全操作（git status、测试运行），并拦截危险操作（强制推送、`rm -rf`、读取 `.env` 文件）。
 
-### Path-Scoped Rules
+### 按路径作用域的规则
 
-Coding standards are automatically enforced based on file location:
+编码规范会根据文件路径自动执行：
 
-| Path | Enforces |
-|------|----------|
-| `src/gameplay/**` | Data-driven values, delta time usage, no UI references |
-| `src/core/**` | Zero allocations in hot paths, thread safety, API stability |
-| `src/ai/**` | Performance budgets, debuggability, data-driven parameters |
-| `src/networking/**` | Server-authoritative, versioned messages, security |
-| `src/ui/**` | No game state ownership, localization-ready, accessibility |
-| `design/gdd/**` | Required 8 sections, formula format, edge cases |
-| `tests/**` | Test naming, coverage requirements, fixture patterns |
-| `prototypes/**` | Relaxed standards, README required, hypothesis documented |
+| 路径 | 执行规范 |
+|------|---------|
+| `src/gameplay/**` | 数据驱动的数值、使用增量时间、禁止 UI 引用 |
+| `src/core/**` | 热路径零内存分配、线程安全、API 稳定性 |
+| `src/ai/**` | 性能预算、可调试性、数据驱动参数 |
+| `src/networking/**` | 服务器权威架构、版本化消息、安全性 |
+| `src/ui/**` | 不持有游戏状态、本地化就绪、无障碍支持 |
+| `design/gdd/**` | 必须包含 8 个章节、公式格式、边界情况 |
+| `tests/**` | 测试命名、覆盖率要求、fixture 模式 |
+| `prototypes/**` | 放宽标准，但必须有 README 和假设说明文档 |
 
-## Design Philosophy
+## 设计哲学
 
-This template is grounded in professional game development practices:
+本模板以专业游戏开发实践为基础：
 
-- **MDA Framework** — Mechanics, Dynamics, Aesthetics analysis for game design
-- **Self-Determination Theory** — Autonomy, Competence, Relatedness for player motivation
-- **Flow State Design** — Challenge-skill balance for player engagement
-- **Bartle Player Types** — Audience targeting and validation
-- **Verification-Driven Development** — Tests first, then implementation
+- **MDA 框架** — 机制（Mechanics）、动态（Dynamics）、美感（Aesthetics）的游戏设计分析方法
+- **自我决定理论** — 以自主性、胜任感、归属感驱动玩家动机
+- **心流状态设计** — 通过挑战与技能的平衡维持玩家沉浸感
+- **Bartle 玩家类型** — 目标受众定位与验证
+- **验证驱动开发** — 先写测试，再实现功能
 
-## Customization
+## 自定义配置
 
-This is a **template**, not a locked framework. Everything is meant to be customized:
+这是一个**模板**，不是锁死的框架。一切都可以按需定制：
 
-- **Add/remove agents** — delete agent files you don't need, add new ones for your domains
-- **Edit agent prompts** — tune agent behavior, add project-specific knowledge
-- **Modify skills** — adjust workflows to match your team's process
-- **Add rules** — create new path-scoped rules for your project's directory structure
-- **Tune hooks** — adjust validation strictness, add new checks
-- **Pick your engine** — use the Godot, Unity, or Unreal agent set (or none)
-- **Set review intensity** — `full` (all director gates), `lean` (phase gates only), or `solo` (none). Set during `/start` or edit `production/review-mode.txt`. Override per-run with `--review solo` on any skill.
+- **增减 Agent** — 删除不需要的 Agent 文件，为你的领域添加新的
+- **编辑 Agent 提示词** — 调整 Agent 行为，加入项目特有的知识
+- **修改技能** — 调整工作流以匹配你的团队流程
+- **添加规则** — 为你的项目目录结构创建新的按路径作用域的规则
+- **调整钩子** — 修改验证严格程度，添加新的检查项
+- **选择引擎** — 使用 Godot、Unity 或 Unreal 的 Agent 集（或都不用）
+- **设置评审强度** — `full`（所有总监门禁）、`lean`（仅阶段门禁）或 `solo`（无门禁）。在 `/start` 时设置，或编辑 `production/review-mode.txt`。也可在任意技能命令后附加 `--review solo` 覆盖单次设置。
 
-## Platform Support
+## 平台支持
 
-Tested on **Windows 10** with Git Bash. All hooks use POSIX-compatible patterns (`grep -E`, not `grep -P`) and include fallbacks for missing tools. Works on macOS and Linux without modification.
+在 **Windows 10** 配合 Git Bash 上测试通过。所有钩子使用 POSIX 兼容的模式（`grep -E`，非 `grep -P`），并内置缺失工具的降级处理。在 macOS 和 Linux 上无需修改即可使用。
 
-## Community
+## 社区
 
-- **Discussions** — [GitHub Discussions](https://github.com/Donchitos/Claude-Code-Game-Studios/discussions) for questions, ideas, and showcasing what you've built
-- **Issues** — [Bug reports and feature requests](https://github.com/Donchitos/Claude-Code-Game-Studios/issues)
+- **讨论区** — [GitHub Discussions](https://github.com/Donchitos/Claude-Code-Game-Studios/discussions)，欢迎提问、分享想法，以及展示你用这个模板做出来的作品
+- **问题追踪** — [Bug 报告和功能请求](https://github.com/Donchitos/Claude-Code-Game-Studios/issues)
 
 ---
 
-## Supporting This Project
+## 支持本项目
 
-Claude Code Game Studios is free and open source. If it saves you time or helps you ship your game, consider supporting continued development:
+Claude Code Game Studios 是免费的开源项目。如果它为你节省了时间或帮助你发布了游戏，欢迎支持持续开发：
 
 <p>
-  <a href="https://www.buymeacoffee.com/donchitos3"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee"></a>
+  <a href="https://www.buymeacoffee.com/donchitos3"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="请我喝咖啡"></a>
   &nbsp;
   <a href="https://github.com/sponsors/Donchitos"><img src="https://img.shields.io/badge/GitHub%20Sponsors-ea4aaa?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="GitHub Sponsors"></a>
 </p>
 
-- **[Buy Me a Coffee](https://www.buymeacoffee.com/donchitos3)** — one-time support
-- **[GitHub Sponsors](https://github.com/sponsors/Donchitos)** — recurring support through GitHub
+- **[Buy Me a Coffee](https://www.buymeacoffee.com/donchitos3)** — 一次性支持
+- **[GitHub Sponsors](https://github.com/sponsors/Donchitos)** — 通过 GitHub 进行持续赞助
 
-Sponsorships help fund time spent maintaining skills, adding new agents, keeping up with Claude Code and engine API changes, and responding to community issues.
+赞助资金将用于维护技能更新、添加新 Agent、跟进 Claude Code 和各引擎 API 变更，以及回应社区问题。
 
 ---
 
-*Built for Claude Code. Maintained and extended — contributions welcome via [GitHub Discussions](https://github.com/Donchitos/Claude-Code-Game-Studios/discussions).*
+*基于 Claude Code 构建。持续维护和扩展中——欢迎通过 [GitHub Discussions](https://github.com/Donchitos/Claude-Code-Game-Studios/discussions) 贡献。*
 
-## License
+## 许可证
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT 许可证。详见 [LICENSE](LICENSE)。
