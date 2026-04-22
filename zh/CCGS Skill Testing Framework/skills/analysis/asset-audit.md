@@ -2,169 +2,162 @@
 
 ## 技能概要
 
-`/asset-audit` 审计 `assets/` 目录，检查命名规范合规性、缺失的元数据、
-文件格式标准和资产大小预算。技能读取 `technical-preferences.md` 获取
-引擎特定规范（命名规则、格式、大小限制），并遍历 `assets/` 目录与
-GDD 中引用的资产对比。
-
-技能可选择询问"May I write the audit report to `production/qa/asset-audit-[日期].md`?"。
-不应用修复——仅发现并报告。
-无 director 门控。判定结果：COMPLIANT（全部检查通过）、WARNINGS（存在小问题）
-或 NON-COMPLIANT（存在命名/大小/格式违规）。
+`/asset-audit` 审计 `assets/` 目录，检查其是否符合命名规范、是否缺少元数据，以及是否存在格式/大小问题。它会依据 `technical-preferences.md` 中定义的规范与预算读取资产文件。无 director 门控。未经用户批准，技能不会写入文件。判定结果：COMPLIANT、WARNINGS 或 NON-COMPLIANT。
 
 ---
 
 ## 静态断言（结构性）
 
-由 `/skill-test static` 自动验证——无需夹具。
+由 `/skill-test static` 自动验证，无需夹具。
 
-- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含所需的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
 - [ ] 包含至少 2 个阶段标题
 - [ ] 包含判定关键词：COMPLIANT、WARNINGS、NON-COMPLIANT
-- [ ] 在写入审计报告前包含"May I write"协作协议语言
-- [ ] 包含下一步交接（例如 `/code-review` 或 `/content-audit`）
+- [ ] 不要求包含 "May I write" 语言（只读；可选报告写入仍需批准）
+- [ ] 包含下一步交接（审计结果出来后该做什么）
 
 ---
 
 ## Director 门控检查
 
-无。`/asset-audit` 是只读分析技能，不适用 director 门控。
+无。资产审计是只读分析技能；不调用任何门控。
 
 ---
 
 ## 测试用例
 
-### 用例 1：正常路径——所有资产符合命名和大小规范，COMPLIANT
+### 用例 1：正常路径——所有资产都遵循命名规范
 
 **夹具：**
-- `technical-preferences.md`：引擎为 Godot 4，纹理最大 2048×2048，音频格式为 .ogg，snake_case 命名
-- `assets/textures/`：所有文件均为 snake_case .png，尺寸 ≤ 2048×2048
-- `assets/audio/`：所有文件均为 .ogg
-- `assets/data/`：资产 YAML 文件存在，无孤立引用
+- `technical-preferences.md` 指定命名规范为 `snake_case`，例如 `enemy_grunt_idle.png`
+- `assets/art/characters/` 包含：`enemy_grunt_idle.png`、`enemy_sniper_run.png`
+- `assets/audio/sfx/` 包含：`sfx_jump_land.ogg`、`sfx_item_pickup.ogg`
+- 所有文件均在大小预算内（纹理 ≤2MB，音频 ≤500KB）
 
 **输入：** `/asset-audit`
 
 **预期行为：**
-1. 技能读取规范（snake_case、.ogg、≤2048）
-2. 技能遍历所有 `assets/` 子目录
-3. 技能检查每个文件的命名、格式和大小——全部通过
-4. 技能询问"May I write the asset audit report to `production/qa/asset-audit-[date].md`?"
-5. 写入报告；判定结果为 COMPLIANT
+1. 技能从 `technical-preferences.md` 读取命名规范与大小预算
+2. 递归扫描 `assets/`
+3. 所有文件都符合 `snake_case` 规范，且都在预算内
+4. 审计表的所有行均显示 PASS
+5. 判定结果为 COMPLIANT
 
 **断言：**
-- [ ] 检查命名规范（snake_case）
-- [ ] 检查文件格式（纹理用 .png，音频用 .ogg）
-- [ ] 检查尺寸预算（≤ 2048×2048）
-- [ ] 0 个违规 → 判定结果为 COMPLIANT
-- [ ] 写入报告前询问"May I write"
+- [ ] 审计覆盖美术和音频资产目录
+- [ ] 每个文件都根据命名规范和大小预算进行检查
+- [ ] 合规时所有行都显示 PASS
+- [ ] 判定结果为 COMPLIANT
+- [ ] 不写入任何文件
 
 ---
 
-### 用例 2：纹理超过大小预算，NON-COMPLIANT
+### 用例 2：不合规——纹理超出大小预算
 
 **夹具：**
-- `technical-preferences.md` 纹理上限为 2048×2048
-- `assets/textures/boss_dragon.png`：4096×4096（超出预算两倍）
-- `assets/textures/player_idle.png`：1024×1024（合规）
+- `assets/art/environment/` 包含 5 个纹理文件
+- 其中 3 个纹理文件各为 4MB（预算：≤2MB）
+- 其余 2 个纹理文件在预算内
 
 **输入：** `/asset-audit`
 
 **预期行为：**
-1. 技能扫描纹理
-2. 检测到 `boss_dragon.png` 超出大小预算（4096 > 2048）
-3. `player_idle.png` 通过
-4. 报告标记 `boss_dragon.png` 为 HIGH 严重性违规
-5. 判定结果为 NON-COMPLIANT
+1. 技能从 `technical-preferences.md` 读取大小预算（纹理 2MB）
+2. 扫描 `assets/art/environment/`，发现 3 个超大纹理
+3. 审计表列出每个超大文件的实际大小与预算
+4. 判定结果为 NON-COMPLIANT
+5. 技能为被标记文件建议压缩或降低分辨率
 
 **断言：**
-- [ ] 以文件名标识 `boss_dragon.png` 为违规项
-- [ ] 违规报告为 HIGH 严重性
-- [ ] `player_idle.png` 在报告中标记为通过
-- [ ] 判定结果为 NON-COMPLIANT（非 WARNINGS）
+- [ ] 3 个超大文件都按名称列出，并显示实际大小与预算大小
+- [ ] 只要任一文件超出预算，判定结果就是 NON-COMPLIANT
+- [ ] 为超大文件给出优化建议
+- [ ] 为保证完整性，也列出预算内文件（显示 PASS）
 
 ---
 
-### 用例 3：音频文件格式错误——使用了 .mp3 而非 .ogg，WARNINGS
+### 用例 3：格式问题——音频格式错误
 
 **夹具：**
-- `technical-preferences.md` 指定音频格式为 .ogg
-- `assets/audio/ambient_forest.mp3`（格式错误——应为 .ogg）
-- `assets/audio/player_jump.ogg`（正确格式）
+- `technical-preferences.md` 指定音频格式为 OGG
+- `assets/audio/music/theme_main.wav` 存在（WAV 格式）
+- `assets/audio/sfx/sfx_footstep.ogg` 存在（正确的 OGG 格式）
 
 **输入：** `/asset-audit`
 
 **预期行为：**
-1. 技能扫描音频文件
-2. 检测到 `ambient_forest.mp3` 使用了错误格式
-3. 将此标记为 MEDIUM 严重性（格式问题通常可修复但不致命）
-4. `player_jump.ogg` 通过
-5. 判定结果为 WARNINGS
+1. 技能读取音频格式要求：OGG
+2. 扫描 `assets/audio/`，发现 `theme_main.wav` 格式不对
+3. 审计表将 `theme_main.wav` 标记为 FORMAT ISSUE（期望 OGG，实际 WAV）
+4. `sfx_footstep.ogg` 显示 PASS
+5. 判定结果为 WARNINGS（格式问题可修复）
 
 **断言：**
-- [ ] 识别格式违规（.mp3 而非 .ogg）
-- [ ] 标记为 MEDIUM 严重性
-- [ ] 判定结果为 WARNINGS（非 NON-COMPLIANT，因为无大小或命名违规）
+- [ ] `theme_main.wav` 被标记为 FORMAT ISSUE，并注明期望与实际格式
+- [ ] 对于可修复的格式问题，判定结果为 WARNINGS（而不是 NON-COMPLIANT）
+- [ ] 正确格式的资产显示为 PASS
+- [ ] 技能不修改或转换任何资产文件
 
 ---
 
-### 用例 4：GDD 引用了不存在的资产，NON-COMPLIANT
+### 用例 4：缺失资产——GDD 引用了 assets/ 中不存在的资产
 
 **夹具：**
-- GDD 引用了 `assets/textures/boss_frost_golem.png`
-- 该文件在 `assets/textures/` 中不存在
+- `design/gdd/enemies.md` 引用了 `enemy_boss_idle.png`
+- `assets/art/characters/boss/` 目录为空，该文件不存在
 
 **输入：** `/asset-audit`
 
 **预期行为：**
-1. 技能读取 GDD 以获取预期资产引用
-2. 技能扫描 `assets/textures/` 目录
-3. 技能检测到 `boss_frost_golem.png` 被 GDD 引用但在磁盘上缺失
-4. 将此标记为 HIGH 严重性（缺失资产会破坏 GDD 实现）
-5. 判定结果为 NON-COMPLIANT
+1. 技能读取 GDD 中的资产引用，找出预期资产（与 `/content-audit` 的范围交叉）
+2. 扫描 `assets/art/characters/boss/`，未找到该文件
+3. 审计表将 `enemy_boss_idle.png` 标记为 MISSING ASSET
+4. 判定结果为 NON-COMPLIANT（关键美术资产缺失）
 
 **断言：**
-- [ ] 将 GDD 引用与磁盘上实际存在的资产进行对比
-- [ ] 检测到缺失的 GDD 引用资产（`boss_frost_golem.png`）
-- [ ] 标记为 HIGH 严重性
-- [ ] 判定结果为 NON-COMPLIANT
+- [ ] 技能会检查 GDD 引用以识别预期资产
+- [ ] 缺失资产会标记为 MISSING ASSET，并注明对应的 GDD 引用
+- [ ] 当关键资产缺失时，判定结果为 NON-COMPLIANT
+- [ ] 技能不创建或添加占位资产
 
 ---
 
-### 用例 5：门控合规性——无门控；可选报告写入
+### 用例 5：门控合规性——无门控；可单独建议 technical-artist 参与
 
 **夹具：**
-- `assets/` 目录存在且有内容，规范已配置
+- 2 个文件违反命名规范（CamelCase 而不是 snake_case）
+- `review-mode.txt` 内容为 `full`
 
 **输入：** `/asset-audit`
 
 **预期行为：**
-1. 技能完成完整的审计
-2. 未调用 director 门控
-3. 可选写入审计报告时询问"May I write"
+1. 技能扫描资产并找到 2 个命名违规
+2. 无论 review mode 如何，都不调用 director 门控
+3. 判定结果为 WARNINGS
+4. 输出提示："Consider having a Technical Artist review naming conventions"
+5. 技能展示发现结果；可选提供写入审计报告
+6. 如果用户选择写入：询问 "May I write to `production/qa/asset-audit-[date].md`?"
 
 **断言：**
-- [ ] 未调用任何 director 门控
-- [ ] 写入报告时（若选择写入）询问"May I write"
-- [ ] 报告可选——若用户拒绝仍返回判定结果
+- [ ] 任意 review mode 下都不调用 director 门控
+- [ ] 只是建议 technical-artist 参与，而不是强制要求
+- [ ] 在任何写入提示之前先展示发现表
+- [ ] 可选的审计报告写入在真正写入前会询问 "May I write"
 
 ---
 
 ## 协议合规性
 
-- [ ] 从 `technical-preferences.md` 读取规范（不硬编码）
-- [ ] 检查命名规范、格式和大小预算
-- [ ] 扫描时将 GDD 引用与磁盘上的资产对比
-- [ ] 写入审计报告前询问"May I write"（报告为可选）
-- [ ] 仅报告——不修改、重命名或删除任何资产文件
-- [ ] 返回 COMPLIANT、WARNINGS 或 NON-COMPLIANT 判定
+- [ ] 从 `technical-preferences.md` 读取命名规范、格式与大小预算
+- [ ] 递归扫描 `assets/` 目录
+- [ ] 审计表显示文件名、检查类型、期望值、实际值和结果
+- [ ] 不修改任何资产文件
+- [ ] 不调用 director 门控
+- [ ] 判定结果严格为：COMPLIANT、WARNINGS、NON-COMPLIANT 之一
 
 ---
 
 ## 覆盖说明
 
-- 孤立资产（磁盘上存在但无 GDD 引用）的行为此处未测试。
-  技能可将其报告为 WARNINGS，但这不属于 NON-COMPLIANT 范畴。
-- Unity 和 Unreal 的资产命名规范与 Godot snake_case 有所不同。
-  技能应从 `technical-preferences.md` 读取规范，而非假定使用 Godot 规范。
-- 资产管道工具（AssetPostprocessor 等）生成的元数据文件审计
-  此处未测试，超出基础审计范围。
+- 元数据检查（例如 Godot `.import` 文件中缺失纹理导入设置）未在这里单独测试；它们沿用相同的 FORMAT ISSUE 标记模式。
+- `/asset-audit` 与 `/content-audit` 都会检查 GDD 引用和资产的对应关系，这是有意的重叠；`/asset-audit` 关注合规性，`/content-audit` 关注完整性。

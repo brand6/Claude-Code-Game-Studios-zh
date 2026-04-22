@@ -343,11 +343,223 @@ Unreal 核心 + 模块：
 - docs/engine-reference/unreal/plugins/gameplay-camera-system.md ✅
 - docs/engine-reference/unreal/plugins/pcg.md ✅
 
-### 阶段 10：命令完成后推荐下一步与修复回流命令
+### 阶段 10：CCGS Skill Testing Framework 翻译（可选）
+
+状态：`complete`（批1 complete，批2 complete，批3 complete，批4 complete，批5 complete，批6 complete，批7 complete）
+模型：Sonnet 4.6
+文件（127个：126个 md + 1个 yaml）
+优先级：低（先保证主体框架运作正常）
+
+#### 批次划分（共 7 批，每批约 15-20 个）
+
+**批1（20个）**：顶层 + agents 头部 — `complete` ✅
+
+- README.md ✅ / CLAUDE.md ✅ / quality-rubric.md ✅ / catalog.yaml ✅
+- templates/agent-test-spec.md ✅ / templates/skill-test-spec.md ✅
+- agents/directors/（4个）✅
+- agents/qa/（3个）✅
+- agents/leads/（7个）✅
+
+**批2（20个）**：agents 核心专业 — `complete` ✅
+
+- agents/operations/（7个）✅
+- agents/specialists/（13个）✅
+
+**批3（15个）**：agents 引擎专项 — `complete` ✅
+
+- agents/engine/godot/godot-specialist.md ✅
+- agents/engine/godot/godot-gdscript-specialist.md ✅
+- agents/engine/godot/godot-csharp-specialist.md ✅
+- agents/engine/godot/godot-gdextension-specialist.md ✅
+- agents/engine/godot/godot-shader-specialist.md ✅
+- agents/engine/unity/unity-specialist.md ✅
+- agents/engine/unity/unity-addressables-specialist.md ✅
+- agents/engine/unity/unity-dots-specialist.md ✅
+- agents/engine/unity/unity-shader-specialist.md ✅
+- agents/engine/unity/unity-ui-specialist.md ✅
+- agents/engine/unreal/unreal-specialist.md ✅
+- agents/engine/unreal/ue-blueprint-specialist.md ✅
+- agents/engine/unreal/ue-gas-specialist.md ✅
+- agents/engine/unreal/ue-replication-specialist.md ✅
+- agents/engine/unreal/ue-umg-specialist.md ✅
+
+**批4（18个）**：skills/utility 前半 — `complete` ✅
+
+- skills/utility/ 前18个（按字母序）：
+  adopt ✅, asset-spec ✅, brainstorm ✅, bug-report ✅, bug-triage ✅,
+  day-one-patch ✅, help ✅, hotfix ✅, launch-checklist ✅, localize ✅,
+  onboard ✅, playtest-report ✅, project-stage-detect ✅, prototype ✅,
+  qa-plan ✅, regression-suite ✅, release-checklist ✅, reverse-document ✅
+
+**批5（20个）**：skills/utility 后半 + analysis — `complete` ✅
+
+- skills/utility/ 后8个：setup-engine ✅, skill-improve ✅, skill-test ✅, smoke-check ✅, soak-test ✅, start ✅, test-helpers ✅, test-setup ✅
+- skills/analysis/（12个）：asset-audit ✅, balance-check ✅, code-review ✅, consistency-check ✅, content-audit ✅, estimate ✅, perf-profile ✅, scope-check ✅, security-audit ✅, tech-debt ✅, test-evidence-review ✅, test-flakiness ✅
+
+**批6（16个）**：skills team + authoring — `complete` ✅
+
+- skills/team/（9个）：team-audio ✅, team-combat ✅, team-level ✅, team-live-ops ✅, team-narrative ✅, team-polish ✅, team-qa ✅, team-release ✅, team-ui ✅
+- skills/authoring/（7个）：architecture-decision ✅, art-bible ✅, create-architecture ✅, design-system ✅, quick-design ✅, ux-design ✅, ux-review ✅
+
+**批7（18个）**：skills 剩余分类 — `complete` ✅
+
+- skills/sprint/（6个）：changelog ✅, milestone-review ✅, patch-notes ✅, retrospective ✅, sprint-plan ✅, sprint-status ✅
+- skills/pipeline/（6个）：create-control-manifest ✅, create-epics ✅, create-stories ✅, dev-story ✅, map-systems ✅, propagate-design-change ✅
+- skills/review/（3个）：architecture-review ✅, design-review ✅, review-all-gdds ✅
+- skills/readiness/（2个）：story-done ✅, story-readiness ✅
+- skills/gate/（1个）：gate-check ✅
+
+### 阶段 11：翻译文本校对
+
+状态：`complete`
+工作规范：主Agent：Gpt-5.4负责校对，有问题的地方调用子Agent：Claude Sonnet 4.6修复后再校验。修复和校验使用不同模型，保证翻译质量。
+目标：发布前逐项对照英文原版与中文译文，确认可执行语义一致，且受保护内容未被误翻
+校对重点：
+
+- 英文原版和中文的语义是否一致，尤其是职责边界、条件约束、流程顺序、门禁结论与例外条件
+- 文件名、路径、命令、斜杠命令、脚本名、frontmatter / YAML 键名、agent / skill 标识符、API 名称等不应翻译的内容是否被误翻
+
+执行方式：
+
+- 以核心链路 docs + skills + agents 为第一优先级，再覆盖其余翻译文件
+- 对照英文原文逐文件抽检与定点复核，对自动校验难以发现的语义漂移单独登记
+- 对发现的问题按“语义偏差 / 保护内容误翻 / 局部措辞不自然”分类修订
+- 每批次完成后更新 findings.md / progress.md，并重新运行 auto/validate_translation.py，确保结果仍为 0 errors / 0 warnings
+
+统一检查清单：
+
+- 语义一致性：核对职责边界、条件强弱（must / should / may）、流程顺序、门禁结论、例外说明、禁止事项是否与英文原文一致
+- 保护内容：核对文件名、路径、命令、斜杠命令、脚本名、占位符、frontmatter / YAML 键名、agent / skill 标识符、API 名称、verdict 关键词是否保持英文原样
+- 术语一致性：核对中文译法是否与 zh/GLOSSARY.md 一致，避免同一概念多种说法导致执行歧义
+- 风险升级规则：若某目录抽检发现语义偏差或保护内容误翻，则该目录从抽检升级为全量复核
+
+#### 批次 1：入口与主流程文档
+
+状态：`complete`
+范围：
+
+- zh/ 根目录入口文档：README.md、UPGRADING.md、CLAUDE.md、GLOSSARY.md
+- zh/docs/ 顶层主流程文档：WORKFLOW-GUIDE.md、COLLABORATIVE-DESIGN-PRINCIPLE.md、CLAUDE.md、ARCHITECTURE.md
+- zh/.claude/docs/ 中直接影响启动与协作理解的入口文档
+
+检查重点：
+
+- 主流程顺序、阶段依赖、斜杠命令、仓库结构说明是否与英文原文一致
+- “必须 / 应当 / 可以”这类约束强度是否被弱化或加强
+
+#### 批次 2：核心 agents 与核心 skills
+
+状态：`complete`
+范围：
+
+- zh/.claude/agents/ 的核心 directors 与 leads
+- zh/.claude/skills/ 的核心链路 skills（start、help、brainstorm、design-system、dev-story、create-epics、create-stories、sprint-plan、gate-check、project-stage-detect、adopt）
+
+检查重点：
+
+- 角色职责边界、委派关系、审批要求、工具限制、门禁裁定词是否与英文原文一致
+- 命令路由、输入参数、输出产物、下一步建议是否存在语义漂移
+
+#### 批次 3：其余 .claude agents / skills / rules
+
+状态：`complete`
+范围：
+
+- zh/.claude/agents/ 其余 agent 文档
+- zh/.claude/skills/ 其余 SKILL.md
+- zh/.claude/rules/ 全部规则文件
+
+检查重点：
+
+- frontmatter 中不可翻译字段与规则路径绑定是否保持原样
+- review / gate / QA / pipeline 类文档中的固定结论词、条件限制、拒绝边界是否保持准确
+
+#### 批次 4：模板、示例与协作文档
+
+状态：`complete`
+范围：
+
+- zh/.claude/docs/templates/、collaborative-protocols/、hooks-reference/
+- zh/docs/examples/
+- zh/.github/ 协作模板
+- zh/design/CLAUDE.md、zh/src/CLAUDE.md
+
+检查重点：
+
+- 模板占位符、示例命令、frontmatter 键名、示例工作流是否被误翻或改义
+- 示例文本是否仍能正确示范原始流程，而不是只保留表面中文可读性
+
+#### 批次 5：结构化数据与引擎参考
+
+状态：`complete`
+范围：
+
+- zh/design/registry/
+- zh/docs/registry/
+- zh/docs/architecture/
+- zh/docs/engine-reference/
+
+检查重点：
+
+- YAML 仅翻说明文本，不翻键名、路径、枚举值、状态值
+- 引擎 API、模块名、版本号、插件名、破坏性变更条目是否保持可检索与可引用
+
+#### 批次 6：CCGS Skill Testing Framework
+
+状态：`complete`
+范围：
+
+- zh/CCGS Skill Testing Framework/ 全部译文
+
+检查重点：
+
+- framework 内 agent / skill / catalog 标识符与分类层级是否与英文原版一致
+- 测试规范、评分标准、工作流说明中的语义边界与固定术语是否保持一致
+
+执行结果：
+
+- 批次 1-5 通过抽检与定点复核，未发现阻塞性的语义漂移或受保护内容误翻
+- 批次 6 抽检命中 `zh/CCGS Skill Testing Framework/skills/analysis/` 目录的系统性问题：5 个测试规范文件把“可选报告写入、仅在用户选择后询问 `May I write`”改写成了默认询问/写入
+- 已按风险升级规则对 `zh/CCGS Skill Testing Framework/skills/analysis/` 做全量复核，并修复 `asset-audit.md`、`balance-check.md`、`consistency-check.md`、`content-audit.md`、`test-flakiness.md`
+- 2026-04-22 复跑 `auto/validate_translation.py`，结果保持 `0 errors / 0 warnings`
+
+验收：
+
+- 中文与英文原文在可执行语义上保持一致，无职责错配、条件反转、范围缩放或流程断裂
+- 文件名、命令、路径等受保护内容保持英文原样，可直接执行或引用
+- 修订后重新运行 auto/validate_translation.py，结果保持 0 errors / 0 warnings
+
+### 阶段 12：发布准备
+
+状态：`not_started`
+
+- 写中文版 README（加上是原仓库翻译的说明：https://github.com/Donchitos/Claude-Code-Game-Studios/）
+- 把 zh/ 目录 连接到远程仓库：https://github.com/brand6/Claude-Code-Game-Studios-zh.git
+- 用中文文件覆盖原英文文件
+- 写更新日志
+
+---
+
+## 【仅记录，暂不执行】
+
+### 备选阶段 A：整体精简优化（Opus 4.6）
+
+- 删废话，合并重复指令，压缩 token 用量
+- 范围：核心 agents + 核心 skills
+- 验收：token 数量下降 ≥20%，功能回归测试通过
+
+### 备选阶段 B：中文增强（Opus 4.6）
+
+- 补充中国国内游戏开发流程习惯（版号、游戏备案节点）
+- 参考成熟国产游戏设计方法论
+- 加入中文文档规范
+- 补充国内常见引擎/工具（Unity China、Cocos Creator）适配说明
+
+### 备选阶段 C：命令完成后推荐下一步与修复回流命令
 
 状态：`not_started`
 模型：Sonnet 4.6
-目标：在每个 SKILL.md 末尾加入"## 完成后推荐"标准段落，并为评审/QA 环节补齐明确的修复命令
+目标：在每个 SKILL.md 末尾加入"## 完成后推荐"标准段落，并为评审 / QA 环节补齐明确的修复命令
 内容：列出 3 个推荐的下一步命令 + /clear + 上下文压缩提示
 范围：所有核心链路 skills（11个），再扩展到全部
 
@@ -375,17 +587,17 @@ Unreal 核心 + 模块：
 
 - 新增 zh/.claude/skills/code-fix/SKILL.md、zh/.claude/skills/design-fix/SKILL.md、zh/.claude/skills/qa-fix/SKILL.md
 - 在 review / QA / check 类 skills 的 Next Steps 中加入 fix 命令，而不是只写“修复后重跑”
-- 为 fix 命令定义统一输入：目标工件路径 + 问题摘要 + 来源报告/阻塞项引用
+- 为 fix 命令定义统一输入：目标工件路径 + 问题摘要 + 来源报告 / 阻塞项引用
 - 建立“评审 -> 修复 -> 复审”闭环模板
 
 数据来源：workflow-catalog.yaml 里的 next_phase + steps 字段，以及 review / QA 报告中的阻塞项
 
-### 阶段 11：自动模式开关
+### 备选阶段 D：自动模式开关
 
 状态：`not_started`
 模型：Sonnet 4.6
 目标：开启后，skill 完成时自动触发下一个命令（无需用户输入）
-核心理念：流程/开发/QA 类操作自动化；设计/决策类操作需玩家参与
+核心理念：流程 / 开发 / QA 类操作自动化；设计 / 决策类操作需玩家参与
 实现方案：
   a. 新建 zh/.claude/skills/auto/SKILL.md（/auto on|off|status）
   b. 运行时写入 production/auto-mode.json（enabled: true/false）
@@ -395,7 +607,7 @@ Unreal 核心 + 模块：
 自动化白名单：sprint-plan → create-epics → create-stories → dev-story → story-done → smoke-check → gate-check
 人工确认保留：brainstorm、design-system、architecture-decision、任何 Opus 精修步骤、责任归属不清的 fix 场景
 
-### 阶段 12：联调测试
+### 备选阶段 E：联调测试
 
 状态：`not_started`
 模型：Sonnet 4.6
@@ -408,95 +620,13 @@ Unreal 核心 + 模块：
 - `/test-evidence-review` / `/smoke-check` 发现 QA 工件缺陷时，`/qa-fix` 只修 QA 工件；若根因在实现或设计，必须拒绝并改推正确 fix 命令
 - 对不属于当前工件责任边界的问题，fix 命令不会越权修改
 
-### 阶段 13：CCGS Skill Testing Framework 翻译（可选）
-
-状态：`complete`（批1 complete，批2 complete，批3 complete，批4 complete，批5 complete，批6 complete，批7 complete）
-模型：Sonnet 4.6
-文件（127个：126个 md + 1个 yaml）
-优先级：低（先保证主体框架运作正常）
-
-#### 批次划分（共 7 批，每批约 15-20 个）
-
-**批1（20个）**：顶层 + agents 头部 — `complete` ✅
-- README.md ✅ / CLAUDE.md ✅ / quality-rubric.md ✅ / catalog.yaml ✅
-- templates/agent-test-spec.md ✅ / templates/skill-test-spec.md ✅
-- agents/directors/（4个）✅
-- agents/qa/（3个）✅
-- agents/leads/（7个）✅
-
-**批2（20个）**：agents 核心专业 — `complete` ✅
-- agents/operations/（7个）✅
-- agents/specialists/（13个）✅
-
-**批3（15个）**：agents 引擎专项 — `complete` ✅
-- agents/engine/godot/godot-specialist.md ✅
-- agents/engine/godot/godot-gdscript-specialist.md ✅
-- agents/engine/godot/godot-csharp-specialist.md ✅
-- agents/engine/godot/godot-gdextension-specialist.md ✅
-- agents/engine/godot/godot-shader-specialist.md ✅
-- agents/engine/unity/unity-specialist.md ✅
-- agents/engine/unity/unity-addressables-specialist.md ✅
-- agents/engine/unity/unity-dots-specialist.md ✅
-- agents/engine/unity/unity-shader-specialist.md ✅
-- agents/engine/unity/unity-ui-specialist.md ✅
-- agents/engine/unreal/unreal-specialist.md ✅
-- agents/engine/unreal/ue-blueprint-specialist.md ✅
-- agents/engine/unreal/ue-gas-specialist.md ✅
-- agents/engine/unreal/ue-replication-specialist.md ✅
-- agents/engine/unreal/ue-umg-specialist.md ✅
-
-**批4（18个）**：skills/utility 前半 — `complete` ✅
-- skills/utility/ 前18个（按字母序）：
-  adopt ✅, asset-spec ✅, brainstorm ✅, bug-report ✅, bug-triage ✅,
-  day-one-patch ✅, help ✅, hotfix ✅, launch-checklist ✅, localize ✅,
-  onboard ✅, playtest-report ✅, project-stage-detect ✅, prototype ✅,
-  qa-plan ✅, regression-suite ✅, release-checklist ✅, reverse-document ✅
-
-**批5（20个）**：skills/utility 后半 + analysis — `complete` ✅
-- skills/utility/ 后8个：setup-engine ✅, skill-improve ✅, skill-test ✅, smoke-check ✅, soak-test ✅, start ✅, test-helpers ✅, test-setup ✅
-- skills/analysis/（12个）：asset-audit ✅, balance-check ✅, code-review ✅, consistency-check ✅, content-audit ✅, estimate ✅, perf-profile ✅, scope-check ✅, security-audit ✅, tech-debt ✅, test-evidence-review ✅, test-flakiness ✅
-
-**批6（16个）**：skills team + authoring — `complete` ✅
-- skills/team/（9个）：team-audio ✅, team-combat ✅, team-level ✅, team-live-ops ✅, team-narrative ✅, team-polish ✅, team-qa ✅, team-release ✅, team-ui ✅
-- skills/authoring/（7个）：architecture-decision ✅, art-bible ✅, create-architecture ✅, design-system ✅, quick-design ✅, ux-design ✅, ux-review ✅
-
-**批7（18个）**：skills 剩余分类 — `complete` ✅
-- skills/sprint/（6个）：changelog ✅, milestone-review ✅, patch-notes ✅, retrospective ✅, sprint-plan ✅, sprint-status ✅
-- skills/pipeline/（6个）：create-control-manifest ✅, create-epics ✅, create-stories ✅, dev-story ✅, map-systems ✅, propagate-design-change ✅
-- skills/review/（3个）：architecture-review ✅, design-review ✅, review-all-gdds ✅
-- skills/readiness/（2个）：story-done ✅, story-readiness ✅
-- skills/gate/（1个）：gate-check ✅
-
-### 阶段 14：发布准备
-
-状态：`not_started`
-
-- 写中文版 README（含"已优化 prompt"标注）
-- 从 zh/ 目录整理成独立仓库结构
-- 建 Claude-Code-Game-Studios-cn 仓库
-- 写更新日志
-
----
-
-## 【仅记录，暂不执行】
-
-### 备选阶段 A：整体精简优化（Opus 4.6）
-
-- 删废话，合并重复指令，压缩 token 用量
-- 范围：核心 agents + 核心 skills
-- 验收：token 数量下降 ≥20%，功能回归测试通过
-
-### 备选阶段 B：中文增强（Opus 4.6）
-
-- 补充中国国内游戏开发流程习惯（版号、游戏备案节点）
-- 参考成熟国产游戏设计方法论
-- 加入中文文档规范
-- 补充国内常见引擎/工具（Unity China、Cocos Creator）适配说明
-
 ---
 
 ## 决策记录
 
+- 主线阶段重排：原阶段 10-12 调整为备选阶段 C-E；原阶段 13 调整为阶段 10；新增阶段 11“翻译文本校对”；原阶段 14“发布准备”顺延为阶段 12
+- 发布前新增双语校对门禁：重点核对英中语义一致性，以及文件名、路径、命令等受保护内容未被误翻
+- 阶段 11 采用风险优先的 6 批次校对顺序：入口主流程 → 核心 agents / skills → 其余 .claude 文档 → 模板 / 示例 / 协作文档 → 结构化数据与引擎参考 → CCGS Skill Testing Framework
 - zh/ 作为翻译暂存目录，发布时移入独立仓库
 - 引擎 agents（15个）按用户选定引擎后再翻译，不阻塞主流程
 - CCGS Skill Testing Framework 定为可选（低优先级）
@@ -510,6 +640,8 @@ Unreal 核心 + 模块：
 
 ## 风险
 
+- 自动校验清零只说明结构与保护字段通过，不代表英中语义已经完全一致
+- 文件名、命令、路径等受保护内容若被误翻，会在发布后造成命令失效、引用断裂或流程误导
 - WORKFLOW-GUIDE.md 很长，需分节翻译
 - agents 文件中有大量交叉引用（agent名），翻译时须保持一致
 - YAML frontmatter 格式破坏会导致 Claude Code 无法识别 agent/skill

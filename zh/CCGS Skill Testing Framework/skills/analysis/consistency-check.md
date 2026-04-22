@@ -2,168 +2,164 @@
 
 ## 技能概要
 
-`/consistency-check` 扫描所有 GDD，交叉对比 `design/registry/entities.yaml`
-（实体注册表），以发现不同文档之间的冲突：公式不匹配、竞争性所有权、
-失效引用和依赖缺口。技能优先使用 grep 搜索而非全文档读取，
-先读取注册表，再仅针对冲突部分读取 GDD。
+`/consistency-check` 扫描 `design/gdd/` 中的所有 GDD，检查文档之间的内部冲突。它会生成结构化发现表，列名为：System A vs System B、Conflict Type、Severity（HIGH / MEDIUM / LOW）。冲突类型包括：formula mismatch、competing ownership、stale reference 和 dependency gap。
 
-技能可选择询问"May I write the consistency report to `production/qa/consistency-[日期].md`?"。
-不应用修复——仅报告冲突。无 director 门控。
-判定结果：CONSISTENT（无冲突）、CONFLICTS FOUND（存在直接冲突）
-或 DEPENDENCY GAP（依赖的 GDD 缺失）。
+该技能在分析期间保持只读。无 director 门控。若用户请求，可将可选的一致性报告写入 `design/consistency-report-[date].md`，但写入前必须询问 "May I write"。
 
 ---
 
 ## 静态断言（结构性）
 
-由 `/skill-test static` 自动验证——无需夹具。
+由 `/skill-test static` 自动验证，无需夹具。
 
-- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含所需的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
 - [ ] 包含至少 2 个阶段标题
 - [ ] 包含判定关键词：CONSISTENT、CONFLICTS FOUND、DEPENDENCY GAP
-- [ ] 在写入一致性报告前包含"May I write"协作协议语言
-- [ ] 包含下一步交接（例如 `/design-review` 审查冲突的 GDD，或 `/propagate-design-change`）
+- [ ] 在分析期间不要求包含 "May I write" 语言（只读扫描）
+- [ ] 末尾包含下一步交接
+- [ ] 明确说明：报告写入是可选的，且需要批准
 
 ---
 
 ## Director 门控检查
 
-无。`/consistency-check` 是只读分析技能，不适用 director 门控。
+无 director 门控。该技能不会生成任何 director gate agent。一致性检查是机械化扫描；扫描本身不需要 creative 或 technical director 参与。
 
 ---
 
 ## 测试用例
 
-### 用例 1：正常路径——4 个 GDD 无冲突，CONSISTENT
+### 用例 1：正常路径——4 份 GDD 没有冲突
 
 **夹具：**
-- `design/registry/entities.yaml` 包含 player、enemy、weapon、item 实体
-- 4 个 GDD 文件（combat.md、player.md、enemy.md、items.md）相互引用一致
-- 公式无冲突，所有权清晰
+- `design/gdd/` 中恰好有 4 份系统 GDD
+- 所有 GDD 的公式一致（没有相同变量却取值不同的情况）
+- 没有两份 GDD 声称拥有同一个游戏实体或机制的所有权
+- 所有依赖引用都指向实际存在的 GDD
 
 **输入：** `/consistency-check`
 
 **预期行为：**
-1. 技能读取实体注册表
-2. 技能 grep 所有 GDD 查找跨文档引用
-3. 检查所有公式和属性值——无冲突
-4. 技能询问"May I write the consistency report?"
-5. 写入报告；判定结果为 CONSISTENT
+1. 技能读取 `design/gdd/` 中全部 4 份 GDD
+2. 运行跨 GDD 一致性检查（公式、所有权、引用）
+3. 未发现冲突
+4. 输出结构化发现表，显示 0 个问题
+5. 判定结果：CONSISTENT
 
 **断言：**
-- [ ] 先读取实体注册表（优先于全文档读取）
-- [ ] 0 个公式冲突 → 判定结果为 CONSISTENT
-- [ ] 写入报告前询问"May I write"
-- [ ] 不修改任何 GDD 文件
+- [ ] 在生成输出前，先读取全部 4 份 GDD
+- [ ] 即便为空，也会展示发现表（显示 "No conflicts found"）
+- [ ] 没有冲突时，判定结果为 CONSISTENT
+- [ ] 未经用户批准，技能不会写入任何文件
+- [ ] 包含下一步交接
 
 ---
 
-### 用例 2：伤害公式冲突——CONFLICTS FOUND（HIGH）
+### 用例 2：失败路径——两份 GDD 的伤害公式冲突
 
 **夹具：**
-- `design/gdd/combat.md`：`damage = base_attack × 1.5`
-- `design/gdd/enemy.md`：`damage = base_attack × 2.0`（与 combat.md 冲突）
+- GDD-A 定义伤害公式：`damage = attack * 1.5`
+- GDD-B 为同一种实体类型定义伤害公式：`damage = attack * 2.0`
+- 两份 GDD 都引用同一个 `attack` 变量
 
 **输入：** `/consistency-check`
 
 **预期行为：**
-1. 技能 grep GDD 查找"damage ="定义
-2. 检测到冲突：combat.md 定义乘数 1.5，enemy.md 定义乘数 2.0
-3. 将此标记为 HIGH 严重性冲突（核心公式不一致）
-4. 报告列出具体冲突（引用两个文件及其各自定义）
-5. 判定结果为 CONFLICTS FOUND
+1. 技能读取所有 GDD，并检测到公式不匹配
+2. 发现表包含一条记录：GDD-A vs GDD-B | Formula Mismatch | HIGH
+3. 展示具体冲突的公式，而不是只说“存在公式冲突”
+4. 判定结果：CONFLICTS FOUND
 
 **断言：**
-- [ ] 检测到公式冲突（×1.5 vs ×2.0）
-- [ ] 报告中列出两个冲突文件
-- [ ] 标记为 HIGH 严重性
-- [ ] 判定结果为 CONFLICTS FOUND
+- [ ] 判定结果为 CONFLICTS FOUND（不是 CONSISTENT）
+- [ ] 冲突项会点名两份 GDD 文件
+- [ ] 冲突类型为 "Formula Mismatch"
+- [ ] 直接公式矛盾时，严重性为 HIGH
+- [ ] 发现表中会展示两条冲突公式
+- [ ] 技能不会自动解决冲突
 
 ---
 
-### 用例 3：依赖 GDD 缺失——DEPENDENCY GAP（MEDIUM）
+### 用例 3：部分路径——GDD 引用了一个没有对应 GDD 的系统
 
 **夹具：**
-- `design/gdd/items.md` 引用了"crafting-system GDD"
-- `design/gdd/crafting.md` 不存在
+- GDD-A 的 Dependencies 章节将 "system-B" 列为依赖
+- `design/gdd/` 中不存在 system-B 的 GDD
+- 其余 GDD 都保持一致
 
 **输入：** `/consistency-check`
 
 **预期行为：**
-1. 技能读取 items GDD
-2. 检测到对 crafting-system 的引用
-3. 技能检查 `design/gdd/crafting.md` 是否存在——未找到
-4. 将此标记为 DEPENDENCY GAP，MEDIUM 严重性
-5. 建议运行 `/design-system crafting` 创建缺失的 GDD
-6. 判定结果为 DEPENDENCY GAP
+1. 技能读取所有 GDD，并检查依赖引用
+2. GDD-A 对 "system-B" 的引用无法解析，因为没有对应 GDD
+3. 发现表包含：GDD-A vs (missing) | Dependency Gap | MEDIUM
+4. 判定结果：DEPENDENCY GAP（不是 CONSISTENT，也不是 CONFLICTS FOUND）
 
 **断言：**
-- [ ] 检测到 items GDD 中的依赖引用
-- [ ] 检查被引用的 GDD 是否存在
-- [ ] 检测到缺失 GDD 后标记为 DEPENDENCY GAP
-- [ ] 建议 `/design-system crafting` 作为下一步
-- [ ] 判定结果为 DEPENDENCY GAP
+- [ ] 判定结果为 DEPENDENCY GAP（与 CONSISTENT、CONFLICTS FOUND 区分开）
+- [ ] 发现项会点名 GDD-A 和缺失的 system-B
+- [ ] 未解析的依赖引用严重性为 MEDIUM
+- [ ] 技能会建议运行 `/design-system system-B` 来创建缺失的 GDD
 
 ---
 
-### 用例 4：未找到 GDD——报告错误，建议 /design-system
+### 用例 4：边界情况——未找到任何 GDD
 
 **夹具：**
-- `design/gdd/` 目录为空或不存在
+- `design/gdd/` 目录为空，或该目录不存在
 
 **输入：** `/consistency-check`
 
 **预期行为：**
-1. 技能扫描 GDD 目录——未找到 GDD 文件
-2. 技能报告："No GDD files found. Run `/design-system [name]` to create system designs."
-3. 不进行一致性检查（无可比较内容）
-4. 技能礼貌退出
+1. 技能尝试读取 `design/gdd/` 中的文件
+2. 未找到任何 GDD 文件
+3. 输出错误："No GDDs found in `design/gdd/`. Run `/design-system` to create GDDs first."
+4. 不生成发现表
+5. 不给出判定结果
 
 **断言：**
-- [ ] 检测到无 GDD 文件
-- [ ] 建议 `/design-system` 创建设计文档
-- [ ] 不生成部分报告
-- [ ] 技能以清晰的错误信息退出
+- [ ] 未找到 GDD 时，技能会输出清晰的错误信息
+- [ ] 不会给出任何判定结果（CONSISTENT / CONFLICTS FOUND / DEPENDENCY GAP）
+- [ ] 技能会建议正确的下一步动作（`/design-system`）
+- [ ] 技能不会崩溃，也不会生成半成品报告
 
 ---
 
-### 用例 5：门控合规性——无门控；不读取 review-mode.txt
+### 用例 5：Director 门控——不生成门控；不读取 review-mode.txt
 
 **夹具：**
-- GDD 存在于标准位置
+- `design/gdd/` 中至少有 2 份 GDD
+- `production/session-state/review-mode.txt` 存在，内容为 `full`
 
 **输入：** `/consistency-check`
 
 **预期行为：**
-1. 技能完成完整的一致性检查
-2. 未调用 director 门控
-3. 技能不读取 `review-mode.txt` 或类似环境标志
+1. 技能读取所有 GDD，并运行一致性扫描
+2. 技能不会读取 `production/session-state/review-mode.txt`
+3. 任意时刻都不会生成 director gate agent
+4. 正常输出发现表和判定结果
 
 **断言：**
-- [ ] 未调用任何 director 门控
-- [ ] 不读取或引用任何 `review-mode.txt` 文件
-- [ ] 写入报告时询问"May I write"
+- [ ] 不生成任何 director gate agent（没有以 CD-、TD-、PR-、AD- 开头的 gates）
+- [ ] 技能不会读取 `production/session-state/review-mode.txt`
+- [ ] 输出中不包含任何 "Gate: [GATE-ID]" 或 gate-skipped 条目
+- [ ] review mode 不影响该技能的行为
 
 ---
 
 ## 协议合规性
 
-- [ ] 先读取实体注册表，再针对冲突 grep GDD 章节
-- [ ] 检查公式冲突、所有权冲突和依赖缺口
-- [ ] 按严重性（HIGH/MEDIUM/LOW）对冲突进行分类
-- [ ] 写入报告前询问"May I write"（报告为可选）
-- [ ] 不修改任何 GDD 文件
-- [ ] 返回 CONSISTENT、CONFLICTS FOUND 或 DEPENDENCY GAP 判定
+- [ ] 在生成发现表前读取全部 GDD
+- [ ] 如果用户请求报告，必须先完整展示发现表，再询问是否写入
+- [ ] 判定结果严格为：CONSISTENT、CONFLICTS FOUND、DEPENDENCY GAP 之一
+- [ ] 无 director 门控，也不读取 review-mode.txt
+- [ ] 报告写入（若用户请求）必须经过 "May I write" 批准
+- [ ] 以与判定结果相符的下一步交接结束
 
 ---
 
 ## 覆盖说明
 
-- 本技能检查 GDD 之间的结构一致性；深度设计理论分析（支柱偏移、主导策略等）
-  由 `/review-all-gdds` 处理。
-- 技能通过 grep 优先模式而非逐文档全文读取来检测冲突——这是一种优化，
-  以避免在大型项目中消耗过多 token。此处不对 grep 搜索行为进行断言。
-- 实体属性的所有权冲突（两个 GDD 都声称拥有同一属性的规范定义）
-  此处未单独测试，但在 CONFLICTS FOUND 判定下涵盖。
-- 命名风格不一致（不同 GDD 使用不同大小写或单数/复数）报告为 LOW 严重性，
-  此处未单独测试。
+- 该技能检查 GDD 之间的结构一致性。更深层的设计理论分析（例如 pillar drift、dominant strategies）由 `/review-all-gdds` 负责。
+- 公式冲突检测依赖 GDD 中一致的公式记法；如果同一机制只用非正式描述表达，技能可能无法检测到。
+- 冲突严重性规则（HIGH / MEDIUM / LOW）在技能正文中定义，这里不再重复展开。

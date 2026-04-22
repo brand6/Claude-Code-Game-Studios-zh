@@ -1,4 +1,75 @@
 # 进度日志 — CCGS 汉化项目
+## 会话 29（2026-04-22）
+
+### 完成的工作
+
+完成阶段 11“翻译文本校对”，并按风险升级规则修复了 batch 6 中命中的 framework analysis 语义漂移问题。
+
+**本轮校对覆盖：**
+- 批次 1-5：对入口文档、主流程文档、核心 agents / skills、其余 `.claude` 文档、模板 / 示例 / 协作文档、结构化数据与引擎参考做抽检与定点复核
+- 批次 6：对 `zh/CCGS Skill Testing Framework/` 做样本复核；在 `skills/analysis/` 命中问题后升级为该目录全量复核
+
+**本轮修复：**
+- 重译并修复 `zh/CCGS Skill Testing Framework/skills/analysis/asset-audit.md`
+- 重译并修复 `zh/CCGS Skill Testing Framework/skills/analysis/balance-check.md`
+- 重译并修复 `zh/CCGS Skill Testing Framework/skills/analysis/consistency-check.md`
+- 重译并修复 `zh/CCGS Skill Testing Framework/skills/analysis/content-audit.md`
+- 重译并修复 `zh/CCGS Skill Testing Framework/skills/analysis/test-flakiness.md`
+
+**问题类型：**
+- 5 个 framework analysis 测试规范把“可选报告写入，仅在用户选择后才询问 `May I write`”误写成了默认询问或默认写入
+- `test-flakiness.md` 还把可选报告错误改写成了写入登记册，改变了原始输出形态
+
+**同步更新：**
+- `task_plan.md`：将阶段 11 及其 6 个批次标记为 `complete`，记录 batch 6 的风险升级与修复结果
+- `findings.md`：补充阶段 11 的最终结论与后续校对关注点
+
+**验证：**
+- 运行 `auto/validate_translation.py`
+- 结果：393 个源文件、396 个中文文件、0 errors、0 warnings
+- 针对 `zh/CCGS Skill Testing Framework/skills/analysis/*.md` 做窄范围 grep 回归检查，确认错误的强制 `May I write` / 登记册表述已清理
+
+## 会话 28（2026-04-22）
+
+### 完成的工作
+
+将阶段 11“翻译文本校对”拆分为可执行的逐目录清单，便于按风险顺序推进发布前复核。
+
+**本次拆分结果：**
+- 增加阶段 11 的统一检查清单：语义一致性、保护内容、术语一致性、风险升级规则
+- 将阶段 11 拆为 6 个批次：入口与主流程文档、核心 agents 与核心 skills、其余 `.claude` agents / skills / rules、模板 / 示例 / 协作文档、结构化数据与引擎参考、CCGS Skill Testing Framework
+- 为每个批次补上目录范围与检查重点，明确哪些目录需要全量复核，哪些目录可先抽检再按问题升级
+
+**同步更新：**
+- `task_plan.md`：细化阶段 11 的执行批次、检查要点与决策记录
+- `findings.md`：补充阶段 11 的建议执行顺序与高风险目录
+
+**验证：**
+- 复核阶段 11 标题、批次标题和阶段 12 起始位置，确认主线顺序未被破坏
+
+## 会话 27（2026-04-22）
+
+### 完成的工作
+
+调整发布前计划结构，使主线更贴近当前收尾目标：
+
+- 将原阶段 10 到 12 从主线移入“备选阶段”，并改为备选阶段 C 到 E
+- 将原阶段 13 重排为阶段 10
+- 在发布准备前新增阶段 11“翻译文本校对”
+- 将原阶段 14“发布准备”顺延重排为阶段 12
+
+**新增校对门禁：**
+- 逐项核对英文原版与中文译文的可执行语义是否一致
+- 专门复核文件名、路径、命令、斜杠命令、脚本名、frontmatter / YAML 键名等不应翻译的内容是否被误翻
+
+**同步更新：**
+- `task_plan.md`：调整阶段顺序，补充“翻译文本校对”阶段，补记决策与风险
+- `findings.md`：新增发布前校对门禁的长期发现
+- 已运行 session-catchup.py，未发现需要回填的未同步上下文
+
+**验证：**
+- 复核 `task_plan.md` 的阶段标题与“备选阶段”结构，确认原阶段 10 到 12 已退出主线
+
 ## 会话 26（2026-04-22）
 
 ### 完成的工作

@@ -1,5 +1,16 @@
 # Findings — CCGS 汉化项目
 
+## 发布前校对门禁（2026-04-22）
+- `auto/validate_translation.py` 的 0 errors / 0 warnings 主要覆盖结构、保护字段、标题、命令保留与缺失翻译，不覆盖全部语义一致性。
+- 发布前需要新增“翻译文本校对”阶段，双语对照校准两类问题：语义偏差；不应翻译的文件名、路径、命令、脚本名、frontmatter / YAML 键名、agent / skill 标识符被误翻。
+- 语义校对时优先复核职责边界、条件限制、流程顺序、门禁裁定词与例外说明，这些最容易出现“中文通顺但行为变了”的问题。
+- 建议执行顺序按风险递减推进：入口主流程文档 → 核心 agents / 核心 skills → 其余 `.claude` 文档 → 模板 / 示例 / 协作文档 → YAML / 引擎参考 → CCGS Skill Testing Framework。
+- 高风险目录优先级：zh/docs/WORKFLOW-GUIDE.md、zh/CLAUDE.md、zh/.claude/agents/ 核心角色、zh/.claude/skills/ 核心链路、zh/.claude/rules/、zh/.github/、zh/design/registry/、zh/docs/registry/。
+- 阶段 11 结果：批次 1-5 的抽检与定点复核未发现阻塞性的语义漂移或受保护内容误翻。
+- 阶段 11 命中的实质问题集中在 `zh/CCGS Skill Testing Framework/skills/analysis/`：5 个测试规范把“可选报告写入、仅在用户选择后才询问 `May I write`”误改成了默认询问或默认写入；`test-flakiness.md` 还把可选报告误改成了登记册写入。
+- 这类问题说明发布前校对应额外核对“写入是否可选”与“触发条件是否变化”，不能只检查 `May I write` 关键词是否存在。
+- `zh/README.md` 中相对路径从根目录形式调整为 `../` 是 `zh/` 子目录下的预期适配，不属于误翻。
+
 ## 项目性质
 - 这是 Claude Code Game Studios 游戏开发工作室模板（提示词库），不是游戏运行时项目
 - 核心是 agents + skills + templates + docs + rules + hooks 的 Markdown 体系

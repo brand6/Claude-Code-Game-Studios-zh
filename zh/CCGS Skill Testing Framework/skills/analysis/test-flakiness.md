@@ -2,178 +2,167 @@
 
 ## 技能概要
 
-`/test-flakiness` 通过两种方式检测不确定性测试（不稳定测试）：
-（1）读取 CI 历史日志或 `tests/flaky-test-registry.md` 中的历史测试运行记录，
-（2）扫描 `tests/` 中的源码模式（例如未播种 `randf()`、`OS.get_ticks_msec()`、
-实时等待）。若两种来源均无，则无法确认不稳定性——只能报告疑似测试。
-
-技能在写入不稳定测试登记册前询问"May I write?"。
-无 director 门控。判定结果：NO FLAKINESS（历史记录和源码模式均无发现）、
-SUSPECT TESTS FOUND（仅有源码模式，无历史记录证据）
-或 CONFIRMED FLAKY（历史记录中存在多次间歇性失败）。
+`/test-flakiness` 通过分析测试历史日志（如果可用），或扫描测试源码中常见的不稳定模式（无种子的随机数、真实时间等待、外部 I/O）来检测非确定性测试。无 director 门控。未经用户批准，技能不会写入文件。判定结果：NO FLAKINESS、SUSPECT TESTS FOUND 或 CONFIRMED FLAKY。
 
 ---
 
 ## 静态断言（结构性）
 
-由 `/skill-test static` 自动验证——无需夹具。
+由 `/skill-test static` 自动验证，无需夹具。
 
-- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含所需的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
 - [ ] 包含至少 2 个阶段标题
 - [ ] 包含判定关键词：NO FLAKINESS、SUSPECT TESTS FOUND、CONFIRMED FLAKY
-- [ ] 包含"May I write"协作协议语言（写入不稳定测试登记册前）
-- [ ] 包含下一步交接（例如 `/test-evidence-review` 进行修复指导，或 `/regression-suite` 隔离不稳定测试）
+- [ ] 不要求包含 "May I write" 语言（只读；可选报告写入仍需批准）
+- [ ] 包含下一步交接（不稳定性发现之后该做什么）
 
 ---
 
 ## Director 门控检查
 
-无。`/test-flakiness` 是测试维护技能，不适用 director 门控。
+无。不稳定性检测是面向 QA lead 的建议性质量技能；不调用任何门控。
 
 ---
 
 ## 测试用例
 
-### 用例 1：正常路径——10 次运行全部通过，NO FLAKINESS
+### 用例 1：正常路径——测试历史干净，没有不稳定性
 
 **夹具：**
-- CI 运行日志：10 次测试运行，`test_damage_calculation` 全部通过
-- `tests/unit/combat/test_damage_calculation.gd`：无不稳定性模式（无 `randf()`、
-  无实时等待）
+- `production/qa/test-history/` 中包含 10 次测试运行日志
+- 所有测试在这 10 次运行中都稳定通过（每个测试 100% 通过率）
+- 没有任何测试表现出失败模式
 
 **输入：** `/test-flakiness`
 
 **预期行为：**
-1. 技能读取 CI 历史日志（或测试运行记录）
-2. `test_damage_calculation` 10/10 次通过
-3. 技能扫描源码模式——未检测到不稳定性模式
-4. 0 个疑似或确认的不稳定测试
-5. 判定结果为 NO FLAKINESS
+1. 技能从 `production/qa/test-history/` 读取测试历史日志
+2. 计算每个测试在 10 次运行中的通过率
+3. 所有测试 10 次都通过，没有发现不一致
+4. 判定结果为 NO FLAKINESS
 
 **断言：**
-- [ ] 读取 CI 历史日志或测试运行记录
-- [ ] 扫描不稳定性的源码模式
-- [ ] 0 个失败或疑似测试 → 判定结果为 NO FLAKINESS
-- [ ] 不写入任何文件（无更新可写入）
+- [ ] 在可用时读取测试历史日志
+- [ ] 基于所有可用运行计算每个测试的通过率
+- [ ] 所有测试稳定通过时，判定结果为 NO FLAKINESS
+- [ ] 不写入任何文件
 
 ---
 
-### 用例 2：10 次运行中 3 次失败——SUSPECT TESTS FOUND（历史记录证据）
+### 用例 2：发现疑似测试——历史记录中出现间歇性失败
 
 **夹具：**
-- CI 运行日志：`test_network_timeout` 运行 10 次中失败 3 次（成功率 70%）
+- `production/qa/test-history/` 中包含 10 次测试运行日志
+- `test_combat_damage_applies_crit_multiplier` 通过 7 次、失败 3 次
+- 失败信息不完全一致（有时超时，有时值错误）
 
 **输入：** `/test-flakiness`
 
 **预期行为：**
-1. 技能读取 CI 运行历史
-2. `test_network_timeout` 10 次中失败 3 次——30% 失败率
-3. 技能将此标记为 SUSPECT（历史记录中存在间歇性失败）
-4. 报告列出 `test_network_timeout`，注明失败率和出现的 CI 运行
-5. 技能询问"May I write to `tests/flaky-test-registry.md`?"进行记录
-6. 判定结果为 SUSPECT TESTS FOUND
+1. 技能读取测试历史日志并计算通过率
+2. `test_combat_damage_applies_crit_multiplier` 的通过率为 70%（阈值：95%）
+3. 技能将它标记为 SUSPECT，并显示通过率（7/10）和失败模式
+4. 判定结果为 SUSPECT TESTS FOUND
+5. 技能建议排查该测试是否存在时序或状态依赖
 
 **断言：**
-- [ ] 检测到 30% 的间歇性失败率
-- [ ] 将 `test_network_timeout` 标记为疑似不稳定测试
-- [ ] 报告包含失败率和具体的 CI 运行引用
-- [ ] 写入登记册前询问"May I write"
+- [ ] 通过率低于阈值的测试会按名称被标记
+- [ ] 每个疑似测试都会显示通过率（分数和百分比）
+- [ ] 如果可以检测到，失败模式（例如不一致的错误信息）会被注明
 - [ ] 判定结果为 SUSPECT TESTS FOUND
+- [ ] 技能会给出调查建议
 
 ---
 
-### 用例 3：源码模式——未播种 randf()——SUSPECT TESTS FOUND
+### 用例 3：源码模式——使用了未播种的随机数
 
 **夹具：**
-- 无 CI 历史日志（或无历史数据）
-- `tests/unit/loot/test_loot_table.gd` 包含：
+- 没有测试历史日志
+- `tests/unit/loot/loot_drop_test.gd` 包含：
   ```gdscript
-  var drop = randf()  # 无播种——每次运行结果不同
+  var roll = randf()  # 未播种的随机数——非确定性
+  assert_gt(roll, 0.5, "Loot should drop above 50%")
   ```
 
 **输入：** `/test-flakiness`
 
 **预期行为：**
-1. 技能尝试读取 CI 历史日志——无记录
-2. 技能扫描测试源码中的不稳定性模式
-3. 检测到未播种 `randf()`——不确定性模式
-4. 报告："Unseed `randf()` call detected in `test_loot_table.gd`.
-   This test will produce different results on each run."
-5. 判定结果为 SUSPECT TESTS FOUND（无历史记录证据——仅源码模式）
+1. 技能未找到测试历史日志
+2. 技能回退到源码分析
+3. 检测到 `randf()` 调用前没有 `seed()`
+4. 将该测试标记为 FLAKINESS RISK（源码模式，未确认）
+5. 判定结果为 SUSPECT TESTS FOUND（检测到模式，但没有历史记录确认）
+6. 技能建议在调用前播种随机数，或 mock 掉随机函数
 
 **断言：**
-- [ ] 检测到未播种的 `randf()` 调用
-- [ ] 正确标记为 SUSPECT TESTS FOUND（不是 CONFIRMED FLAKY——无历史记录证据）
-- [ ] 报告建议添加固定种子（例如 `seed(12345)`）
+- [ ] 在没有历史日志时，会使用源码分析作为回退方案
+- [ ] 能将未播种的随机数使用识别为不稳定性风险
+- [ ] 判定结果为 SUSPECT TESTS FOUND（不是 CONFIRMED FLAKY，因为没有历史记录）
+- [ ] 修复建议会提到播种或 mock
 
 ---
 
-### 用例 4：无历史记录 + 源码模式（OS.get_ticks_msec）——SUSPECT TESTS FOUND
+### 用例 4：没有测试历史——仅做源码分析并查找常见模式
 
 **夹具：**
-- 无 CI 历史日志
-- `tests/integration/perf/test_frame_timing.gd` 包含：
-  ```gdscript
-  var start = OS.get_ticks_msec()
-  # ... 一些操作 ...
-  assert(OS.get_ticks_msec() - start < 16)  # 假设特定帧时长
-  ```
+- `production/qa/test-history/` 不存在
+- `tests/` 中有 15 个测试文件
+- 扫描发现有 2 个测试使用 `OS.get_ticks_msec()` 做时间断言
+- 没有发现其他不稳定模式
 
 **输入：** `/test-flakiness`
 
 **预期行为：**
-1. 技能尝试读取 CI 历史——无记录
-2. 技能扫描测试源码——检测到 `OS.get_ticks_msec()` 与时间敏感断言结合
-3. 将此标记为疑似不稳定测试（性能测试在不同系统上会失败）
-4. 建议使用确定性方法（模拟帧或相对阈值）
+1. 技能检查测试历史，未找到
+2. 技能说明："No test history available — analyzing source code for flakiness patterns only"
+3. 扫描全部测试文件，查找常见模式：未播种随机数、真实时间等待、系统时钟使用
+4. 发现 2 个测试使用 `OS.get_ticks_msec()`，并将其标记为 FLAKINESS RISK
 5. 判定结果为 SUSPECT TESTS FOUND
 
 **断言：**
-- [ ] 检测到 `OS.get_ticks_msec()` 用于时间敏感断言
-- [ ] 标记为 SUSPECT TESTS FOUND（非 CONFIRMED FLAKY）
-- [ ] 建议确定性测试替代方案
+- [ ] 技能会明确说明当前仅进行源码分析（没有历史记录）
+- [ ] 会扫描常见不稳定模式：随机数、基于时间的断言、外部 I/O
+- [ ] 用于断言的 `OS.get_ticks_msec()` 会被标记为不稳定性风险
+- [ ] 一旦发现源码模式，判定结果就是 SUSPECT TESTS FOUND
 
 ---
 
-### 用例 5：CONFIRMED FLAKY 需要历史记录证据——仅源码模式不足够
+### 用例 5：门控合规性——无门控；不稳定性报告属于建议性输出
 
 **夹具：**
-- `tests/unit/ai/test_pathfinding.gd` 包含未播种 `randf()`（源码模式）
-- 无 CI 历史日志
+- 测试历史显示有 1 个 CONFIRMED FLAKY 测试（10 次运行中失败 6 次）
+- `review-mode.txt` 内容为 `full`
 
 **输入：** `/test-flakiness`
 
 **预期行为：**
-1. 技能扫描源码——检测到不稳定性模式
-2. 无 CI 历史记录——无法确认实际间歇性失败
-3. 仅有源码模式 → 判定结果为 SUSPECT TESTS FOUND（非 CONFIRMED FLAKY）
-4. 报告解释："Source pattern detected, but no historical run data available
-   to confirm flakiness. Rating: SUSPECT TESTS FOUND."
+1. 技能分析测试历史，识别出 1 个已确认的不稳定测试
+2. 无论 review mode 如何，都不调用 director 门控
+3. 判定结果为 CONFIRMED FLAKY
+4. 技能展示发现结果，并提供可选的书面报告
+5. 如果用户选择写入：询问 "May I write to `production/qa/flakiness-report-[date].md`?"
 
 **断言：**
-- [ ] 检测到不稳定性源码模式
-- [ ] 仅有源码模式时不产生 CONFIRMED FLAKY 判定
-- [ ] 正确降级为 SUSPECT TESTS FOUND
-- [ ] 报告解释确认不稳定性需要历史记录证据
+- [ ] 任意 review mode 下都不调用 director 门控
+- [ ] CONFIRMED FLAKY 判定必须基于历史记录证据，而不是仅靠源码模式
+- [ ] 可选报告写入在真正写入前必须经过 "May I write"
+- [ ] 不稳定性报告是给 qa-lead 的建议性信息；技能不会自动禁用测试
 
 ---
 
 ## 协议合规性
 
-- [ ] 从 CI 历史日志读取历史测试运行记录（若存在）
-- [ ] 扫描 `tests/` 中的不稳定性源码模式（`randf()`、`create_timer`、`OS.get_ticks_msec`）
-- [ ] CONFIRMED FLAKY 需要历史记录证据（仅有源码模式产生 SUSPECT TESTS FOUND）
-- [ ] 写入不稳定测试登记册前询问"May I write"
-- [ ] 返回 NO FLAKINESS、SUSPECT TESTS FOUND 或 CONFIRMED FLAKY 判定
+- [ ] 在可用时读取测试历史日志；不可用时回退到源码分析
+- [ ] 明确说明正在使用哪种分析模式（历史记录 vs 仅源码）
+- [ ] 对 SUSPECT 分类使用不稳定阈值（例如 95% 通过率）
+- [ ] CONFIRMED FLAKY 需要历史记录证据；源码模式只会产生 SUSPECT
+- [ ] 不会禁用或修改任何测试文件
+- [ ] 不调用 director 门控
+- [ ] 判定结果严格为：NO FLAKINESS、SUSPECT TESTS FOUND、CONFIRMED FLAKY 之一
 
 ---
 
 ## 覆盖说明
 
-- Unity/C# 中的不稳定性模式（`UnityEngine.Random.value`、`Time.realtimeSinceStartup`）
-  遵循相同的源码模式检测方法，但使用 C# 特定 API；此处未单独测试。
-- 基础设施不稳定性（CI 机器超时、网络故障）与测试不稳定性不同；
-  此处不对 CI 基础设施失败进行断言，仅对测试特定的不稳定性进行断言。
-- 批量运行 10 次测试以检测不稳定性的自动化流程
-  在技能正文中定义；此处不对 10 次运行计数进行断言，
-  而是对检测逻辑进行断言。
+- SUSPECT 分类所使用的通过率阈值（例如上文建议的 95%）属于实现细节；测试验证的是能否标记间歇性失败，而不是断言精确阈值。
+- 因环境问题导致失败的测试（缺失资源、错误平台等）并不属于不稳定性；技能需要区分环境失败和测试本身的非确定性，这里未显式单测这一点。
