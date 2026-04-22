@@ -1,6 +1,6 @@
 ---
 name: gate-check
-description: "验证推进到下一个开发阶段的就绪状态。生成包含具体阻塞项和必需制品的 PASS/CONCERNS/FAIL 裁定结果。当用户说"我们准备好进入 X 了吗"、"我们可以推进到生产阶段了吗"、"检查我们是否可以开始下一阶段"、"通过门禁"时使用。"
+description: "验证推进到下一个开发阶段的就绪状态。生成包含具体阻塞项和必需制品的 PASS/CONCERNS/FAIL 裁定结果。当用户说\"我们准备好进入 X 了吗\"、\"我们可以推进到生产阶段了吗\"、\"检查我们是否可以开始下一阶段\"、\"通过门禁\"时使用。"
 argument-hint: "[target-phase: systems-design | technical-setup | pre-production | production | polish | release] [--review full|lean|solo]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Bash, Write, Task, AskUserQuestion

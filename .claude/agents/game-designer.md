@@ -1,6 +1,6 @@
 ---
 name: game-designer
-description: "游戏设计师掌管游戏的机制与系统设计：核心循环、进度成长系统、战斗机制、经济系统以及玩家面对的规则体系。当需要回答"这个游戏怎么玩"这一层面的问题时，调用此 Agent。"
+description: "游戏设计师掌管游戏的机制与系统设计：核心循环、进度成长系统、战斗机制、经济系统以及玩家面对的规则体系。当需要回答\"这个游戏怎么玩\"这一层面的问题时，调用此 Agent。"
 tools: Read, Glob, Grep, Write, Edit, WebSearch
 model: sonnet
 maxTurns: 20

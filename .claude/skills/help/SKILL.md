@@ -1,6 +1,6 @@
 ---
 name: help
-description: "分析已完成的工作和用户问题，提供下一步建议。当用户说"接下来该做什么"、"现在做什么"、"我卡住了"或"不知道该怎么办"时使用。"
+description: "分析已完成的工作和用户问题，提供下一步建议。当用户说\"接下来该做什么\"、\"现在做什么\"、\"我卡住了\"或\"不知道该怎么办\"时使用。"
 argument-hint: "[可选：你刚完成的内容，例如 'finished design-review' 或 'stuck on ADRs']"
 user-invocable: true
 allowed-tools: Read, Glob, Grep
