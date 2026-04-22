@@ -1,180 +1,179 @@
 # Skill Test Spec: /team-combat
 
-## Skill Summary
+## Skill 概述
 
-Orchestrates the full combat team pipeline end-to-end for a single combat feature.
-Coordinates game-designer, gameplay-programmer, ai-programmer, technical-artist,
-sound-designer, the primary engine specialist, and qa-tester through six structured
-phases: Design → Architecture (with engine specialist validation) → Implementation
-(parallel) → Integration → Validation → Sign-off. Uses `AskUserQuestion` at each
-phase transition. Delegates all file writes to sub-agents. Produces a summary report
-with verdict COMPLETE / NEEDS WORK / BLOCKED and handoffs to `/code-review`,
-`/balance-check`, and `/team-polish`.
-
----
-
-## Static Assertions (Structural)
-
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings (Phase 1 through Phase 6 are all present)
-- [ ] Contains verdict keywords: COMPLETE, NEEDS WORK, BLOCKED
-- [ ] Contains "May I write" or "File Write Protocol" — writes delegated to sub-agents, orchestrator does not write files directly
-- [ ] Has a next-step handoff at the end (references `/code-review`, `/balance-check`, `/team-polish`)
-- [ ] Error Recovery Protocol section is present with all four recovery steps
-- [ ] Uses `AskUserQuestion` at phase transitions for user approval before proceeding
-- [ ] Phase 3 is explicitly marked as parallel (gameplay-programmer, ai-programmer, technical-artist, sound-designer)
-- [ ] Phase 2 includes spawning the primary engine specialist (read from `.claude/docs/technical-preferences.md`)
-- [ ] Team Composition lists all seven roles (game-designer, gameplay-programmer, ai-programmer, technical-artist, sound-designer, engine specialist, qa-tester)
+编排完整的六阶段战斗功能流水线：设计（game-designer）→ 架构 + 引擎专项并行
+（lead-programmer + 主引擎专项 agent）→ 实现并行（gameplay-programmer +
+ai-programmer + technical-artist + sound-designer）→ 集成测试（lead-programmer）
+→ 验证（qa-tester）→ 签收（game-designer + lead-programmer）。
+整个流水线通过 ADR 和 GDD 引用进行上下文感知。
+裁决：COMPLETE / NEEDS WORK / BLOCKED。
+完成后的下一步：`/code-review`、`/balance-check`、`/team-polish`。
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: Happy Path — All agents succeed, full pipeline runs to completion
-
-**Fixture:**
-- `design/gdd/game-concept.md` exists and is populated
-- Engine is configured in `.claude/docs/technical-preferences.md` (Engine Specialists section filled)
-- No existing GDD for the requested combat feature
-
-**Input:** `/team-combat parry and riposte system`
-
-**Expected behavior:**
-1. Phase 1 — game-designer spawned; produces `design/gdd/parry-riposte.md` covering all 8 required sections (overview, player fantasy, rules, formulas, edge cases, dependencies, tuning knobs, acceptance criteria); asks user to approve design doc
-2. Phase 2 — gameplay-programmer + ai-programmer spawned; produce architecture sketch with class structure, interfaces, and file list; then primary engine specialist is spawned to validate idioms; engine specialist output incorporated; `AskUserQuestion` presented with architecture options before Phase 3 begins
-3. Phase 3 — gameplay-programmer, ai-programmer, technical-artist, sound-designer spawned in parallel; all four return outputs before Phase 4 begins
-4. Phase 4 — integration wires together all Phase 3 outputs; tuning knobs verified as data-driven; `AskUserQuestion` confirms integration before Phase 5
-5. Phase 5 — qa-tester spawned; writes test cases from acceptance criteria; verifies edge cases; performance impact checked against budget
-6. Phase 6 — summary report produced: design COMPLETE, all team members COMPLETE, test cases listed, verdict: COMPLETE
-7. Next steps listed: `/code-review`, `/balance-check`, `/team-polish`
-
-**Assertions:**
-- [ ] `AskUserQuestion` called at each phase gate (at minimum before Phase 3 and before Phase 5)
-- [ ] Phase 3 agents launched simultaneously — no sequential dependency between gameplay-programmer, ai-programmer, technical-artist, sound-designer
-- [ ] Engine specialist runs in Phase 2 before Phase 3 begins (output incorporated into architecture)
-- [ ] All file writes delegated to sub-agents (orchestrator never calls Write/Edit directly)
-- [ ] Verdict COMPLETE present in final report
-- [ ] Next steps include `/code-review`, `/balance-check`, `/team-polish`
-- [ ] Design doc covers all 8 required GDD sections
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 明确包含六个阶段（设计、架构、实现、集成、验证、签收）
+- [ ] 包含裁决关键字：COMPLETE、NEEDS WORK、BLOCKED
+- [ ] 存在"并行实现"阶段——四个 agent 同时派生
+- [ ] 存在文件写入协议；编排者不直接写入文件
+- [ ] 子 agent 在任何写入之前强制执行"May I write to [path]?"
+- [ ] 存在错误恢复协议——BLOCKED agent 不使整个流水线停止
+- [ ] 步骤过渡前使用 `AskUserQuestion`
+- [ ] 末尾包含下一步交接：`/code-review`、`/balance-check`、`/team-polish`
 
 ---
 
-### Case 2: Blocked Agent — One subagent returns BLOCKED mid-pipeline
+## 测试用例
 
-**Fixture:**
-- `design/gdd/parry-riposte.md` exists (Phase 1 already complete)
-- ai-programmer agent returns BLOCKED because no AI system architecture ADR exists (ADR status is Proposed)
+### 用例 1：正常路径——所有六个阶段完成，裁决 COMPLETE
 
-**Input:** `/team-combat parry and riposte system`
+**测试夹具：**
+- 战斗设计 GDD 位于 `design/gdd/combat.md`
+- 相关 ADR 位于 `docs/architecture/` 且状态为 Accepted
+- 引擎已在 `.claude/docs/technical-preferences.md` 中配置
+- 所有 agent 成功完成任务
 
-**Expected behavior:**
-1. Phase 1 — design doc found; game-designer confirms it is valid; phase approved
-2. Phase 2 — gameplay-programmer completes architecture sketch; ai-programmer returns BLOCKED: "ADR for AI behavior system is Proposed — cannot implement until ADR is Accepted"
-3. Error Recovery Protocol triggered: "ai-programmer: BLOCKED — AI behavior ADR is Proposed"
-4. `AskUserQuestion` presented with options: (a) Skip ai-programmer and note the gap; (b) Retry with narrower scope; (c) Stop here and run `/architecture-decision` first
-5. If user chooses (a): Phase 3 proceeds with gameplay-programmer, technical-artist, sound-designer only; ai-programmer gap noted in partial report
-6. Final report produced: partial implementation documented, ai-programmer section marked BLOCKED, overall verdict: BLOCKED
+**输入：** `/team-combat ranged-attack`
 
-**Assertions:**
-- [ ] BLOCKED surface message appears before any dependent phase continues
-- [ ] `AskUserQuestion` offers at minimum three options: skip / retry / stop
-- [ ] Partial report produced — completed agents' work is not discarded
-- [ ] Overall verdict is BLOCKED (not COMPLETE) when any agent is unresolved
-- [ ] Blocked reason references the ADR and suggests `/architecture-decision`
-- [ ] Orchestrator does not silently proceed past the blocked dependency
+**预期行为：**
+1. 上下文收集：读取 `design/gdd/combat.md`、相关 ADR、现有代码文件
+2. 阶段 1：派生 game-designer 进行战斗系统设计；输出包含机制说明、数值公式和设计决策
+3. `AskUserQuestion` 批准设计后进行阶段 2
+4. 阶段 2：并行派生 lead-programmer（架构方案）和引擎专项 agent（引擎特定验证）
+5. `AskUserQuestion` 批准架构后进行阶段 3
+6. 阶段 3：同时派生 gameplay-programmer、ai-programmer、technical-artist 和 sound-designer——四个 Task 调用同时发出
+7. `AskUserQuestion` 批准实现后进行阶段 4
+8. 阶段 4：lead-programmer 集成测试；验证所有子系统连接
+9. `AskUserQuestion` 批准集成后进行阶段 5
+10. 阶段 5：qa-tester 验证；执行功能测试、回归测试
+11. `AskUserQuestion` 批准测试后进行阶段 6
+12. 阶段 6：game-designer 和 lead-programmer 联合签收；确认设计意图已实现
+13. 裁决：COMPLETE
+14. 下一步：`/code-review`、`/balance-check`、`/team-polish`
 
----
-
-### Case 3: No Argument — Clear usage guidance shown
-
-**Fixture:**
-- Any project state
-
-**Input:** `/team-combat` (no argument)
-
-**Expected behavior:**
-1. Skill detects no argument provided
-2. Outputs usage message explaining the required argument (combat feature description)
-3. Provides an example invocation: `/team-combat [combat feature description]`
-4. Skill exits without spawning any subagents
-
-**Assertions:**
-- [ ] Skill does NOT spawn any subagents when no argument is given
-- [ ] Usage message includes the argument-hint format from frontmatter
-- [ ] Error message includes at least one example of a valid invocation
-- [ ] No file reads beyond what is needed to detect the missing argument
-- [ ] Verdict is NOT shown (pipeline never runs)
+**断言：**
+- [ ] 阶段 3 中四个 agent 的 Task 调用同时发出（并行）
+- [ ] 每次阶段过渡前使用 `AskUserQuestion`
+- [ ] 所有六个阶段均明确标识于输出中
+- [ ] 阶段 6 包含 game-designer 和 lead-programmer 两者签收
+- [ ] 裁决为 COMPLETE
+- [ ] 下一步引用 `/code-review`、`/balance-check`、`/team-polish`
 
 ---
 
-### Case 4: Parallel Phase Validation — Phase 3 agents run simultaneously
+### 用例 2：阻塞 agent——ai-programmer 的 ADR 未被 Accepted
 
-**Fixture:**
-- `design/gdd/parry-riposte.md` exists and is complete
-- Architecture sketch has been approved
-- Engine specialist has validated architecture
+**测试夹具：**
+- 阶段 3 进行中
+- AI 行为的相关 ADR（ADR-012-enemy-ai）状态为 Proposed（不是 Accepted）
+- ai-programmer 检测到此情况并阻塞
 
-**Input:** `/team-combat parry and riposte system` (resuming from Phase 2 complete)
+**输入：** `/team-combat enemy-ai`（阶段 3 场景）
 
-**Expected behavior:**
-1. Phase 3 begins after architecture approval
-2. All four Task calls — gameplay-programmer, ai-programmer, technical-artist, sound-designer — are issued before any result is awaited
-3. Skill waits for all four agents to complete before proceeding to Phase 4
-4. If any single agent completes early, skill does not begin Phase 4 until all four have returned
+**预期行为：**
+1. 阶段 1–2 正常完成
+2. 阶段 3：ai-programmer 读取 ADR-012-enemy-ai，发现状态为 Proposed
+3. ai-programmer 返回 BLOCKED："ADR-012-enemy-ai 状态为 Proposed——没有已接受的架构决策，无法实现。请先运行 `/architecture-decision` 将 ADR 推进到 Accepted 状态。"
+4. gameplay-programmer、technical-artist 和 sound-designer 继续完成各自任务
+5. 编排者立即在对话中显示 ai-programmer 的 BLOCKED 状态
+6. `AskUserQuestion` 呈现选项：
+   - 停止并解决 ADR 问题（推荐）
+   - 继续完成其他阶段并在稍后解决 AI 实现问题
+7. 无论选择哪个选项，生成部分报告记录已完成和被阻塞的内容
+8. 裁决：BLOCKED（ai-programmer 未完成）
 
-**Assertions:**
-- [ ] Four Task calls issued in a single batch (no sequential waiting between them)
-- [ ] Phase 4 does not begin until all four Phase 3 agents have returned results
-- [ ] Skill does not pass one Phase 3 agent's output as input to another Phase 3 agent (they are independent)
-- [ ] All four Phase 3 agent results referenced in the Phase 4 integration step
-
----
-
-### Case 5: Architecture Phase Engine Routing — Engine specialist receives correct context
-
-**Fixture:**
-- `.claude/docs/technical-preferences.md` has Engine Specialists section populated (e.g., Primary: godot-specialist)
-- Architecture sketch produced by gameplay-programmer is available
-- Engine version pinned in `docs/engine-reference/godot/VERSION.md`
-
-**Input:** `/team-combat parry and riposte system`
-
-**Expected behavior:**
-1. Phase 2 — gameplay-programmer produces architecture sketch
-2. Skill reads `.claude/docs/technical-preferences.md` Engine Specialists section to identify the primary engine specialist agent type
-3. Engine specialist is spawned with: the architecture sketch, the GDD path, the engine version from `VERSION.md`, and explicit instructions to check for deprecated APIs
-4. Engine specialist output (idiom notes, deprecated API warnings, native system recommendations) is returned to orchestrator
-5. Orchestrator incorporates engine notes into the architecture before presenting Phase 2 results to user
-6. `AskUserQuestion` includes engine specialist's notes alongside the architecture sketch
-
-**Assertions:**
-- [ ] Engine specialist agent type is read from `.claude/docs/technical-preferences.md` — not hardcoded
-- [ ] Engine specialist prompt includes the architecture sketch and GDD path
-- [ ] Engine specialist checks for deprecated APIs against the pinned engine version
-- [ ] Engine specialist output is incorporated before Phase 3 begins (not skipped or appended separately)
-- [ ] If no engine is configured, engine specialist step is skipped and a note is added to the report
+**断言：**
+- [ ] ai-programmer 明确引用阻塞原因（ADR-012-enemy-ai，状态 Proposed）
+- [ ] 编排者不等待所有并行 agent 完成后才显示 BLOCKED 状态
+- [ ] 阶段 3 中其他三个 agent 不因 ai-programmer 阻塞而停止
+- [ ] `AskUserQuestion` 提供停止或继续的选项
+- [ ] 部分报告记录哪些内容已完成、哪些被阻塞
+- [ ] 裁决为 BLOCKED——不为 COMPLETE
 
 ---
 
-## Protocol Compliance
+### 用例 3：无参数——使用指导
 
-- [ ] `AskUserQuestion` used at each phase transition — user approves before pipeline advances
-- [ ] All file writes delegated to sub-agents via Task — orchestrator does not call Write or Edit directly
-- [ ] Error Recovery Protocol followed: surface → assess → offer options → partial report
-- [ ] Phase 3 agents launched in parallel per skill spec
-- [ ] Partial report always produced even when agents are BLOCKED
-- [ ] Verdict is one of COMPLETE / NEEDS WORK / BLOCKED
-- [ ] Next steps present at end of output: `/code-review`, `/balance-check`, `/team-polish`
+**测试夹具：**
+- 任何项目状态
+
+**输入：** `/team-combat`（无参数）
+
+**预期行为：**
+1. Skill 检测到未提供功能名称
+2. 输出使用指导，包含正确的调用格式和示例
+3. 不派生任何 agent
+
+**断言：**
+- [ ] 无参数时不派生任何 agent
+- [ ] 使用信息包含带参数示例的正确格式
+- [ ] 不使用 `AskUserQuestion`
 
 ---
 
-## Coverage Notes
+### 用例 4：并行阶段验证——四个实现 agent 确实同时发出
 
-- The NEEDS WORK verdict path (qa-tester finds failures in Phase 5) is not separately tested
-  here; it follows the same error recovery and partial report protocol as Case 2.
-- "Retry with narrower scope" error recovery option is listed in assertions but its full
-  recursive behavior (splitting via `/create-stories`) is covered by the `/create-stories` spec.
-- Phase 4 integration logic (wiring gameplay, AI, VFX, audio) is validated implicitly by
-  the Happy Path case; a dedicated integration test would require fixture code files.
-- Engine specialist unavailable (no engine configured) is partially covered in Case 5
-  assertions — a dedicated fixture for unconfigured engine state would strengthen coverage.
+**测试夹具：**
+- 阶段 1 和阶段 2 已完成批准
+- 等待阶段 3 执行
+- 所有四个 agent（gameplay-programmer、ai-programmer、technical-artist、sound-designer）均可用且未被阻塞
+
+**输入：** `/team-combat melee-combat`（阶段 3 焦点）
+
+**预期行为：**
+1. 阶段 3 启动时：编排者在等待任何结果之前发出所有四个 Task 调用
+2. 无论哪个 agent 最先完成，其结果先呈现
+3. 所有四个结果收集完毕后，`AskUserQuestion` 呈现合并输出
+4. 没有 agent 等待另一个 agent 的结果才开始工作
+
+**断言：**
+- [ ] 阶段 3 期间没有顺序 agent 执行（没有 agent 等待另一个完成）
+- [ ] 四个 agent 的输出均包含在阶段 3 摘要中
+- [ ] `AskUserQuestion` 在所有四个结果收集后呈现
+- [ ] 编排者不在四个 agent 之间传递中间结果
+
+---
+
+### 用例 5：引擎专项路由——根据配置引擎选择正确的引擎专项 agent
+
+**测试夹具：**
+- `.claude/docs/technical-preferences.md` 中配置为 `Godot 4`
+
+**输入：** `/team-combat dodge-roll`
+
+**预期行为：**
+1. 阶段 2：引擎专项 agent 为 `godot-specialist`（或更细粒度的 Godot 专项如 `godot-gdscript-specialist`）
+2. 引擎专项 agent 根据 Godot 4 惯用法验证架构方案
+3. 如果配置为 Unity，则改用 `unity-specialist`；如果为 Unreal，则改用 `unreal-specialist`
+
+**断言：**
+- [ ] 派生的引擎专项 agent 与 technical-preferences.md 中配置的引擎匹配
+- [ ] 非 Godot 引擎专项 agent 不被派生（无不必要的多引擎专项调用）
+
+---
+
+## 协议合规性
+
+- [ ] 上下文收集（GDD、ADR、现有代码）在派生任何 agent 之前运行
+- [ ] 每次阶段过渡前使用 `AskUserQuestion`（用户必须批准才能继续）
+- [ ] 阶段 3 并行：四个 Task 调用同时发出，不等待中间结果
+- [ ] 编排者不直接写入任何文件——所有写入委托给子 agent
+- [ ] 子 agent 在任何写入之前强制执行"May I write to [path]?"
+- [ ] BLOCKED agent 立即报告——不被静默跳过
+- [ ] 某些 agent 阻塞时始终生成部分报告
+- [ ] 裁决为 COMPLETE、NEEDS WORK 或 BLOCKED——不使用其他值
+- [ ] 末尾包含下一步交接：`/code-review`、`/balance-check`、`/team-polish`
+
+---
+
+## 覆盖率说明
+
+- 阶段 3 中可能出现多个 agent 同时阻塞的情况——未独立测试，但
+  断言的部分报告规则隐式涵盖此场景。
+- 阶段 6 签收可能返回 NEEDS WORK（设计意图未实现）——此路径在
+  用例 1 中通过裁决关键字的存在进行了隐式测试。
+- "重试范围缩小"的错误恢复选项已在断言中列出，但其完整递归行为
+  （通过 `/create-stories` 拆分）由 `/create-stories` 规范覆盖。

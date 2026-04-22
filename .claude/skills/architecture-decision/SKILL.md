@@ -1,455 +1,420 @@
 ---
 name: architecture-decision
-description: "Creates an Architecture Decision Record (ADR) documenting a significant technical decision, its context, alternatives considered, and consequences. Every major technical choice should have an ADR."
+description: "创建架构决策记录（ADR），记录重要的技术决策、背景、备选方案及其影响。每个重大技术选型都应有对应的 ADR。"
 argument-hint: "[title] [--review full|lean|solo]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write, Task, AskUserQuestion
 ---
 
-When this skill is invoked:
+调用本技能时：
 
-## 0. Parse Arguments — Detect Retrofit Mode
+## 0. 解析参数 — 检测补录模式
 
-Resolve the review mode (once, store for all gate spawns this run):
-1. If `--review [full|lean|solo]` was passed → use that
-2. Else read `production/review-mode.txt` → use that value
-3. Else → default to `lean`
+解析评审模式（本次运行期间只解析一次，用于所有门控生成）：
+1. 若传入了 `--review [full|lean|solo]` → 使用该值
+2. 否则读取 `production/review-mode.txt` → 使用其中的值
+3. 否则 → 默认使用 `lean`
 
-See `.claude/docs/director-gates.md` for the full check pattern.
+完整检测模式说明参见 `.claude/docs/director-gates.md`。
 
-**If the argument starts with `retrofit` followed by a file path**
-(e.g., `/architecture-decision retrofit docs/architecture/adr-0001-event-system.md`):
+**若参数以 `retrofit` 开头，后跟文件路径**
+（例如 `/architecture-decision retrofit docs/architecture/adr-0001-event-system.md`）：
 
-Enter **retrofit mode**:
+进入**补录模式**：
 
-1. Read the existing ADR file completely.
-2. Identify which template sections are present by scanning headings:
-   - `## Status` — **BLOCKING if missing**: `/story-readiness` cannot check ADR acceptance
-   - `## ADR Dependencies` — HIGH if missing: dependency ordering breaks
-   - `## Engine Compatibility` — HIGH if missing: post-cutoff risk unknown
-   - `## GDD Requirements Addressed` — MEDIUM if missing: traceability lost
-3. Present to the user:
+1. 完整读取现有 ADR 文件。
+2. 通过扫描标题识别模板中哪些章节已存在：
+   - `## Status` — **阻塞项，缺失则阻塞**：`/story-readiness` 无法在没有 ADR 接受状态时完成检查
+   - `## ADR Dependencies` — 高优先级缺失项：依赖排序会失效
+   - `## Engine Compatibility` — 高优先级缺失项：截止日期后的风险未知
+   - `## GDD Requirements Addressed` — 中优先级缺失项：可追溯性丢失
+3. 向用户展示：
    ```
-   ## Retrofit: [ADR title]
-   File: [path]
+   ## 补录：[ADR 标题]
+   文件：[路径]
 
-   Sections already present (will not be touched):
-   ✓ Status: [current value, or "MISSING — will add"]
-   ✓ [section]
+   已存在的章节（不会修改）：
+   ✓ Status: [当前值，或"缺失 — 将补充"]
+   ✓ [章节名]
 
-   Missing sections to add:
-   ✗ Status — BLOCKING (stories cannot validate ADR acceptance without this)
-   ✗ ADR Dependencies — HIGH
-   ✗ Engine Compatibility — HIGH
+   缺失需补充的章节：
+   ✗ Status — 阻塞项（没有此字段，story 无法验证 ADR 接受状态）
+   ✗ ADR Dependencies — 高优先级
+   ✗ Engine Compatibility — 高优先级
    ```
-4. Ask: "Shall I add the [N] missing sections? I will not modify any existing content."
-5. If yes:
-   - For **Status**: ask the user — "What is the current status of this decision?"
-     Options: "Proposed", "Accepted", "Deprecated", "Superseded by ADR-XXXX"
-   - For **ADR Dependencies**: ask — "Does this decision depend on any other ADR?
-     Does it enable or block any other ADR or epic?" Accept "None" for each field.
-   - For **Engine Compatibility**: read the engine reference docs (same as Step 0 below)
-     and ask the user to confirm the domain. Then generate the table with verified data.
-   - For **GDD Requirements Addressed**: ask — "Which GDD systems motivated this decision?
-     What specific requirement in each GDD does this ADR address?"
-   - Append each missing section to the ADR file using the Edit tool.
-   - **Never modify any existing section.** Only append or fill absent sections.
-6. After adding all missing sections, update the ADR's `## Date` field if it is absent.
-7. Suggest: "Run `/architecture-review` to re-validate coverage now that this ADR
-   has its Status and Dependencies fields."
+4. 询问："是否要补充这 [N] 个缺失章节？我不会修改任何已有内容。"
+5. 若确认：
+   - 对于 **Status**：询问用户——"此决策的当前状态是什么？"
+     选项："Proposed"、"Accepted"、"Deprecated"、"Superseded by ADR-XXXX"
+   - 对于 **ADR Dependencies**：询问——"此决策是否依赖其他任何 ADR？它是否启用或阻塞其他 ADR 或 epic？"每个字段接受"None"。
+   - 对于 **Engine Compatibility**：读取引擎参考文档（同下方步骤 0），并请用户确认所属领域，然后使用验证后的数据生成表格。
+   - 对于 **GDD Requirements Addressed**：询问——"哪些 GDD 系统促成了此决策？每个 GDD 中哪项具体需求由本 ADR 解决？"
+   - 使用 Edit 工具将每个缺失章节追加到 ADR 文件。
+   - **绝不修改任何已有章节。** 仅追加或填充缺失章节。
+6. 补充所有缺失章节后，若 ADR 中无 `## Date` 字段，则补充该字段。
+7. 建议："运行 `/architecture-review` 以重新验证覆盖范围，现在该 ADR 已包含 Status 和 Dependencies 字段。"
 
-If NOT in retrofit mode, proceed to Step 0 below (normal ADR authoring).
+若**不处于**补录模式，则继续执行下方步骤 0（正常 ADR 编写流程）。
 
-**No-argument guard**: If no argument was provided (title is empty), ask before
-running Phase 0:
+**无参数保护**：若未提供参数（标题为空），在执行阶段 0 之前先询问：
 
-> "What technical decision are you documenting? Please provide a short title
-> (e.g., `event-system-architecture`, `physics-engine-choice`)."
+> "您要记录哪项技术决策？请提供一个简短标题
+> （例如 `event-system-architecture`、`physics-engine-choice`）。"
 
-Use the user's response as the title, then proceed to Step 0.
+使用用户的回复作为标题，然后继续步骤 0。
 
 ---
 
-## 0. Load Engine Context (ALWAYS FIRST)
+## 0. 加载引擎上下文（始终最先执行）
 
-Before doing anything else, establish the engine environment:
+在执行其他任何操作之前，先确定引擎环境：
 
-1. Read `docs/engine-reference/[engine]/VERSION.md` to get:
-   - Engine name and version
-   - LLM knowledge cutoff date
-   - Post-cutoff version risk levels (LOW / MEDIUM / HIGH)
+1. 读取 `docs/engine-reference/[engine]/VERSION.md`，获取：
+   - 引擎名称与版本
+   - LLM 知识截止日期
+   - 截止日期后的版本风险等级（LOW / MEDIUM / HIGH）
 
-2. Identify the **domain** of this architecture decision from the title or
-   user description. Common domains: Physics, Rendering, UI, Audio, Navigation,
-   Animation, Networking, Core, Input, Scripting.
+2. 从标题或用户描述中识别本次架构决策的**领域**。常见领域：Physics、Rendering、UI、Audio、Navigation、Animation、Networking、Core、Input、Scripting。
 
-3. Read the corresponding module reference if it exists:
+3. 若对应模块参考文档存在，则读取：
    `docs/engine-reference/[engine]/modules/[domain].md`
 
-4. Read `docs/engine-reference/[engine]/breaking-changes.md` — flag any
-   changes in the relevant domain that post-date the LLM's training cutoff.
+4. 读取 `docs/engine-reference/[engine]/breaking-changes.md`——标记相关领域中晚于 LLM 训练截止日期的变更。
 
-5. Read `docs/engine-reference/[engine]/deprecated-apis.md` — flag any APIs
-   in the relevant domain that should not be used.
+5. 读取 `docs/engine-reference/[engine]/deprecated-apis.md`——标记相关领域中不应使用的 API。
 
-6. **Display a knowledge gap warning** before proceeding if the domain carries
-   MEDIUM or HIGH risk:
+6. 若该领域风险等级为 MEDIUM 或 HIGH，则在继续执行前**显示知识缺口警告**：
 
    ```
-   ⚠️  ENGINE KNOWLEDGE GAP WARNING
-   Engine: [name + version]
-   Domain: [domain]
-   Risk Level: HIGH — This version is post-LLM-cutoff.
+   ⚠️  引擎知识缺口警告
+   引擎：[名称 + 版本]
+   领域：[领域]
+   风险等级：HIGH — 此版本已超出 LLM 知识截止日期。
 
-   Key changes verified from engine-reference docs:
-   - [Change 1 relevant to this domain]
-   - [Change 2]
+   已从 engine-reference 文档中验证的关键变更：
+   - [与本领域相关的变更 1]
+   - [变更 2]
 
-   This ADR will be cross-referenced against the engine reference library.
-   Proceed with verified information only — do NOT rely solely on training data.
+   本 ADR 将与引擎参考库交叉验证。
+   仅使用已验证的信息继续编写——不要仅凭训练数据判断。
    ```
 
-   If no engine has been configured yet, prompt: "No engine is configured.
-   Run `/setup-engine` first, or tell me which engine you are using."
+   若尚未配置引擎，提示："未配置引擎。请先运行 `/setup-engine`，或告知您使用的引擎。"
 
 ---
 
-## 1. Determine the next ADR number
+## 1. 确定下一个 ADR 编号
 
-Scan `docs/architecture/` for existing ADRs to find the next number.
-
----
-
-## 2. Gather context
-
-Read related code, existing ADRs, and relevant GDDs from `design/gdd/`.
-
-### 2a: Architecture Registry Check (BLOCKING gate)
-
-Read `docs/registry/architecture.yaml`. Extract entries relevant to this ADR's
-domain and decision (grep by system name, domain keyword, or state being touched).
-
-Present any relevant stances to the user **before** the collaborative design
-begins, as locked constraints:
-
-```
-## Existing Architectural Stances (must not contradict)
-
-State Ownership:
-  player_health → owned by health-system (ADR-0001)
-  Interface: HealthComponent.current_health (read-only float)
-  → If this ADR reads or writes player health, it must use this interface.
-
-Interface Contracts:
-  damage_delivery → signal pattern (ADR-0003)
-  Signal: damage_dealt(amount, target, is_crit)
-  → If this ADR delivers or receives damage events, it must use this signal.
-
-Forbidden Patterns:
-  ✗ autoload_singleton_coupling (ADR-0001)
-  ✗ direct_cross_system_state_write (ADR-0000)
-  → The proposed approach must not use these patterns.
-```
-
-If the user's proposed decision would contradict any registered stance, surface
-the conflict immediately:
-
-> "⚠️ Conflict: This ADR proposes [X], but ADR-[NNNN] established that [Y] is
-> the accepted pattern for this purpose. Proceeding without resolving this will
-> produce contradictory ADRs and inconsistent stories.
-> Options: (1) Align with the existing stance, (2) Supersede ADR-[NNNN] with
-> an explicit replacement, (3) Explain why this case is an exception."
-
-Do not proceed to Step 3 (collaborative design) until any conflict is resolved
-or explicitly accepted as an intentional exception.
+扫描 `docs/architecture/` 中已有的 ADR，确定下一个编号。
 
 ---
 
-## 3. Guide the decision collaboratively
+## 2. 收集上下文
 
-Before asking anything, derive the skill's best guesses from the context already
-gathered (GDDs read, engine reference loaded, existing ADRs scanned). Then present
-a **confirm/adjust** prompt using `AskUserQuestion` — not open-ended questions.
+读取相关代码、现有 ADR 以及 `design/gdd/` 中的相关 GDD。
 
-**Derive assumptions first:**
-- **Problem**: Infer from the title + GDD context what decision needs to be made
-- **Alternatives**: Propose 2-3 concrete options from engine reference + GDD requirements
-- **Dependencies**: Scan existing ADRs for upstream dependencies; assume None if unclear
-- **GDD linkage**: Extract which GDD systems the title directly relates to
-- **Status**: Always `Proposed` for new ADRs — never ask the user what the status is
+### 2a：架构注册表检查（阻塞门控）
 
-**Scope of assumptions tab**: Assumptions cover only: problem framing, alternative approaches, upstream dependencies, GDD linkage, and status. Schema design questions (e.g., "How should spawn timing work?", "Should data be inline or external?") are NOT assumptions — they are design decisions belonging to a separate step after the assumptions are confirmed. Do not include schema design questions in the assumptions AskUserQuestion widget.
+读取 `docs/registry/architecture.yaml`，提取与本 ADR 领域和决策相关的条目（按系统名称、领域关键词或被修改的状态值进行 grep）。
 
-**After assumptions are confirmed**, if the ADR involves schema or data design choices, use a separate multi-tab `AskUserQuestion` to ask each design question independently before drafting.
-
-**Present assumptions with `AskUserQuestion`:**
+在开始协作设计（步骤 3）之前，将所有相关立场作为锁定约束展示给用户：
 
 ```
-Here's what I'm assuming before drafting:
+## 现有架构立场（不得矛盾）
 
-Problem: [one-sentence problem statement derived from context]
-Alternatives I'll consider:
-  A) [option derived from engine reference]
-  B) [option derived from GDD requirements]
-  C) [option from common patterns]
-GDD systems driving this: [list derived from context]
-Dependencies: [upstream ADRs if any, otherwise "None"]
-Status: Proposed
+状态所有权：
+  player_health → 由 health-system 拥有（ADR-0001）
+  接口：HealthComponent.current_health（只读 float）
+  → 若本 ADR 读取或写入玩家血量，必须使用此接口。
 
-[A] Proceed — draft with these assumptions
-[B] Change the alternatives list
-[C] Adjust the GDD linkage
-[D] Add a performance budget constraint
-[E] Something else needs changing first
+接口约定：
+  damage_delivery → 信号模式（ADR-0003）
+  信号：damage_dealt(amount, target, is_crit)
+  → 若本 ADR 传递或接收伤害事件，必须使用此信号。
+
+禁止模式：
+  ✗ autoload_singleton_coupling（ADR-0001）
+  ✗ direct_cross_system_state_write（ADR-0000）
 ```
 
-Do not generate the ADR until the user confirms assumptions or provides corrections.
+若用户提出的决策与任何已注册立场矛盾，立即提示冲突：
 
-**After engine specialist and TD reviews return** (Step 4.5/4.6), if unresolved
-decisions remain, present each one as a separate `AskUserQuestion` with the proposed
-options as choices plus a free-text escape:
+> "⚠️ 冲突：本 ADR 提议 [X]，但 ADR-[NNNN] 已将 [Y] 确立为此用途的接受模式。不解决此冲突则会产生相互矛盾的 ADR 和不一致的 story。
+> 选项：（1）与现有立场对齐；（2）明确用新决策取代 ADR-[NNNN]；（3）说明为何此情形属于例外。"
 
-```
-Decision: [specific unresolved point]
-[A] [option from specialist review]
-[B] [alternative option]
-[C] Different approach — I'll describe it
-```
-
-**ADR Dependencies** — derive from existing ADRs, then confirm:
-- Does this decision depend on any other ADR not yet Accepted?
-- Does it unlock or unblock any other ADR or epic?
-- Does it block any specific epic from starting?
-
-Record answers in the **ADR Dependencies** section. Write "None" for each field if no constraints apply.
+在冲突解决或被明确接受为例外之前，不得继续执行步骤 3（协作设计）。
 
 ---
 
-## 4. Generate the ADR
+## 3. 协作引导决策
 
-Following this format:
+开始提问前，先从已收集的上下文（已读取的 GDD、已加载的引擎参考、已扫描的现有 ADR）中推导技能的最佳假设。然后使用 `AskUserQuestion` 提供一个**确认/调整**提示——不要开放式提问。
+
+**先推导假设：**
+- **问题**：从标题 + GDD 上下文推断需要做出什么决策
+- **备选方案**：从引擎参考 + GDD 需求中提出 2-3 个具体选项
+- **依赖关系**：扫描现有 ADR 中的上游依赖；若不明确则假设为 None
+- **GDD 关联**：提取标题直接关联的 GDD 系统
+- **状态**：新 ADR 始终为 `Proposed`——不要询问用户状态
+
+**假设范围**：假设仅涵盖：问题框架、备选方案、上游依赖、GDD 关联和状态。模式设计问题（例如"派生时机如何处理？"、"数据应内联还是外部存储？"）不属于假设——它们是设计决策，应在假设被确认后单独提问。不要在假设的 AskUserQuestion 组件中包含模式设计问题。
+
+**假设确认后**，若 ADR 涉及模式或数据设计选择，请使用单独的多标签 `AskUserQuestion` 独立提问每个设计问题，再起草 ADR。
+
+**使用 `AskUserQuestion` 展示假设：**
+
+```
+以下是起草前的假设：
+
+问题：[从上下文推导的一句话问题陈述]
+将考虑的备选方案：
+  A) [来自引擎参考的选项]
+  B) [来自 GDD 需求的选项]
+  C) [来自常见模式的选项]
+驱动此决策的 GDD 系统：[从上下文推导的列表]
+依赖关系：[上游 ADR（若有），否则为"None"]
+状态：Proposed
+
+[A] 继续——使用这些假设起草
+[B] 修改备选方案列表
+[C] 调整 GDD 关联
+[D] 添加性能预算约束
+[E] 需要先改变其他内容
+```
+
+在用户确认假设或提供修正之前，不要生成 ADR。
+
+**引擎专家和 TD 评审返回后**（步骤 4.5/4.6），若仍有未解决的决策，对每个未解决点单独展示一个 `AskUserQuestion`，将提议的选项作为选择项，并附加自由文本出口：
+
+```
+决策：[具体未解决的问题]
+[A] [来自专家评审的选项]
+[B] [备选方案]
+[C] 不同方案——我来描述
+```
+
+**ADR 依赖关系** — 从现有 ADR 推导，然后确认：
+- 此决策是否依赖尚未 Accepted 的其他 ADR？
+- 它是否解锁或解除对其他 ADR 或 epic 的阻塞？
+- 它是否阻止某个特定 epic 启动？
+
+将答案记录到 **ADR Dependencies** 章节。若无约束，每个字段写"None"。
+
+---
+
+## 4. 生成 ADR
+
+遵循以下格式：
 
 ```markdown
-# ADR-[NNNN]: [Title]
+# ADR-[NNNN]: [标题]
 
 ## Status
 [Proposed | Accepted | Deprecated | Superseded by ADR-XXXX]
 
 ## Date
-[Date of decision]
+[决策日期]
 
 ## Engine Compatibility
 
-| Field | Value |
-|-------|-------|
-| **Engine** | [e.g. Godot 4.6] |
+| 字段 | 值 |
+|------|----|
+| **Engine** | [例如 Godot 4.6] |
 | **Domain** | [Physics / Rendering / UI / Audio / Navigation / Animation / Networking / Core / Input] |
-| **Knowledge Risk** | [LOW / MEDIUM / HIGH — from VERSION.md] |
-| **References Consulted** | [List engine-reference docs read, e.g. `docs/engine-reference/godot/modules/physics.md`] |
-| **Post-Cutoff APIs Used** | [Any APIs from post-LLM-cutoff versions this decision depends on, or "None"] |
-| **Verification Required** | [Specific behaviours to test before shipping, or "None"] |
+| **Knowledge Risk** | [LOW / MEDIUM / HIGH — 来自 VERSION.md] |
+| **References Consulted** | [已读取的引擎参考文档列表，例如 `docs/engine-reference/godot/modules/physics.md`] |
+| **Post-Cutoff APIs Used** | [本决策依赖的任何截止日期后版本 API，或"None"] |
+| **Verification Required** | [发布前需测试的具体行为，或"None"] |
 
 ## ADR Dependencies
 
-| Field | Value |
-|-------|-------|
-| **Depends On** | [ADR-NNNN (must be Accepted before this can be implemented), or "None"] |
-| **Enables** | [ADR-NNNN (this ADR unlocks that decision), or "None"] |
-| **Blocks** | [Epic/Story name — cannot start until this ADR is Accepted, or "None"] |
-| **Ordering Note** | [Any sequencing constraint that isn't captured above] |
+| 字段 | 值 |
+|------|----|
+| **Depends On** | [ADR-NNNN（必须在本决策实现之前 Accepted），或"None"] |
+| **Enables** | [ADR-NNNN（本 ADR 解锁该决策），或"None"] |
+| **Blocks** | [Epic/Story 名称——在本 ADR Accepted 之前无法启动，或"None"] |
+| **Ordering Note** | [上方未涵盖的任何排序约束] |
 
 ## Context
 
 ### Problem Statement
-[What problem are we solving? Why does this decision need to be made now?]
+[我们在解决什么问题？为何现在必须做出此决策？]
 
 ### Constraints
-- [Technical constraints]
-- [Timeline constraints]
-- [Resource constraints]
-- [Compatibility requirements]
+- [技术约束]
+- [时间约束]
+- [资源约束]
+- [兼容性要求]
 
 ### Requirements
-- [Must support X]
-- [Must perform within Y budget]
-- [Must integrate with Z]
+- [必须支持 X]
+- [必须在 Y 预算内运行]
+- [必须与 Z 集成]
 
 ## Decision
 
-[The specific technical decision made, described in enough detail for someone
-to implement it.]
+[所做的具体技术决策，详细程度足以让他人据此实现。]
 
 ### Architecture Diagram
-[ASCII diagram or description of the system architecture this creates]
+[ASCII 图或此决策所创建系统架构的描述]
 
 ### Key Interfaces
-[API contracts or interface definitions this decision creates]
+[此决策创建的 API 约定或接口定义]
 
 ## Alternatives Considered
 
-### Alternative 1: [Name]
-- **Description**: [How this would work]
-- **Pros**: [Advantages]
-- **Cons**: [Disadvantages]
-- **Rejection Reason**: [Why this was not chosen]
+### 备选方案 1：[名称]
+- **描述**：[如何运作]
+- **优点**：[优势]
+- **缺点**：[劣势]
+- **未选择原因**：[为何未选此方案]
 
-### Alternative 2: [Name]
-- **Description**: [How this would work]
-- **Pros**: [Advantages]
-- **Cons**: [Disadvantages]
-- **Rejection Reason**: [Why this was not chosen]
+### 备选方案 2：[名称]
+- **描述**：[如何运作]
+- **优点**：[优势]
+- **缺点**：[劣势]
+- **未选择原因**：[为何未选此方案]
 
 ## Consequences
 
 ### Positive
-- [Good outcomes of this decision]
+- [此决策的良好结果]
 
 ### Negative
-- [Trade-offs and costs accepted]
+- [已接受的权衡与代价]
 
 ### Risks
-- [Things that could go wrong]
-- [Mitigation for each risk]
+- [可能出错的事项]
+- [每项风险的缓解措施]
 
 ## GDD Requirements Addressed
 
-| GDD System | Requirement | How This ADR Addresses It |
-|------------|-------------|--------------------------|
-| [system-name].md | [specific rule, formula, or performance constraint from that GDD] | [how this decision satisfies it] |
+| GDD 系统 | 需求 | 本 ADR 如何满足 |
+|---------|------|----------------|
+| [system-name].md | [该 GDD 中的具体规则、公式或性能约束] | [此决策如何满足该需求] |
 
 ## Performance Implications
-- **CPU**: [Expected impact]
-- **Memory**: [Expected impact]
-- **Load Time**: [Expected impact]
-- **Network**: [Expected impact, if applicable]
+- **CPU**：[预期影响]
+- **Memory**：[预期影响]
+- **Load Time**：[预期影响]
+- **Network**：[预期影响（若适用）]
 
 ## Migration Plan
-[If this changes existing code, how do we get from here to there?]
+[若此决策改变了现有代码，如何从现状迁移到目标状态？]
 
 ## Validation Criteria
-[How will we know this decision was correct? What metrics or tests?]
+[如何验证此决策是正确的？使用哪些指标或测试？]
 
 ## Related Decisions
-- [Links to related ADRs]
-- [Links to related design documents]
+- [相关 ADR 链接]
+- [相关设计文档链接]
 ```
 
-4.5. **Engine Specialist Validation** — Before saving, spawn the **primary engine specialist** via Task to validate the drafted ADR:
-   - Read `.claude/docs/technical-preferences.md` `Engine Specialists` section to get the primary specialist
-   - If no engine is configured (`[TO BE CONFIGURED]`), skip this step
-   - Spawn `subagent_type: [primary specialist]` with: the ADR's Engine Compatibility section, Decision section, Key Interfaces, and the engine reference docs path. Ask them to:
-     1. Confirm the proposed approach is idiomatic for the pinned engine version
-     2. Flag any APIs or patterns that are deprecated or changed post-training-cutoff
-     3. Identify engine-specific risks or gotchas not captured in the current ADR draft
-   - If the specialist identifies a **blocking issue** (wrong API, deprecated approach, engine version incompatibility): revise the Decision and Engine Compatibility sections accordingly, then confirm the changes with the user before proceeding
-   - If the specialist finds **minor notes** only: incorporate them into the ADR's Risks subsection
+4.5. **引擎专家验证** — 保存之前，生成**主要引擎专家** Task 来验证 ADR 草稿：
+   - 读取 `.claude/docs/technical-preferences.md` 中的 `Engine Specialists` 章节，获取主要专家信息
+   - 若未配置引擎（`[TO BE CONFIGURED]`），跳过此步骤
+   - 生成 `subagent_type: [主要专家]`，提供：ADR 的 Engine Compatibility 章节、Decision 章节、Key Interfaces 以及 engine-reference 文档路径。要求其：
+     1. 确认所提方案对锁定的引擎版本是否符合惯用法
+     2. 标记任何在训练数据截止后已废弃或已变更的 API 或模式
+     3. 识别 ADR 草稿中未捕获的引擎特定风险或注意事项
+   - 若专家发现**阻塞性问题**（错误 API、已废弃方案、引擎版本不兼容）：相应修改 Decision 和 Engine Compatibility 章节，并在继续之前向用户确认变更
+   - 若专家仅发现**小问题**：将其纳入 ADR 的 Risks 子章节
 
-**Review mode check** — apply before spawning TD-ADR:
-- `solo` → skip. Note: "TD-ADR skipped — Solo mode." Proceed to Step 4.7 (GDD sync check).
-- `lean` → skip (not a PHASE-GATE). Note: "TD-ADR skipped — Lean mode." Proceed to Step 4.7 (GDD sync check).
-- `full` → spawn as normal.
+**评审模式检查** — 在生成 TD-ADR 之前执行：
+- `solo` → 跳过。注记："TD-ADR 已跳过——Solo 模式。"继续步骤 4.7（GDD 同步检查）。
+- `lean` → 跳过（非 PHASE-GATE）。注记："TD-ADR 已跳过——Lean 模式。"继续步骤 4.7（GDD 同步检查）。
+- `full` → 正常生成。
 
-4.6. **Technical Director Strategic Review** — After the engine specialist validation, spawn `technical-director` via Task using gate **TD-ADR** (`.claude/docs/director-gates.md`):
-   - Pass: the ADR file path (or draft content), engine version, domain, any existing ADRs in the same domain
-   - The TD validates architectural coherence (is this decision consistent with the whole system?) — distinct from the engine specialist's API-level check
-   - If CONCERNS or REJECT: revise the Decision or Alternatives sections accordingly before proceeding
+4.6. **技术总监战略评审** — 引擎专家验证后，使用门控 **TD-ADR**（`.claude/docs/director-gates.md`）生成 `technical-director` Task：
+   - 提供：ADR 文件路径（或草稿内容）、引擎版本、领域、同一领域中的现有 ADR
+   - TD 验证架构一致性（此决策与整体系统是否一致？）——与引擎专家的 API 级检查不同
+   - 若 CONCERNS 或 REJECT：在继续之前相应修改 Decision 或 Alternatives 章节
 
-4.7. **GDD Sync Check** — Before presenting the write approval, scan all GDDs
-referenced in the "GDD Requirements Addressed" section for naming inconsistencies
-with the ADR's Key Interfaces and Decision sections (renamed signals, API methods,
-or data types). If any are found, surface them as a **prominent warning block**
-immediately before the write approval — not as a footnote:
+4.7. **GDD 同步检查** — 在展示写入审批之前，扫描"GDD Requirements Addressed"章节中引用的所有 GDD，检查 ADR 的 Key Interfaces 和 Decision 章节中的命名是否与 GDD 保持一致（信号、API 方法或数据类型被重命名）。若有不一致，在写入审批之前立即以**醒目警告块**的形式提示——不要作为脚注：
 
 ```
-⚠️ GDD SYNC REQUIRED
-[gdd-filename].md uses names this ADR has renamed:
-  [old_name] → [new_name_from_adr]
-  [old_name_2] → [new_name_2_from_adr]
-The GDD must be updated before or alongside writing this ADR to prevent
-developers reading the GDD from implementing the wrong interface.
+⚠️ 需要 GDD 同步
+[gdd-filename].md 使用了本 ADR 已重命名的名称：
+  [旧名称] → [ADR 中的新名称]
+  [旧名称 2] → [新名称 2]
+在写入本 ADR 之前或同时必须更新 GDD，否则读取 GDD 的开发者会实现错误的接口。
 ```
 
-If no inconsistencies: skip this block silently.
+若无不一致：静默跳过此块。
 
-5. **Write approval** — Use `AskUserQuestion`:
+5. **写入审批** — 使用 `AskUserQuestion`：
 
-If GDD sync issues were found:
-- "ADR draft is complete. How would you like to proceed?"
-  - [A] Write ADR + update GDD in the same pass
-  - [B] Write ADR only — I'll update the GDD manually
-  - [C] Not yet — I need to review further
+若发现 GDD 同步问题：
+- "ADR 草稿已完成。您希望如何继续？"
+  - [A] 在同一步骤中写入 ADR 并更新 GDD
+  - [B] 仅写入 ADR——我会手动更新 GDD
+  - [C] 暂不——我需要进一步审阅
 
-If no GDD sync issues:
-- "ADR draft is complete. May I write it?"
-  - [A] Write ADR to `docs/architecture/adr-[NNNN]-[slug].md`
-  - [B] Not yet — I need to review further
+若无 GDD 同步问题：
+- "ADR 草稿已完成。是否写入？"
+  - [A] 写入 ADR 到 `docs/architecture/adr-[NNNN]-[slug].md`
+  - [B] 暂不——我需要进一步审阅
 
-If yes to any write option, write the file, creating the directory if needed.
-For option [A] with GDD update: also update the GDD file(s) to use the new names.
+若确认写入，则写入文件，必要时创建目录。
+对于选项 [A] 含 GDD 更新：同时更新 GDD 文件以使用新名称。
 
-6. **Update Architecture Registry**
+6. **更新架构注册表**
 
-Scan the written ADR for new architectural stances that should be registered:
-- State it claims ownership of
-- Interface contracts it defines (signal signatures, method APIs)
-- Performance budget it claims
-- API choices it makes explicitly
-- Patterns it bans (Consequences → Negative or explicit "do not use X")
+扫描已写入的 ADR，找出应在注册表中登记的新架构立场：
+- 它声明所有权的状态
+- 它定义的接口约定（信号签名、方法 API）
+- 它声明的性能预算
+- 它明确做出的 API 选择
+- 它禁止的模式（Consequences → Negative 或明确的"不要使用 X"）
 
-Present candidates:
+展示候选项：
 ```
-Registry candidates from this ADR:
-  NEW state ownership:      player_stamina → stamina-system
-  NEW interface contract:   stamina_depleted signal
-  NEW performance budget:   stamina-system: 0.5ms/frame
-  NEW forbidden pattern:    polling stamina each frame (use signal instead)
-  EXISTING (referenced_by update only): player_health → already registered ✅
+此 ADR 的注册表候选项：
+  新状态所有权：      player_stamina → stamina-system
+  新接口约定：        stamina_depleted 信号
+  新性能预算：        stamina-system: 0.5ms/帧
+  新禁止模式：        每帧轮询耐力值（使用信号替代）
+  已存在（仅更新 referenced_by）：player_health → 已注册 ✅
 ```
 
-**Registry append logic**: When writing to `docs/registry/architecture.yaml`, do NOT assume sections are empty. The file may already have entries from previous ADRs written in this session. Before each Edit call:
-1. Read the current state of `docs/registry/architecture.yaml`
-2. Find the correct section (state_ownership, interfaces, forbidden_patterns, api_decisions)
-3. Append the new entry AFTER the last existing entry in that section — do not try to replace a `[]` placeholder that may no longer exist
-4. If the section has entries already, use the closing content of the last entry as the `old_string` anchor, and append the new entry after it
+**注册表追加逻辑**：写入 `docs/registry/architecture.yaml` 时，不要假设各章节为空。该文件可能已有来自本会话中之前写入的 ADR 的条目。每次 Edit 调用前：
+1. 读取 `docs/registry/architecture.yaml` 的当前状态
+2. 找到正确的章节（state_ownership、interfaces、forbidden_patterns、api_decisions）
+3. 在该章节最后一个已有条目之后追加新条目——不要尝试替换可能已不存在的 `[]` 占位符
+4. 若章节已有条目，使用最后一个条目的结尾内容作为 `old_string` 锚点，并在其后追加新条目
 
-**BLOCKING — do not write to `docs/registry/architecture.yaml` without explicit user approval.**
+**阻塞——未经用户明确审批，不得写入 `docs/registry/architecture.yaml`。**
 
-Ask using `AskUserQuestion`:
-- "May I update `docs/registry/architecture.yaml` with these [N] new stances?"
-  - Options: "Yes — update the registry", "Not yet — I want to review the candidates", "Skip registry update"
+使用 `AskUserQuestion` 询问：
+- "是否可以用这 [N] 个新立场更新 `docs/registry/architecture.yaml`？"
+  - 选项："是——更新注册表"、"暂不——我想先审阅候选项"、"跳过注册表更新"
 
-Only proceed if the user selects yes. If yes: append new entries. Never modify existing entries — if a stance is
-changing, set the old entry to `status: superseded_by: ADR-[NNNN]` and add the new entry.
+仅在用户选择"是"后继续。若是：追加新条目。不要修改已有条目——若某立场发生变化，将旧条目设置为 `status: superseded_by: ADR-[NNNN]` 并添加新条目。
 
 ---
 
-## 7. Closing Next Steps
+## 7. 结束下一步建议
 
-After the ADR is written (and registry optionally updated), close with `AskUserQuestion`.
+ADR 写入（注册表可选更新）后，用 `AskUserQuestion` 结束。
 
-Before generating the widget:
-1. Read `docs/registry/architecture.yaml` — check if any priority ADRs are still unwritten (look for ADRs flagged in technical-preferences.md or systems-index.md as prerequisites)
-2. Check if all prerequisite ADRs are now written. If yes, include a "Start writing GDDs" option.
-3. List ALL remaining priority ADRs as individual options — not just the next one or two.
+生成组件前：
+1. 读取 `docs/registry/architecture.yaml`——检查是否还有优先级 ADR 尚未写入（查看 technical-preferences.md 或 systems-index.md 中标记为前置条件的 ADR）
+2. 检查所有前置 ADR 是否已写入。若是，包含"开始编写 GDD"选项。
+3. 将所有剩余优先级 ADR 逐一列为选项——不要只列出接下来的一两个。
 
-Widget format:
+组件格式：
 ```
-ADR-[NNNN] written and registry updated. What would you like to do next?
-[1] Write [next-priority-adr-name] — [brief description from prerequisites list]
-[2] Write [another-priority-adr] — [brief description]  (include ALL remaining ones)
-[N] Start writing GDDs — run `/design-system [first-undesigned-system]` (only show if all prerequisite ADRs are written)
-[N+1] Stop here for this session
+ADR-[NNNN] 已写入，注册表已更新。接下来做什么？
+[1] 编写 [下一优先级 ADR 名称] — [来自前置条件列表的简短描述]
+[2] 编写 [另一个优先级 ADR] — [简短描述]（列出所有剩余项）
+[N] 开始编写 GDD — 运行 `/design-system [第一个未设计的系统]`（仅在所有前置 ADR 写入完成后显示）
+[N+1] 本次会话到此结束
 ```
 
-If there are no remaining priority ADRs and no undesigned GDD systems, offer only "Stop here" and suggest running `/architecture-review` in a fresh session.
+若没有剩余的优先级 ADR 也没有未设计的 GDD 系统，只提供"到此结束"并建议在新的 Claude Code 会话中运行 `/architecture-review`。
 
-**Always include this fixed notice in the closing output (do NOT omit it):**
+**始终在结束输出中包含以下固定提示（不得省略）：**
 
-> To validate ADR coverage against your GDDs, open a **fresh Claude Code session**
-> and run `/architecture-review`.
+> 要验证 ADR 对 GDD 的覆盖范围，请打开**新的 Claude Code 会话**
+> 并运行 `/architecture-review`。
 >
-> **Never run `/architecture-review` in the same session as `/architecture-decision`.**
-> The reviewing agent must be independent of the authoring context to give an unbiased
-> assessment. Running it here would invalidate the review.
-
-Update any stories that were `Status: Blocked` pending this ADR to `Status: Ready`.

@@ -1,80 +1,80 @@
-# Art Bible: [Game Title]
+# 美术圣经：[Game Title]
 
-## Document Status
-- **Version**: 1.0
-- **Last Updated**: [Date]
-- **Owned By**: art-director
-- **Status**: [Draft / Under Review / Approved]
+## 文档状态
+- **版本**：1.0
+- **最后更新**：[Date]
+- **负责人**：art-director
+- **状态**：[Draft / Under Review / Approved]
 
-## Visual Identity Summary
-[2-3 sentences describing the overall visual identity]
+## 视觉身份概述
+[2-3句话描述整体视觉身份]
 
-## Reference Board
-[List reference games, films, art, and what specific visual quality each represents]
+## 参考板
+[列出参考游戏、影片、艺术作品，以及每个参考对象代表的具体视觉质感]
 
-| Reference | Medium | What We're Taking |
-| --------- | ------ | ----------------- |
-| [Name] | [Game/Film/Art] | [Specific quality] |
+| 参考来源 | 媒介 | 我们借鉴的内容 |
+| -------- | ---- | -------------- |
+| [名称] | [游戏/电影/艺术] | [具体质感] |
 
-## Color Palette
+## 色彩方案
 
-### Primary Palette
-| Name | Hex | Usage |
-| ---- | --- | ----- |
-| [Color Name] | #XXXXXX | [Where and when to use] |
+### 主色板
+| 颜色名称 | 十六进制 | 使用场景 |
+| -------- | -------- | -------- |
+| [颜色名称] | #XXXXXX | [何时何处使用] |
 
-### Emotional Color Mapping
-| Game State | Dominant Colors | Mood |
-| ---------- | --------------- | ---- |
-| Exploration | [Colors] | [Feeling] |
-| Combat | [Colors] | [Feeling] |
-| Safe zones | [Colors] | [Feeling] |
-| Danger | [Colors] | [Feeling] |
+### 情绪色彩映射
+| 游戏状态 | 主色 | 情绪氛围 |
+| -------- | ---- | -------- |
+| 探索 | [颜色] | [感受] |
+| 战斗 | [颜色] | [感受] |
+| 安全区域 | [颜色] | [感受] |
+| 危险 | [颜色] | [感受] |
 
-## Art Style
+## 美术风格
 
-### Rendering Style
-[Realistic / Stylized / Pixel / Cel-shaded / etc.]
+### 渲染风格
+[写实 / 风格化 / 像素 / 描边 / 等]
 
-### Proportions
-[Character proportions, environment scale, UI scale relationships]
+### 比例规范
+[角色比例、环境尺度、UI 尺度关系]
 
-### Level of Detail
-[How detailed are characters, environments, UI elements?]
+### 细节层级
+[角色、环境、UI 元素的细节程度如何？]
 
-### Visual Hierarchy
-[How do we guide the player's eye? What's always most prominent?]
+### 视觉层次
+[如何引导玩家视线？什么始终最突出？]
 
-## Character Art Standards
-[Silhouette requirements, color coding, animation style, proportions]
+## 角色美术规范
+[轮廓要求、色彩编码、动画风格、比例]
 
-## Environment Art Standards
-[Tilesets, modularity, lighting, atmospheric effects, scale]
+## 环境美术规范
+[图块集、模块化方式、光照、大气效果、比例]
 
-## UI Art Standards
-[Button styles, typography, icon style, menu layout principles, HUD density]
+## UI 美术规范
+[按钮样式、字体排版、图标风格、菜单布局原则、HUD 密度]
 
-## VFX Standards
-[Particle style, screen effects, impact feedback, color coding]
+## VFX 规范
+[粒子风格、屏幕效果、打击反馈、色彩编码]
 
-## Asset Production Standards
+## 资产制作规范
 
-### Naming Convention
+### 命名规则
 `[category]_[name]_[variant]_[size].[ext]`
 
-### Texture Standards
-| Category | Max Resolution | Format | Color Space |
-| -------- | -------------- | ------ | ----------- |
-| Characters | [Size] | [Format] | [Space] |
-| Environments | [Size] | [Format] | [Space] |
-| UI | [Size] | [Format] | [Space] |
-| VFX | [Size] | [Format] | [Space] |
+### 贴图规范
+| 类别 | 最大分辨率 | 格式 | 色彩空间 |
+| ---- | ---------- | ---- | -------- |
+| 角色 | [尺寸] | [格式] | [空间] |
+| 环境 | [尺寸] | [格式] | [空间] |
+| UI | [尺寸] | [格式] | [空间] |
+| VFX | [尺寸] | [格式] | [空间] |
 
-### Animation Standards
-[Frame rates, blend times, animation graph structure]
+### 动画规范
+[帧率、融合时间、动画图结构]
 
-## Accessibility
-- Colorblind-safe UI elements required
-- Minimum text size: [X]px at 1080p
-- High contrast mode specifications
-- Icon + color (never color alone) for game state
+## 无障碍
+- UI 元素须满足色盲友好要求
+- 1080p 下最小文字尺寸：[X]px
+- 高对比度模式规范
+- 游戏状态使用图标+颜色组合（绝不单独依赖颜色）

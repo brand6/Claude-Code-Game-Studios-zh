@@ -1,62 +1,62 @@
-# What's New in [Version]
+# [Version] 更新内容
 
-**Release Date**: [Date]
-
----
-
-## New Features
-
-- **[Feature Name]**: [Player-friendly description of what they can now do. Focus on the experience, not the implementation. 1-2 sentences.]
-
-- **[Feature Name]**: [Description]
+**发布日期**：[Date]
 
 ---
 
-## Improvements
+## 新特性
 
-- **[Area Improved]**: [How this makes the game better for the player. Be specific.]
+- **[特性名称]**：[以玩家视角描述现在可以做什么。聚焦体验，而非实现细节。1-2句话。]
 
-- **[Area Improved]**: [Description]
-
----
-
-## Balance Changes
-
-- **[What Changed]**: [Old value] -> [New value]. [Brief design reasoning in player terms. Example: "Healing potions now restore 50 HP (up from 30) -- late-game encounters needed more recovery options."]
-
-- **[What Changed]**: [Description]
+- **[特性名称]**：[描述]
 
 ---
 
-## Bug Fixes
+## 改进
 
-- Fixed an issue where [describe the player-visible symptom, not the code fix]
-- Fixed [another player-visible symptom]
-- Fixed [symptom]
+- **[改进区域]**：[具体说明本次改进如何提升玩家体验。]
 
----
-
-## Known Issues
-
-- [Issue description in player terms]. [Workaround if one exists.] We're working on a fix.
+- **[改进区域]**：[描述]
 
 ---
 
-## Technical Notes (Internal Only -- Remove Before Publishing)
+## 平衡调整
 
-### Commits Covered
-- Range: `[first-hash]..[last-hash]`
-- Total commits: [N]
+- **[调整内容]**：[旧数值] -> [新数值]。[以玩家能理解的语言简述设计理由。示例："治疗药水现在恢复 50 HP（原为 30）——后期关卡需要更多恢复手段。"]
 
-### Internal Changes
-- [Refactoring, infrastructure, or tooling changes not visible to players]
-
-### Deferred Items
-- [Features or fixes originally planned for this release but moved to next]
-  - Reason: [why deferred]
-  - New target: [version or sprint]
+- **[调整内容]**：[描述]
 
 ---
 
-Thank you for playing! Your feedback helps us improve the game.
-Report issues at [support link].
+## 错误修复
+
+- 修复了一个问题：[描述玩家可见的现象，而非代码层面的修复]
+- 修复了[另一个玩家可见的现象]
+- 修复了[现象]
+
+---
+
+## 已知问题
+
+- [以玩家角度描述问题]。[如有临时解决方案请说明。]我们正在跟进修复。
+
+---
+
+## 技术说明（仅限内部，发布前删除）
+
+### 涵盖的提交
+- 范围：`[first-hash]..[last-hash]`
+- 提交总数：[N]
+
+### 内部变更
+- [对玩家不可见的重构、基础设施或工具链变更]
+
+### 延期内容
+- [原计划在本次发布中完成、但已移至下一版本的特性或修复]
+  - 原因：[为何延期]
+  - 新目标版本：[版本号或 Sprint 编号]
+
+---
+
+感谢您的游玩！您的反馈帮助我们持续改进。
+请通过 [support link] 提交问题报告。

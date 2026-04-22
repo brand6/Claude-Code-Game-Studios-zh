@@ -1,191 +1,173 @@
-# Skill Test Spec: /create-stories
+# Skill 测试规范：/create-stories
 
-## Skill Summary
+## Skill 摘要
 
-`/create-stories` breaks a single epic into developer-ready story files. It reads
-the EPIC.md, the corresponding GDD, governing ADRs, the control manifest, and the
-TR registry. Each story gets structured frontmatter including: Title, Epic, Layer,
-Priority, Status, TR-ID, ADR references, Acceptance Criteria, and Definition of
-Done. Stories are classified by type (Logic / Integration / Visual/Feel / UI /
-Config/Data) which determines the required test evidence path.
+`/create-stories [epic-name]` 读取 EPIC.md 文件并将其每个要求转化为一个完整的 Story 文件，包含 frontmatter、TR-ID、管理 ADR 引用、控制清单规则（摘自控制清单）和验收标准。Story 写入 `production/epics/[layer]/story-[name].md`。
 
-In `full` review mode, a QL-STORY-READY check runs per story after creation. In
-`lean` or `solo` mode, QL-STORY-READY is skipped. The skill asks "May I write"
-before writing each story file. Stories are written to
-`production/epics/[layer]/story-[name].md`.
+在 `full` 审核模式下，QL-STORY-READY 门控（QA Lead）在展示给用户前对每个 Story 草稿运行。在 `lean` 或 `solo` 模式下，QL-STORY-READY 被跳过并注明。Skill 在创建每个 Story 文件前询问"May I write"。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构性）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需 Fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: COMPLETE, BLOCKED, NEEDS WORK
-- [ ] Contains "May I write" collaborative protocol language (per-story approval)
-- [ ] Has a next-step handoff at the end (`/story-readiness`, `/dev-story`)
-- [ ] Documents story Status: Blocked when governing ADR is Proposed
-- [ ] Documents QL-STORY-READY gate: active in full mode, skipped in lean/solo
-
----
-
-## Director Gate Checks
-
-In `full` mode: QL-STORY-READY check runs per story after creation. Stories that
-fail the check are noted as NEEDS WORK before the "May I write" ask.
-
-In `lean` mode: QL-STORY-READY is skipped. Output notes:
-"QL-STORY-READY skipped — lean mode" per story.
-
-In `solo` mode: QL-STORY-READY is skipped with equivalent notes.
+- [ ] 包含必填 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含 ≥2 个阶段标题
+- [ ] 包含 verdict 关键词：COMPLETE、BLOCKED、NEEDS WORK
+- [ ] 包含"May I write"协作协议语言（按 Story 逐一批准）
+- [ ] 末尾包含下一步交接（`/story-readiness` → `/dev-story`）
+- [ ] 说明 QL-STORY-READY 门控行为：full 模式运行，lean/solo 跳过
 
 ---
 
-## Test Cases
+## Director 门控检查
 
-### Case 1: Happy Path — Epic with 3 stories, all ADRs Accepted
+`full` 模式下：QL-STORY-READY（QA Lead）门控对每个 Story 草稿运行，在向用户展示前评估其准备状态。失败的 Story 标记为 NEEDS WORK，并附具体反馈；用户可选择继续或修订。
 
-**Fixture:**
-- `production/epics/[layer]/EPIC-[name].md` exists with 3 GDD requirements
-- Corresponding GDD exists with matching acceptance criteria
-- All governing ADRs have `Status: Accepted`
-- `docs/architecture/control-manifest.md` exists
-- `docs/architecture/tr-registry.yaml` has TR-IDs for all 3 requirements
-- `production/session-state/review-mode.txt` contains `lean`
+`lean` 模式下：QL-STORY-READY 被跳过。输出注明："QL-STORY-READY skipped — lean mode"。
 
-**Input:** `/create-stories [epic-name]`
-
-**Expected behavior:**
-1. Skill reads EPIC.md, GDD, governing ADRs, control manifest, and TR registry
-2. Classifies each requirement into a story type (Logic / Integration / Visual/Feel / UI / Config/Data)
-3. Drafts 3 story files with correct frontmatter schema
-4. QL-STORY-READY is skipped (lean mode) — noted in output
-5. Asks "May I write" before writing each story file
-6. Writes all 3 story files after approval
-
-**Assertions:**
-- [ ] Each story's frontmatter contains: Title, Epic, Layer, Priority, Status, TR-ID, ADR reference, Acceptance Criteria, DoD
-- [ ] Story types are correctly classified (at least one Logic type in fixture)
-- [ ] "May I write" is asked per story (not once for the entire batch)
-- [ ] QL-STORY-READY skip is noted in output
-- [ ] All 3 story files are written with correct naming: `story-[name].md`
-- [ ] Skill does NOT start implementation
+`solo` 模式下：QL-STORY-READY 被跳过，注明方式相同。
 
 ---
 
-### Case 2: Failure Path — No epic file found
+## 测试用例
 
-**Fixture:**
-- The epic path provided does not exist in `production/epics/`
+### 用例 1：正常路径——含 3 个要求的 Epic 创建 3 个 Story
 
-**Input:** `/create-stories nonexistent-epic`
+**Fixture：**
+- `production/epics/[layer]/EPIC-[name].md` 存在，包含 3 个要求
+- 所有管理 ADR 均为 Accepted 状态
+- `docs/architecture/control-manifest.md` 存在
+- TR 注册表中存在所有 TR-ID
+- `production/session-state/review-mode.txt` 内容为 `lean`
 
-**Expected behavior:**
-1. Skill attempts to read the EPIC.md file
-2. File not found
-3. Skill outputs a clear error with the path it searched
-4. Skill suggests checking `production/epics/` or running `/create-epics` first
-5. No story files are created
+**输入：** `/create-stories [epic-name]`
 
-**Assertions:**
-- [ ] Skill outputs a clear error naming the missing file path
-- [ ] No story files are written
-- [ ] Skill recommends the correct next action (`/create-epics`)
-- [ ] Skill does NOT create stories without a valid EPIC.md
+**预期行为：**
+1. Skill 读取 EPIC.md、相关 GDD、管理 ADR、控制清单和 TR 注册表
+2. 为 3 个要求各起草一个 Story
+3. QL-STORY-READY 被跳过（lean 模式）——在输出中注明
+4. 展示 3 个 Story 草稿
+5. 对每个 Story 逐一询问"May I write `production/epics/[layer]/story-[name].md`?"
+6. 批准后写入全部 3 个 Story 文件
 
----
-
-### Case 3: Blocked Story — ADR is Proposed
-
-**Fixture:**
-- EPIC.md exists with 2 requirements
-- Requirement 1 is covered by an Accepted ADR
-- Requirement 2 is covered by an ADR with `Status: Proposed`
-
-**Input:** `/create-stories [epic-name]`
-
-**Expected behavior:**
-1. Skill reads the ADR for Requirement 2 and finds Status: Proposed
-2. Story for Requirement 2 is drafted with `Status: Blocked`
-3. Blocking note references the specific ADR: "BLOCKED: ADR-NNN is Proposed"
-4. Story for Requirement 1 is drafted normally with `Status: Ready`
-5. Both stories are shown in the draft — user asked "May I write" for both
-
-**Assertions:**
-- [ ] Story 2 has `Status: Blocked` in its frontmatter
-- [ ] Blocking note names the specific ADR number and recommends `/architecture-decision`
-- [ ] Story 1 has `Status: Ready` — blocked status does not affect non-blocked stories
-- [ ] Blocked status is shown in the draft preview before writing
-- [ ] Both story files are written (blocked stories are still written — just flagged)
+**断言：**
+- [ ] 任何写入询问前先展示全部 3 个 Story 草稿
+- [ ] 逐 Story 询问"May I write"（不是一次性批准）
+- [ ] 每个 Story 文件包含：frontmatter、TR-ID（引用注册表）、ADR 引用、控制清单规则、验收标准
+- [ ] 输出中注明 QL-STORY-READY 跳过
+- [ ] 未经逐 Story 批准 Skill 不写入
 
 ---
 
-### Case 4: Edge Case — No argument provided
+### 用例 2：失败路径——未找到 Epic 文件
 
-**Fixture:**
-- `production/epics/` directory exists with ≥2 epic subdirectories
+**Fixture：**
+- `production/epics/` 目录存在但不含指定的 EPIC 文件
 
-**Input:** `/create-stories` (no argument)
+**输入：** `/create-stories [epic-name]`
 
-**Expected behavior:**
-1. Skill detects no argument is provided
-2. Outputs a usage error: "No epic specified. Usage: /create-stories [epic-name]"
-3. Skill lists available epics from `production/epics/`
-4. No story files are created
+**预期行为：**
+1. Skill 尝试读取 EPIC 文件但失败
+2. Skill 输出明确错误："Epic 'epic-name' not found. Run `/create-epics` first."
+3. Skill 退出，不创建 Story 文件
 
-**Assertions:**
-- [ ] Skill outputs a usage error when no argument is given
-- [ ] Skill lists available epics to help the user choose
-- [ ] No story files are written
-- [ ] Skill does NOT silently pick an epic without user input
-
----
-
-### Case 5: Director Gate — Full mode runs QL-STORY-READY; stories failing noted as NEEDS WORK
-
-**Fixture:**
-- EPIC.md exists with 2 requirements
-- Both governing ADRs are Accepted
-- `production/session-state/review-mode.txt` contains `full`
-- QL-STORY-READY check finds one story has ambiguous acceptance criteria
-
-**Input:** `/create-stories [epic-name]`
-
-**Expected behavior:**
-1. Both stories are drafted
-2. QL-STORY-READY check runs for each story
-3. Story 1 passes QL-STORY-READY
-4. Story 2 fails QL-STORY-READY — noted as NEEDS WORK with specific feedback
-5. Both stories are shown to user with pass/fail status before "May I write"
-6. User can proceed (story written as-is with NEEDS WORK note) or revise first
-
-**Assertions:**
-- [ ] QL-STORY-READY results appear per story in the output
-- [ ] Story 2 is flagged as NEEDS WORK with the specific failing criteria
-- [ ] Story 1 shows as passing QL-STORY-READY
-- [ ] User is given the choice to proceed or revise before writing
-- [ ] Skill does NOT auto-block writing of stories that fail QL-STORY-READY without user input
+**断言：**
+- [ ] 未找到 EPIC 文件时 Skill 输出明确错误
+- [ ] Skill 推荐运行 `/create-epics` 作为下一步
+- [ ] 不写入 Story 文件
+- [ ] Verdict 为 BLOCKED
 
 ---
 
-## Protocol Compliance
+### 用例 3：依赖检查——被阻塞的 Story（Proposed ADR）
 
-- [ ] All context (EPIC, GDD, ADRs, manifest, TR registry) loaded before drafting stories
-- [ ] Story drafts shown in full before any "May I write" ask
-- [ ] "May I write" asked per story (not once for the entire batch)
-- [ ] Blocked stories flagged before write approval — not discovered after writing
-- [ ] TR-IDs reference the registry — requirement text is not embedded inline in story files
-- [ ] Control manifest rules quoted per-story from the manifest, not invented
-- [ ] Ends with next-step handoff: `/story-readiness` → `/dev-story`
+**Fixture：**
+- EPIC.md 包含 3 个要求
+- ADR 1（管理 Story 1 和 Story 3）：Accepted
+- ADR 2（管理 Story 2）：Proposed
+
+**输入：** `/create-stories [epic-name]`
+
+**预期行为：**
+1. Skill 检查所有 Story 的管理 ADR
+2. Story 2 在其 ADR 尚未 Accepted 时，ADR 依赖标记为阻塞
+3. Story 1 和 Story 3：Status: Ready
+4. Story 2：Status: Blocked（依赖 [ADR 编号] 尚未 Accepted）
+5. 全部 3 个 Story 草稿展示给用户，含各自状态
+6. 全部 3 个 Story 均写入——被阻塞的 Story 以 Blocked 状态写入
+
+**断言：**
+- [ ] Story 2 在草稿中标记为 Status: Blocked
+- [ ] 阻塞说明包含具体 ADR 编号并推荐运行 `/architecture-decision`
+- [ ] Story 1 和 Story 3 在草稿中标记为 Status: Ready
+- [ ] 全部 Story 文件写入（被阻塞的 Story 也写入——只是标记为 Blocked）
 
 ---
 
-## Coverage Notes
+### 用例 4：边缘情况——未提供参数
 
-- Integration story test evidence (playtest doc alternative) follows the same
-  approval pattern as Logic stories — not independently fixture-tested.
-- Story ordering (foundational first, UI last) is validated implicitly via
-  Case 1's multi-story fixture.
-- The story sizing rule (splitting large requirement groups) is not tested here
-  — it is addressed in the `/create-stories` skill's internal logic.
+**Fixture：**
+- `production/epics/` 目录存在，包含 ≥2 个 Epic 子目录
+
+**输入：** `/create-stories`（无参数）
+
+**预期行为：**
+1. Skill 检测到未提供参数
+2. 输出用法错误："No epic specified. Usage: /create-stories [epic-name]"
+3. Skill 列出 `production/epics/` 中可用的 Epic
+4. 不创建 Story 文件
+
+**断言：**
+- [ ] 未提供参数时 Skill 输出用法错误
+- [ ] Skill 列出可用 Epic 帮助用户选择
+- [ ] 不写入 Story 文件
+- [ ] Skill 不在无用户输入的情况下静默选择 Epic
+
+---
+
+### 用例 5：Director 门控——Full 模式运行 QL-STORY-READY；失败的 Story 标记为 NEEDS WORK
+
+**Fixture：**
+- EPIC.md 包含 2 个要求
+- 两个管理 ADR 均为 Accepted
+- `production/session-state/review-mode.txt` 内容为 `full`
+- QL-STORY-READY 检查发现其中一个 Story 的验收标准不明确
+
+**输入：** `/create-stories [epic-name]`
+
+**预期行为：**
+1. 起草两个 Story
+2. 对每个 Story 运行 QL-STORY-READY 检查
+3. Story 1 通过 QL-STORY-READY
+4. Story 2 未通过 QL-STORY-READY——标记为 NEEDS WORK，并附具体反馈
+5. 在"May I write"询问前向用户展示两个 Story（含通过/未通过状态）
+6. 用户可选择继续（以 NEEDS WORK 注记写入 Story）或先修订
+
+**断言：**
+- [ ] 输出中每个 Story 均显示 QL-STORY-READY 结果
+- [ ] Story 2 标记为 NEEDS WORK，并附具体未通过标准
+- [ ] Story 1 显示为通过 QL-STORY-READY
+- [ ] 写入前向用户提供继续或修订的选择
+- [ ] Skill 不在无用户输入的情况下自动阻止 QL-STORY-READY 未通过 Story 的写入
+
+---
+
+## 协议合规
+
+- [ ] 起草 Story 前加载全部上下文（EPIC、GDD、ADR、清单、TR 注册表）
+- [ ] 任何"May I write"询问前完整展示 Story 草稿
+- [ ] 逐 Story 询问"May I write"（不是一次性批准整批）
+- [ ] 被阻塞的 Story 在写入批准前标记——不是写入后才发现
+- [ ] TR-ID 引用注册表——要求文本不直接内嵌在 Story 文件中
+- [ ] 控制清单规则摘自清单文件，不凭空捏造
+- [ ] 末尾包含下一步交接：`/story-readiness` → `/dev-story`
+
+---
+
+## 覆盖率说明
+
+- Integration Story 的测试证明（Playtest 文档替代方案）与 Logic Story 采用相同的批准模式——未独立设计 Fixture 测试。
+- Story 排序（基础优先，UI 最后）通过用例 1 的多 Story Fixture 隐式验证。
+- Story 规模规则（拆分大型要求组）未在此测试——由 `/create-stories` Skill 的内部逻辑处理。

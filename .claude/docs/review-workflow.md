@@ -1,6 +1,6 @@
-# Review Workflow
+# 评审工作流
 
-1. Code changes require review by the relevant department lead agent
-2. Design changes require sign-off from `game-designer` and `creative-director`
-3. Architecture changes require sign-off from `technical-director`
-4. Cross-domain changes require sign-off from `producer`
+1. 代码变更须由对应的部门负责人 Agent 进行评审
+2. 设计变更须经 `game-designer` 与 `creative-director` 签字认可
+3. 架构变更须经 `technical-director` 签字认可
+4. 跨领域变更须经 `producer` 签字认可

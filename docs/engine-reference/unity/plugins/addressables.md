@@ -1,68 +1,67 @@
 # Unity 6.3 — Addressables
 
-**Last verified:** 2026-02-13
-**Status:** Production-Ready
-**Package:** `com.unity.addressables` (Package Manager)
+**最后验证：** 2026-02-13
+**状态：** 生产就绪
+**包：** `com.unity.addressables`（Package Manager）
 
 ---
 
-## Overview
+## 概述
 
-**Addressables** is Unity's advanced asset management system that replaces `Resources.Load()`
-with async loading, remote content delivery, and better memory control.
+**Addressables** 是 Unity 的高级资产管理系统，用异步加载、远程内容分发和更精细的内存控制替代了 `Resources.Load()`。
 
-**Use Addressables for:**
-- Async asset loading (non-blocking)
-- DLC and remote content
-- Memory optimization (load/unload on demand)
-- Asset dependency management
-- Large projects with many assets
+**以下场景使用 Addressables：**
+- 异步资产加载（非阻塞）
+- DLC 与远程内容
+- 内存优化（按需加载/卸载）
+- 资产依赖管理
+- 资产数量庞大的大型项目
 
-**DON'T use Addressables for:**
-- Tiny projects (overhead not worth it)
-- Assets needed immediately at startup (use direct references)
+**以下场景不要使用 Addressables：**
+- 小型项目（开销不值得）
+- 启动时需立即使用的资产（改用直接引用）
 
 ---
 
-## Installation
+## 安装
 
-### Install via Package Manager
+### 通过 Package Manager 安装
 
 1. `Window > Package Manager`
-2. Unity Registry > Search "Addressables"
-3. Install `Addressables`
+2. Unity Registry > 搜索 "Addressables"
+3. 安装 `Addressables`
 
 ---
 
-## Core Concepts
+## 核心概念
 
-### 1. **Addressable Assets**
-- Assets marked as "Addressable" (assigned unique keys)
-- Can be loaded by key at runtime
+### 1. **可寻址资产（Addressable Assets）**
+- 标记为"Addressable"的资产（分配唯一键值）
+- 可在运行时通过键值加载
 
-### 2. **Asset Groups**
-- Organize assets (e.g., "UI", "Weapons", "Level1")
-- Groups determine build settings (local vs remote)
+### 2. **资产组（Asset Groups）**
+- 组织资产（如 "UI"、"武器"、"Level1"）
+- 组决定构建设置（本地 vs 远程）
 
-### 3. **Async Loading**
-- All loading is async (non-blocking)
-- Returns `AsyncOperationHandle`
+### 3. **异步加载**
+- 所有加载操作均为异步（非阻塞）
+- 返回 `AsyncOperationHandle`
 
-### 4. **Reference Counting**
-- Addressables tracks asset usage
-- Must manually release assets when done
+### 4. **引用计数**
+- Addressables 跟踪资产使用情况
+- 使用完毕后必须手动释放资产
 
 ---
 
-## Setup
+## 配置
 
-### 1. Mark Assets as Addressable
+### 1. 将资产标记为 Addressable
 
-1. Select asset in Project window
-2. Inspector > Check "Addressable"
-3. Assign key (e.g., "Enemies/Goblin")
+1. 在 Project 窗口中选择资产
+2. Inspector > 勾选 "Addressable"
+3. 指定键值（如 "Enemies/Goblin"）
 
-**OR via script:**
+**或通过脚本：**
 ```csharp
 #if UNITY_EDITOR
 using UnityEditor.AddressableAssets;
@@ -74,18 +73,18 @@ AddressableAssetSettings.AddAssetEntry(guid, "MyAssetKey", "Default Local Group"
 
 ---
 
-### 2. Create Groups
+### 2. 创建资产组
 
 `Window > Asset Management > Addressables > Groups`
 
-- **Default Local Group**: Bundled with build
-- **Remote Group**: Hosted on server (CDN)
+- **默认本地组（Default Local Group）**：随构建包打包
+- **远程组（Remote Group）**：托管在服务器（CDN）上
 
 ---
 
-## Basic Loading
+## 基础加载
 
-### Load Asset Async
+### 异步加载资产
 
 ```csharp
 using UnityEngine.AddressableAssets;
@@ -93,7 +92,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class AssetLoader : MonoBehaviour {
     async void Start() {
-        // ✅ Load asset asynchronously
+        // ✅ 异步加载资产
         AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>("Enemies/Goblin");
         await handle.Task;
 
@@ -101,10 +100,10 @@ public class AssetLoader : MonoBehaviour {
             GameObject prefab = handle.Result;
             Instantiate(prefab);
         } else {
-            Debug.LogError("Failed to load asset");
+            Debug.LogError("资产加载失败");
         }
 
-        // ⚠️ IMPORTANT: Release when done
+        // ⚠️ 重要：用完后释放
         Addressables.Release(handle);
     }
 }
@@ -112,34 +111,34 @@ public class AssetLoader : MonoBehaviour {
 
 ---
 
-### Load and Instantiate
+### 加载并实例化
 
 ```csharp
 async void SpawnEnemy() {
-    // ✅ Load and instantiate in one step
+    // ✅ 一步完成加载与实例化
     AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync("Enemies/Goblin");
     await handle.Task;
 
     GameObject enemy = handle.Result;
-    // Use enemy...
+    // 使用 enemy...
 
-    // ✅ Release when destroying
+    // ✅ 销毁时释放
     Addressables.ReleaseInstance(enemy);
 }
 ```
 
 ---
 
-### Load Multiple Assets
+### 批量加载多个资产
 
 ```csharp
 async void LoadAllWeapons() {
-    // Load all assets with label "Weapons"
+    // 加载所有带 "Weapons" 标签的资产
     AsyncOperationHandle<IList<GameObject>> handle = Addressables.LoadAssetsAsync<GameObject>("Weapons", null);
     await handle.Task;
 
     foreach (var weapon in handle.Result) {
-        Debug.Log($"Loaded: {weapon.name}");
+        Debug.Log($"已加载：{weapon.name}");
     }
 
     Addressables.Release(handle);
@@ -148,55 +147,55 @@ async void LoadAllWeapons() {
 
 ---
 
-## Asset Labels (Tags)
+## 资产标签（Labels）
 
-### Assign Labels
+### 指定标签
 
 1. `Window > Asset Management > Addressables > Groups`
-2. Select asset > Inspector > Labels > Add label (e.g., "Level1", "UI")
+2. 选择资产 > Inspector > Labels > 添加标签（如 "Level1"、"UI"）
 
-### Load by Label
+### 按标签加载
 
 ```csharp
-// Load all assets with label "Level1"
+// 加载所有带 "Level1" 标签的资产
 Addressables.LoadAssetsAsync<GameObject>("Level1", null);
 ```
 
 ---
 
-## Remote Content (DLC)
+## 远程内容（DLC）
 
-### Setup Remote Groups
+### 配置远程组
 
-1. Create new group: `Window > Addressables > Groups > Create New Group > Packed Assets`
-2. Group Settings:
-   - **Build Path**: `ServerData/[BuildTarget]`
-   - **Load Path**: `http://yourcdn.com/content/[BuildTarget]`
+1. 新建组：`Window > Addressables > Groups > Create New Group > Packed Assets`
+2. 组设置：
+   - **构建路径（Build Path）**：`ServerData/[BuildTarget]`
+   - **加载路径（Load Path）**：`http://yourcdn.com/content/[BuildTarget]`
 
-### Build Remote Content
+### 构建远程内容
 
 1. `Window > Asset Management > Addressables > Build > New Build > Default Build Script`
-2. Upload `ServerData/` folder to CDN
-3. Game loads assets from remote server
+2. 将 `ServerData/` 文件夹上传到 CDN
+3. 游戏从远程服务器加载资产
 
 ---
 
-## Preloading / Caching
+## 预加载与缓存
 
-### Download Dependencies
+### 下载依赖项
 
 ```csharp
 async void PreloadLevel() {
-    // Download all assets in group without loading into memory
+    // 下载组内所有资产但不加载到内存
     AsyncOperationHandle handle = Addressables.DownloadDependenciesAsync("Level1");
     await handle.Task;
 
-    // Now "Level1" assets are cached, load instantly
+    // 现在 "Level1" 资产已缓存，加载将立即完成
     Addressables.Release(handle);
 }
 ```
 
-### Check Download Size
+### 查看下载大小
 
 ```csharp
 async void CheckDownloadSize() {
@@ -204,7 +203,7 @@ async void CheckDownloadSize() {
     await handle.Task;
 
     long sizeInBytes = handle.Result;
-    Debug.Log($"Download size: {sizeInBytes / (1024 * 1024)} MB");
+    Debug.Log($"下载大小：{sizeInBytes / (1024 * 1024)} MB");
 
     Addressables.Release(handle);
 }
@@ -212,36 +211,36 @@ async void CheckDownloadSize() {
 
 ---
 
-## Memory Management
+## 内存管理
 
-### Release Assets
+### 释放资产
 
 ```csharp
-// ✅ Always release when done
+// ✅ 使用完毕后始终释放
 Addressables.Release(handle);
 
-// ✅ For instantiated objects
+// ✅ 对于实例化的对象
 Addressables.ReleaseInstance(gameObject);
 ```
 
-### Check Reference Count
+### 查看引用计数
 
 ```csharp
-// Addressables uses reference counting
-// Asset is unloaded when refCount == 0
+// Addressables 使用引用计数
+// 当 refCount == 0 时，资产被卸载
 ```
 
 ---
 
-## Asset References (Inspector-Assigned)
+## 资产引用（Inspector 赋值）
 
-### Use AssetReference
+### 使用 AssetReference
 
 ```csharp
 using UnityEngine.AddressableAssets;
 
 public class EnemySpawner : MonoBehaviour {
-    // ✅ Assign in Inspector (drag & drop)
+    // ✅ 在 Inspector 中赋值（拖放即可）
     public AssetReference enemyPrefab;
 
     async void SpawnEnemy() {
@@ -249,7 +248,7 @@ public class EnemySpawner : MonoBehaviour {
         await handle.Task;
 
         GameObject enemy = handle.Result;
-        // Use enemy...
+        // 使用 enemy...
 
         enemyPrefab.ReleaseInstance(enemy);
     }
@@ -258,9 +257,9 @@ public class EnemySpawner : MonoBehaviour {
 
 ---
 
-## Scenes
+## 场景
 
-### Load Addressable Scene
+### 加载可寻址场景
 
 ```csharp
 using UnityEngine.SceneManagement;
@@ -270,18 +269,18 @@ async void LoadScene() {
     await handle.Task;
 
     SceneInstance sceneInstance = handle.Result;
-    // Scene loaded
+    // 场景已加载
 
-    // Unload scene
+    // 卸载场景
     await Addressables.UnloadSceneAsync(handle).Task;
 }
 ```
 
 ---
 
-## Common Patterns
+## 常用模式
 
-### Lazy Loading (Load on Demand)
+### 懒加载（按需加载）
 
 ```csharp
 Dictionary<string, AsyncOperationHandle<GameObject>> loadedAssets = new();
@@ -298,11 +297,11 @@ async Task<GameObject> GetAsset(string key) {
 
 ---
 
-### Cleanup on Scene Unload
+### 场景卸载时清理
 
 ```csharp
 void OnDestroy() {
-    // Release all handles
+    // 释放所有句柄
     foreach (var handle in loadedAssets.Values) {
         Addressables.Release(handle);
     }
@@ -312,9 +311,9 @@ void OnDestroy() {
 
 ---
 
-## Content Catalog Updates (Live Updates)
+## 内容目录更新（热更新）
 
-### Check for Catalog Updates
+### 检查目录更新
 
 ```csharp
 async void CheckForUpdates() {
@@ -322,7 +321,7 @@ async void CheckForUpdates() {
     await handle.Task;
 
     if (handle.Result.Count > 0) {
-        Debug.Log("Updates available");
+        Debug.Log("有可用更新");
         await Addressables.UpdateCatalogs(handle.Result).Task;
     }
 
@@ -332,47 +331,47 @@ async void CheckForUpdates() {
 
 ---
 
-## Performance Tips
+## 性能建议
 
-- **Preload** frequently used assets at startup
-- **Release** assets immediately when not needed
-- Use **labels** to batch-load related assets
-- **Cache** remote content for offline use
+- 在启动时**预加载**常用资产
+- 不再需要时立即**释放**资产
+- 使用**标签**批量加载相关资产
+- **缓存**远程内容以支持离线使用
 
 ---
 
-## Debugging
+## 调试
 
-### Addressables Event Viewer
+### Addressables 事件查看器
 
 `Window > Asset Management > Addressables > Event Viewer`
 
-- Shows all load/release operations
-- Memory usage per asset
-- Reference counts
+- 显示所有加载/释放操作
+- 每个资产的内存占用
+- 引用计数
 
 ### Addressables Profiler
 
 `Window > Asset Management > Addressables > Profiler`
 
-- Real-time asset usage
-- Bundle loading stats
+- 实时资产使用情况
+- Bundle 加载统计
 
 ---
 
-## Migration from Resources
+## 从 Resources 迁移
 
 ```csharp
-// ❌ OLD: Resources.Load (synchronous, blocks frame)
+// ❌ 旧方式：Resources.Load（同步，会阻塞帧）
 GameObject prefab = Resources.Load<GameObject>("Enemies/Goblin");
 
-// ✅ NEW: Addressables (async, non-blocking)
+// ✅ 新方式：Addressables（异步，不阻塞）
 var handle = await Addressables.LoadAssetAsync<GameObject>("Enemies/Goblin").Task;
 GameObject prefab = handle.Result;
 ```
 
 ---
 
-## Sources
+## 参考资料
 - https://docs.unity3d.com/Packages/com.unity.addressables@2.0/manual/index.html
 - https://learn.unity.com/tutorial/addressables

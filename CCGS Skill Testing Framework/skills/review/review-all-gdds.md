@@ -1,178 +1,160 @@
-# Skill Test Spec: /review-all-gdds
+# Skill 测试规范：/review-all-gdds
 
-## Skill Summary
+## Skill 摘要
 
-`/review-all-gdds` is an Opus-tier skill that performs a holistic cross-GDD review
-across all files in `design/gdd/`. It runs two complementary review phases in
-parallel: Phase 1 checks for consistency (contradictions, formula mismatches,
-stale references, competing ownership), and Phase 2 checks design theory (dominant
-strategies, pillar drift, cognitive overload, economic imbalance). Because the two
-phases are independent, they are spawned simultaneously to save time. The skill
-produces a CONSISTENT / MINOR ISSUES / MAJOR ISSUES verdict and is read-only — no
-files are written without explicit user approval.
+`/review-all-gdds` 对 `design/gdd/` 中所有系统 GDD 进行整体性跨文档评审。Skill 分两个并行阶段运行：第一阶段（一致性检查）和第二阶段（设计理论检查）。该 Skill 为 Opus 级别操作，需要对整个 GDD 集合的深度理解。
 
-The skill is itself the holistic review gate in the pipeline. It is invoked after
-individual GDDs are complete and before architecture work begins. It does NOT spawn
-any director gate agents (it IS the director-level review).
+Skill 为只读操作——不写入任何文件，仅生成报告。无 Director 门控。Verdict 为：CONSISTENT、MINOR ISSUES、MAJOR ISSUES。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构性）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需 Fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥5 phase headings (complex multi-phase skill)
-- [ ] Contains verdict keywords: CONSISTENT, MINOR ISSUES, MAJOR ISSUES
-- [ ] Does NOT require "May I write" language (read-only skill)
-- [ ] Has a next-step handoff at the end
-- [ ] Documents parallel phase spawning (Phase 1 and Phase 2 are independent)
-
----
-
-## Director Gate Checks
-
-No director gates — this skill spawns no director gate agents. It IS the holistic
-review; delegating to a director gate would create a circular dependency.
+- [ ] 包含必填 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含 ≥2 个阶段标题
+- [ ] 包含 verdict 关键词：CONSISTENT、MINOR ISSUES、MAJOR ISSUES
+- [ ] 不包含"May I write"语言（只读 Skill）
+- [ ] 末尾包含适合对应 verdict 的下一步交接
+- [ ] 说明两个阶段并行运行（不是依次运行）
+- [ ] 说明无 Director 门控（不读取 review-mode.txt）
 
 ---
 
-## Test Cases
+## Director 门控检查
 
-### Case 1: Happy Path — Clean GDD set with no conflicts
-
-**Fixture:**
-- `design/gdd/` contains ≥3 system GDDs
-- All GDDs are internally consistent: no formula contradictions, no competing ownership, no stale references
-- All GDDs align with the pillars defined in `design/gdd/game-pillars.md`
-
-**Input:** `/review-all-gdds`
-
-**Expected behavior:**
-1. Skill reads all GDD files in `design/gdd/`
-2. Phase 1 (consistency scan) and Phase 2 (design theory check) spawn in parallel
-3. Phase 1 finds no contradictions, no formula mismatches, no ownership conflicts
-4. Phase 2 finds no pillar drift, no dominant strategies, no cognitive overload
-5. Skill outputs a structured findings table with 0 blocking issues
-6. Verdict: CONSISTENT
-
-**Assertions:**
-- [ ] Both review phases are spawned in parallel (not sequentially)
-- [ ] Output includes a findings table (even if empty — shows "No issues found")
-- [ ] Verdict is CONSISTENT when no conflicts are found
-- [ ] Skill does NOT write any files without user approval
-- [ ] Next-step handoff to `/architecture-review` or `/create-architecture` is present
+无 Director 门控——该 Skill 无论审核模式如何均不生成任何 Director 门控代理。该 Skill 本身就是 Opus 级别的跨文档评审。
 
 ---
 
-### Case 2: Failure Path — Conflicting rules between two GDDs
+## 测试用例
 
-**Fixture:**
-- GDD-A defines a floor value (e.g. "minimum [output] is [N]")
-- GDD-B states a mechanic that bypasses that floor (e.g. "[mechanic] can reduce [output] to 0")
-- The two GDDs are otherwise complete and valid
+### 用例 1：正常路径——GDD 集合整洁，两个阶段均通过
 
-**Input:** `/review-all-gdds`
+**Fixture：**
+- `design/gdd/` 包含 ≥3 个已批准系统 GDD
+- GDD 之间无规则冲突
+- 所有跨文档依赖均有效
 
-**Expected behavior:**
-1. Phase 1 (consistency scan) detects the contradiction between GDD-A and GDD-B
-2. Conflict is reported with: both filenames, the specific conflicting rules, and severity HIGH
-3. Verdict: MAJOR ISSUES
-4. Handoff instructs user to resolve the conflict and re-run before proceeding
+**输入：** `/review-all-gdds`
 
-**Assertions:**
-- [ ] Verdict is MAJOR ISSUES (not CONSISTENT or MINOR ISSUES)
-- [ ] Both GDD filenames are named in the conflict entry
-- [ ] The specific contradicting rules are quoted or described (not vague "conflict found")
-- [ ] Issue is classified as severity HIGH (blocking)
-- [ ] Skill does NOT auto-resolve the conflict
+**预期行为：**
+1. Skill 读取 `design/gdd/` 中所有 GDD
+2. 第一阶段（一致性检查）和第二阶段（设计理论检查）并行生成
+3. 两个阶段均返回通过结果
+4. Skill 输出完整性说明和通过理由
+5. Verdict 为 CONSISTENT
 
----
-
-### Case 3: Partial Path — Single GDD with orphaned dependency reference
-
-**Fixture:**
-- GDD-A lists a dependency in its Dependencies section pointing to "system-B"
-- No GDD for system-B exists in `design/gdd/`
-- All other GDDs are consistent
-
-**Input:** `/review-all-gdds`
-
-**Expected behavior:**
-1. Phase 1 detects the orphaned dependency reference in GDD-A
-2. Issue is reported as: DEPENDENCY GAP — GDD-A references system-B which has no GDD
-3. No other conflicts found
-4. Verdict: MINOR ISSUES (dependency gap is advisory, not blocking by itself)
-
-**Assertions:**
-- [ ] Verdict is MINOR ISSUES (not MAJOR ISSUES for a single orphaned reference)
-- [ ] The specific GDD filename and the missing dependency name are reported
-- [ ] Skill suggests running `/design-system system-B` to resolve the gap
-- [ ] Skill does NOT skip or silently ignore the missing dependency
+**断言：**
+- [ ] 两个阶段并行运行（不是依次运行）
+- [ ] Verdict 为 CONSISTENT
+- [ ] 不写入任何文件
+- [ ] 末尾包含适合对应 verdict 的下一步交接（`/architecture-review` 或 `/create-architecture`）
 
 ---
 
-### Case 4: Edge Case — No GDD files found
+### 用例 2：冲突规则——两个 GDD 有相互矛盾的定义
 
-**Fixture:**
-- `design/gdd/` directory is empty or does not exist
-- No GDD files are present
+**Fixture：**
+- `design/gdd/combat.md` 定义了一条游戏规则
+- `design/gdd/physics.md` 定义了与上述规则相矛盾的规则
 
-**Input:** `/review-all-gdds`
+**输入：** `/review-all-gdds`
 
-**Expected behavior:**
-1. Skill attempts to read files in `design/gdd/`
-2. No files found — skill outputs an error with guidance
-3. Skill recommends running `/brainstorm` and `/design-system` before re-running
-4. Skill does NOT produce a verdict (CONSISTENT / MINOR ISSUES / MAJOR ISSUES)
+**预期行为：**
+1. 第一阶段（一致性检查）检测到规则冲突
+2. 报告命名两个冲突的 GDD 文件
+3. 报告引用每个文档中相互矛盾的具体规则文本
+4. Verdict 为 MAJOR ISSUES
 
-**Assertions:**
-- [ ] Skill outputs a clear error message when no GDDs are found
-- [ ] No verdict is produced when the directory is empty
-- [ ] Skill recommends the correct next action (`/brainstorm` or `/design-system`)
-- [ ] Skill does NOT crash or produce a partial report
-
----
-
-### Case 5: Director Gate — No gate spawned regardless of review mode
-
-**Fixture:**
-- `design/gdd/` contains ≥2 consistent system GDDs
-- `production/session-state/review-mode.txt` exists with content `full`
-
-**Input:** `/review-all-gdds`
-
-**Expected behavior:**
-1. Skill reads all GDDs and runs the two review phases
-2. Skill does NOT read `review-mode.txt`
-3. Skill does NOT spawn any director gate agent (CD-, TD-, PR-, AD- prefixed)
-4. Skill completes and outputs its verdict normally
-5. Review mode setting has no effect on this skill's behavior
-
-**Assertions:**
-- [ ] No director gate agents are spawned at any point
-- [ ] Skill does NOT read `production/session-state/review-mode.txt`
-- [ ] Output does not contain any "Gate: [GATE-ID]" or "skipped" gate entries
-- [ ] The skill produces a verdict regardless of review mode
-- [ ] R4 metric: gate count for this skill = 0 in all modes
+**断言：**
+- [ ] Verdict 为 MAJOR ISSUES
+- [ ] 两个冲突的 GDD 文件名均在报告中命名
+- [ ] 引用了相互矛盾的具体规则
+- [ ] 输出提供明确的修复建议
 
 ---
 
-## Protocol Compliance
+### 用例 3：孤立依赖引用
 
-- [ ] Phase 1 (consistency) and Phase 2 (design theory) spawned in parallel — not sequentially
-- [ ] Does NOT write any files without "May I write" approval
-- [ ] Findings table shown before any write ask
-- [ ] Verdict is one of exactly: CONSISTENT, MINOR ISSUES, MAJOR ISSUES
-- [ ] Ends with appropriate handoff: MAJOR ISSUES → fix and re-run; MINOR ISSUES → may proceed with awareness; CONSISTENT → `/create-architecture`
+**Fixture：**
+- `design/gdd/inventory.md` 引用一个名为 "crafting-system" 的系统
+- `design/gdd/crafting.md` 不存在（尚未设计该系统）
+
+**输入：** `/review-all-gdds`
+
+**预期行为：**
+1. 第一阶段检测到孤立依赖
+2. 报告注明 `inventory.md` 引用了不存在的 `crafting-system`
+3. 建议运行 `/design-system crafting`
+4. Verdict 为 MINOR ISSUES（依赖缺失，但不是直接规则冲突）
+
+**断言：**
+- [ ] Verdict 为 MINOR ISSUES（不是 MAJOR ISSUES 或 CONSISTENT）
+- [ ] 报告中命名孤立的依赖引用
+- [ ] Skill 建议 `/design-system` 作为下一步
+- [ ] 输出区分孤立依赖（MINOR）和规则冲突（MAJOR）
 
 ---
 
-## Coverage Notes
+### 用例 4：失败路径——未找到 GDD 文件
 
-- Economic balance analysis (source/sink loops) requires cross-GDD resource data — covered
-  structurally by Case 2 (the conflict detection pattern is the same).
-- The design theory phase (Phase 2) checks including dominant strategy detection and
-  cognitive overload are not individually fixture-tested — they follow the same
-  pattern as consistency checks and are validated via the pillar drift case structure.
-- The `since-last-review` scoping mode is not tested here — it is a runtime concern.
+**Fixture：**
+- `design/gdd/` 目录为空或不存在
+
+**输入：** `/review-all-gdds`
+
+**预期行为：**
+1. Skill 尝试读取 `design/gdd/` 中的文件
+2. 未找到文件——Skill 输出错误并给出指导
+3. Skill 建议运行 `/brainstorm` 和 `/design-system` 后再重新运行
+4. Skill 不生成 verdict（CONSISTENT / MINOR ISSUES / MAJOR ISSUES）
+
+**断言：**
+- [ ] 未找到 GDD 时 Skill 输出明确错误消息
+- [ ] 目录为空时不生成 verdict
+- [ ] Skill 推荐正确的下一步操作（`/brainstorm` 或 `/design-system`）
+- [ ] Skill 不崩溃或生成部分报告
+
+---
+
+### 用例 5：Director 门控——无论审核模式如何均不生成门控
+
+**Fixture：**
+- `design/gdd/` 包含 ≥2 个一致的系统 GDD
+- `production/session-state/review-mode.txt` 存在，内容为 `full`
+
+**输入：** `/review-all-gdds`
+
+**预期行为：**
+1. Skill 读取所有 GDD 并运行两个评审阶段
+2. Skill 不读取 `review-mode.txt`
+3. Skill 不生成任何 Director 门控代理（无 CD-、TD-、PR-、AD- 前缀）
+4. Skill 正常完成并输出 verdict
+5. 审核模式设置对该 Skill 行为无影响
+
+**断言：**
+- [ ] 全程不生成 Director 门控代理
+- [ ] Skill 不读取 `production/session-state/review-mode.txt`
+- [ ] 输出不包含任何"Gate: [GATE-ID]"或门控跳过条目
+- [ ] 无论审核模式如何 Skill 均生成 verdict
+- [ ] R4 指标：该 Skill 在所有模式下门控数量 = 0
+
+---
+
+## 协议合规
+
+- [ ] 第一阶段（一致性）和第二阶段（设计理论）并行生成——不是依次生成
+- [ ] 不在无"May I write"批准的情况下写入任何文件
+- [ ] 任何写入询问前展示结论表
+- [ ] Verdict 严格为以下之一：CONSISTENT、MINOR ISSUES、MAJOR ISSUES
+- [ ] 末尾包含适合对应 verdict 的交接：MAJOR ISSUES → 修复后重新运行；MINOR ISSUES → 可继续并知晓问题；CONSISTENT → `/create-architecture`
+
+---
+
+## 覆盖率说明
+
+- 经济平衡分析（来源/汇出循环）需要跨 GDD 的资源数据——通过用例 2 结构性覆盖（冲突检测模式相同）。
+- 设计理论阶段（第二阶段）的检查项（包括主导策略检测和认知过载）未独立设计 Fixture 测试——遵循与一致性检查相同的模式，通过支柱漂移用例结构验证。
+- `since-last-review` 范围模式未在此测试——这是运行时问题。

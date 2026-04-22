@@ -1,181 +1,179 @@
 ---
 name: release-checklist
-description: "Generates a comprehensive pre-release validation checklist covering build verification, certification requirements, store metadata, and launch readiness."
+description: "生成涵盖构建验证、认证要求、商店元数据和发布就绪的全面发布前验证清单。"
 argument-hint: "[platform: pc|console|mobile|all]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write
 ---
 
-> **Explicit invocation only**: This skill should only run when the user explicitly requests it with `/release-checklist`. Do not auto-invoke based on context matching.
+> **仅限显式调用**：本技能只在用户明确输入 `/release-checklist` 时运行。请勿根据上下文匹配自动调用。
 
-## Phase 1: Parse Arguments
+## 阶段 1：解析参数
 
-Read the argument for the target platform (`pc`, `console`, `mobile`, or `all`). If no platform is specified, default to `all`.
-
----
-
-## Phase 2: Load Project Context
-
-- Read `CLAUDE.md` for project context, version information, and platform targets.
-- Read the current milestone from `production/milestones/` to understand what features and content should be included in this release.
+读取目标平台参数（`pc`、`console`、`mobile` 或 `all`）。若未指定平台，默认为 `all`。
 
 ---
 
-## Phase 3: Scan Codebase
+## 阶段 2：加载项目上下文
 
-Scan for outstanding issues:
-
-- Count `TODO` comments
-- Count `FIXME` comments
-- Count `HACK` comments
-- Note their locations and severity
-
-Check for test results in any test output directories or CI logs if available.
+- 读取 `CLAUDE.md`，获取项目上下文、版本信息和目标平台。
+- 读取 `production/milestones/` 中的当前里程碑，了解本次发布应包含哪些功能和内容。
 
 ---
 
-## Phase 4: Generate the Release Checklist
+## 阶段 3：扫描代码库
+
+扫描未解决的问题：
+
+- 统计 `TODO` 注释数量
+- 统计 `FIXME` 注释数量
+- 统计 `HACK` 注释数量
+- 记录其位置和严重程度
+
+检查测试结果目录或 CI 日志中的可用测试结果。
+
+---
+
+## 阶段 4：生成发布清单
 
 ```markdown
-## Release Checklist: [Version] -- [Platform]
-Generated: [Date]
+## 发布清单：[版本] -- [平台]
+生成日期：[日期]
 
-### Codebase Health
-- TODO count: [N] ([list top 5 if many])
-- FIXME count: [N] ([list all -- these are potential blockers])
-- HACK count: [N] ([list all -- these need review])
+### 代码库健康状态
+- TODO 数量：[N]（若较多则列出前 5 条）
+- FIXME 数量：[N]（全部列出——可能是阻断项）
+- HACK 数量：[N]（全部列出——需要评审）
 
-### Build Verification
-- [ ] Clean build succeeds on all target platforms
-- [ ] No compiler warnings (zero-warning policy)
-- [ ] All assets included and loading correctly
-- [ ] Build size within budget ([target size])
-- [ ] Build version number correctly set ([version])
-- [ ] Build is reproducible from tagged commit
+### 构建验证
+- [ ] 在所有目标平台上干净构建成功
+- [ ] 无编译器警告（零警告策略）
+- [ ] 所有资源已包含并正确加载
+- [ ] 构建体积在预算范围内（[目标体积]）
+- [ ] 构建版本号设置正确（[版本]）
+- [ ] 构建可从已打标签的 commit 复现
 
-### Quality Gates
-- [ ] Zero S1 (Critical) bugs
-- [ ] Zero S2 (Major) bugs -- or documented exceptions with producer approval
-- [ ] All critical path features tested and signed off by QA
-- [ ] Performance within budgets:
-  - [ ] Target FPS met on minimum spec hardware
-  - [ ] Memory usage within budget
-  - [ ] Load times within budget
-  - [ ] No memory leaks over extended play sessions
-- [ ] No regression from previous build
-- [ ] Soak test passed (4+ hours continuous play)
+### 质量门禁
+- [ ] 零 S1（严重）Bug
+- [ ] 零 S2（主要）Bug——或已有制作人批准的书面例外
+- [ ] 所有关键路径功能经 QA 测试并签核
+- [ ] 性能达标：
+  - [ ] 最低配置硬件上达到目标帧率
+  - [ ] 内存用量在预算内
+  - [ ] 加载时间在预算内
+  - [ ] 长时间游玩无内存泄漏
+- [ ] 与上一构建相比无回归
+- [ ] 浸泡测试通过（连续游玩 4+ 小时）
 
-### Content Complete
-- [ ] All placeholder assets replaced with final versions
-- [ ] All TODO/FIXME in content files resolved or documented
-- [ ] All player-facing text proofread
-- [ ] All text localization-ready (no hardcoded strings)
-- [ ] Audio mix finalized and approved
-- [ ] Credits complete and accurate
+### 内容完整性
+- [ ] 所有占位资源已替换为最终版本
+- [ ] 内容文件中的所有 TODO/FIXME 已解决或已记录
+- [ ] 所有面向玩家的文本已校对
+- [ ] 所有文本均可本地化（无硬编码字符串）
+- [ ] 音频混音已最终确定并获批准
+- [ ] 致谢名单已完整且准确
 ```
 
-Add platform-specific sections based on the argument:
+根据参数添加平台专属章节：
 
-**For `pc`:**
+**`pc` 平台：**
 ```markdown
-### Platform Requirements: PC
-- [ ] Minimum and recommended specs verified and documented
-- [ ] Keyboard+mouse controls fully functional
-- [ ] Controller support tested (Xbox, PlayStation, generic)
-- [ ] Resolution scaling tested (1080p, 1440p, 4K, ultrawide)
-- [ ] Windowed, borderless, and fullscreen modes working
-- [ ] Graphics settings save and load correctly
-- [ ] Steam/Epic/GOG SDK integrated and tested
-- [ ] Achievements functional
-- [ ] Cloud saves functional
-- [ ] Steam Deck compatibility verified (if targeting)
+### 平台要求：PC
+- [ ] 最低和推荐配置已验证并记录
+- [ ] 键鼠控制完全可用
+- [ ] 手柄支持已测试（Xbox、PlayStation、通用型）
+- [ ] 分辨率缩放已测试（1080p、1440p、4K、超宽屏）
+- [ ] 窗口、无边框和全屏模式均正常运行
+- [ ] 画质设置可正确保存和加载
+- [ ] Steam/Epic/GOG SDK 已集成并测试
+- [ ] 成就功能正常
+- [ ] 云存档功能正常
+- [ ] Steam Deck 兼容性已验证（如需支持）
 ```
 
-**For `console`:**
+**`console` 平台：**
 ```markdown
-### Platform Requirements: Console
-- [ ] TRC/TCR/Lotcheck requirements checklist complete
-- [ ] Platform-specific controller prompts display correctly
-- [ ] Suspend/resume works correctly
-- [ ] User switching handled properly
-- [ ] Network connectivity loss handled gracefully
-- [ ] Storage full scenario handled
-- [ ] Parental controls respected
-- [ ] Platform-specific achievement/trophy integration tested
-- [ ] First-party certification submission prepared
+### 平台要求：主机
+- [ ] TRC/TCR/Lotcheck 要求清单已完成
+- [ ] 平台专属手柄按键提示正确显示
+- [ ] 休眠/唤醒功能正常
+- [ ] 用户切换处理正确
+- [ ] 网络断开情况已优雅处理
+- [ ] 存储空间不足情况已处理
+- [ ] 家长控制设置已生效
+- [ ] 平台专属成就/奖杯集成已测试
+- [ ] 第一方认证提交包已准备完毕
 ```
 
-**For `mobile`:**
+**`mobile` 平台：**
 ```markdown
-### Platform Requirements: Mobile
-- [ ] App store guidelines compliance verified
-- [ ] All required device permissions justified and documented
-- [ ] Privacy policy linked and accurate
-- [ ] Data safety/nutrition labels completed
-- [ ] Touch controls tested on multiple screen sizes
-- [ ] Battery usage within acceptable range
-- [ ] Background behavior correct (pause, resume, terminate)
-- [ ] Push notification permissions handled correctly
-- [ ] In-app purchase flow tested (if applicable)
-- [ ] App size within store limits
+### 平台要求：移动端
+- [ ] 应用商店指南合规性已验证
+- [ ] 所有必需的设备权限均有说明并已记录
+- [ ] 隐私政策已链接且内容准确
+- [ ] 数据安全/营养标签已完成
+- [ ] 触控操作已在多种屏幕尺寸上测试
+- [ ] 电池消耗在可接受范围内
+- [ ] 后台行为正确（暂停、恢复、终止）
+- [ ] 推送通知权限处理正确
+- [ ] 应用内购买流程已测试（如适用）
+- [ ] 应用体积在商店限制内
 ```
 
-**Store and launch sections (all platforms):**
+**商店与发布（所有平台）：**
 ```markdown
-### Store / Distribution
-- [ ] Store page metadata complete and proofread
-  - [ ] Short description
-  - [ ] Long description
-  - [ ] Feature list
-  - [ ] System requirements (PC)
-- [ ] Screenshots up to date and per-platform resolution requirements met
-- [ ] Trailers up to date
-- [ ] Key art and capsule images current
-- [ ] Age rating obtained and configured:
+### 商店 / 发行渠道
+- [ ] 商店页面元数据完整且已校对
+  - [ ] 简短描述
+  - [ ] 详细描述
+  - [ ] 功能列表
+  - [ ] 系统要求（PC）
+- [ ] 截图已更新并符合各平台分辨率要求
+- [ ] 宣传视频已更新
+- [ ] 主视觉图和封面图已是最新版本
+- [ ] 年龄分级已获取并已配置：
   - [ ] ESRB
   - [ ] PEGI
-  - [ ] Other regional ratings as required
-- [ ] Legal notices, EULA, and privacy policy in place
-- [ ] Third-party license attributions complete
-- [ ] Pricing configured for all regions
+  - [ ] 其他地区所需分级
+- [ ] 法律声明、EULA 和隐私政策已到位
+- [ ] 第三方许可归属已完整
+- [ ] 所有地区的定价已配置
 
-### Launch Readiness
-- [ ] Analytics / telemetry verified and receiving data
-- [ ] Crash reporting configured and dashboard accessible
-- [ ] Day-one patch prepared and tested (if needed)
-- [ ] On-call team schedule set for first 72 hours
-- [ ] Community launch announcements drafted
-- [ ] Press/influencer keys prepared for distribution
-- [ ] Support team briefed on known issues and FAQ
-- [ ] Rollback plan documented (if critical issues found post-launch)
+### 发布就绪
+- [ ] 数据分析 / 遥测已验证并正在接收数据
+- [ ] 崩溃报告已配置且仪表盘可访问
+- [ ] 首日补丁已准备并测试（如需要）
+- [ ] 发布后 72 小时值班团队排班已安排
+- [ ] 社区发布公告草稿已完成
+- [ ] 媒体/网红体验码已准备好分发
+- [ ] 支持团队已了解已知问题和 FAQ
+- [ ] 回滚方案已记录（如发布后发现严重问题）
 
-### Go / No-Go: [READY / NOT READY]
+### 上线 / 不上线：[READY / NOT READY]
 
-**Rationale:**
-[Summary of readiness assessment. List any blocking items that must be
-resolved before launch. If NOT READY, list the specific items that need
-resolution and estimated time to address them.]
+**理由：**
+[发布就绪状态总结。列出上线前必须解决的阻断项。若 NOT READY，列出具体需要解决的事项及预计处理时间。]
 
-**Sign-offs Required:**
-- [ ] QA Lead
-- [ ] Technical Director
-- [ ] Producer
-- [ ] Creative Director
+**需要签核：**
+- [ ] QA 负责人
+- [ ] 技术总监
+- [ ] 制作人
+- [ ] 创意总监
 ```
 
 ---
 
-## Phase 5: Save Checklist
+## 阶段 5：保存清单
 
-Present the checklist to the user with: total checklist items, number of known blockers (FIXME/HACK counts, known bugs).
+向用户展示清单，并说明：清单项总数、已知阻断项数量（FIXME/HACK 数量、已知 Bug）。
 
-Ask: "May I write this to `production/releases/release-checklist-[version].md`?"
+询问："May I write this to `production/releases/release-checklist-[version].md`？"
 
-If yes, write the file, creating the directory if needed.
+若同意，写入文件（如需则创建目录）。
 
 ---
 
-## Phase 6: Next Steps
+## 阶段 6：后续步骤
 
-- Run `/gate-check` for a formal phase gate verdict before proceeding to release.
-- Coordinate final sign-offs via `/team-release`.
+- 在进入发布流程前，运行 `/gate-check` 获取正式阶段门禁裁定。
+- 通过 `/team-release` 协调最终签核。

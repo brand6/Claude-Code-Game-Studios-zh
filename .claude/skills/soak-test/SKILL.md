@@ -1,283 +1,266 @@
 ---
 name: soak-test
-description: "Generate a soak test protocol for extended play sessions. Defines what to observe, measure, and log during long play sessions to surface slow leaks, fatigue effects, and edge cases that only appear after sustained play. Primarily used in Polish and Release phases."
+description: "生成耐久测试方案，用于长时间游戏会话。定义在持续游玩过程中需要观察、测量和记录的内容，以发现缓慢泄漏、疲劳效应以及只有在长期游玩后才会出现的边缘情况。主要用于打磨阶段和发布阶段。"
 argument-hint: "[duration: 30m | 1h | 2h | 4h] [focus: memory | stability | balance | all]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write
 ---
 
-# Soak Test
+# 耐久测试
 
-A soak test (also called an endurance test) is an extended play session run
-with specific observation goals. Unlike a smoke check (broad critical path,
-~10 min) or a single-feature playtest (~30 min), a soak test runs for **30
-minutes to several hours** to surface:
+耐久测试（也称为浸泡测试）是一种带有明确观测目标的长时间游戏会话。
+与烟雾测试（覆盖关键路径、约 10 分钟）或单功能游戏测试（约 30 分钟）不同，
+耐久测试持续 **30 分钟到数小时**，用于发现：
 
-- **Memory leaks** — gradual heap growth that only appears after scene transitions
-- **Performance drift** — frame time degradation that worsens over time
-- **State accumulation bugs** — issues that only appear after N repetitions
-  of a mechanic (inventory full, score overflow, AI state corruption)
-- **Fun fatigue** — mechanics that feel good in a first session but grow
-  repetitive over extended play
-- **Content exhaustion** — the point where players run out of novel content
+- **内存泄漏** — 只在场景切换后才会出现的堆内存缓慢增长
+- **性能漂移** — 随时间推移不断恶化的帧时间衰退
+- **状态累积缺陷** — 只有在某个机制重复 N 次后才会出现的问题
+  （背包已满、分数溢出、AI 状态损坏）
+- **乐趣疲劳** — 第一局感觉不错但长时间游玩后变得重复的机制
+- **内容耗尽** — 玩家耗尽新鲜内容的时间点
 
-**This skill generates the observation protocol and analysis harness — the
-human does the actual playing.**
+**本 skill 生成观测方案和分析框架——实际游玩由人工完成。**
 
-**Output:** `production/qa/soak-test-[date]-[duration].md`
+**输出：** `production/qa/soak-test-[日期]-[时长].md`
 
-**When to run:**
-- Polish phase — before `/gate-check release`
-- After fixing a memory or stability issue (regression soak)
-- When extended play has not been formally tracked
+**何时运行：**
+- 打磨阶段——在执行 `/gate-check release` 之前
+- 修复内存或稳定性问题之后（回归耐久测试）
+- 当长时间游玩从未被正式追踪时
 
 ---
 
-## 1. Parse Arguments
+## 1. 解析参数
 
-**Duration** (default: `1h`):
-- `30m` — short soak; suitable for testing a single mechanic or scene
-- `1h` — standard soak; covers most common leak categories
-- `2h` — extended soak; recommended for first full Polish soak
-- `4h` — deep soak; required for games with long session design (RPGs, sims)
+**时长**（默认：`1h`）：
+- `30m` — 短耐久；适合测试单个机制或场景
+- `1h` — 标准耐久；覆盖大多数常见泄漏类别
+- `2h` — 延长耐久；推荐用于首次完整打磨阶段耐久
+- `4h` — 深度耐久；长会话设计游戏必做（RPG、模拟类）
 
-**Focus** (default: `all`):
-- `memory` — focus on heap size, object count, leak patterns
-- `stability` — focus on crash/freeze/hang detection
-- `balance` — focus on fun fatigue, content exhaustion, difficulty perception
-- `all` — all of the above
-
----
-
-## 2. Load Context
-
-Read:
-- `.claude/docs/technical-preferences.md` — engine (for engine-specific memory
-  monitoring guidance), performance budgets (memory ceiling, target FPS)
-- `design/gdd/game-concept.md` — intended session length (for comparison against
-  soak duration), core loop description
-- Most recent file in `production/playtests/` — prior playtest findings
-  (to avoid re-documenting known issues)
-- Most recent file in `production/qa/qa-plan-*.md` — current sprint test coverage
-  (to understand what has been formally tested vs. what the soak covers)
-
-Note any performance budget targets from technical-preferences.md:
-- Memory ceiling: [N MB, or "not set"]
-- Target FPS: [N, or "not set"]
-- Frame budget: [N ms, or "not set"]
+**焦点**（默认：`all`）：
+- `memory` — 专注于堆大小、对象数量、泄漏模式
+- `stability` — 专注于崩溃/卡死/挂起检测
+- `balance` — 专注于乐趣疲劳、内容耗尽、难度感知
+- `all` — 以上全部
 
 ---
 
-## 3. Define Observation Checkpoints
+## 2. 加载上下文
 
-Based on duration, generate timed checkpoints:
+读取：
+- `.claude/docs/technical-preferences.md` — 引擎（用于引擎专项内存监控指导）、性能预算（内存上限、目标帧率）
+- `design/gdd/game-concept.md` — 预期会话时长（与耐久时长对比）、核心循环描述
+- `production/playtests/` 中最新文件 — 此前的游戏测试发现（避免重复记录已知问题）
+- `production/qa/qa-plan-*.md` 中最新文件 — 当前冲刺测试覆盖情况（了解已正式测试的内容与耐久覆盖范围）
 
-**30m soak**: T+0, T+10, T+20, T+30
-**1h soak**: T+0, T+15, T+30, T+45, T+60
-**2h soak**: T+0, T+20, T+40, T+60, T+80, T+100, T+120
-**4h soak**: T+0, T+30, T+60, T+90, T+120, T+180, T+240
-
-At each checkpoint, the observer records the observation items defined in
-Phase 4.
-
----
-
-## 4. Generate the Soak Test Protocol
-
-### Memory / Stability observation items (if focus = memory or all)
-
-Engine-specific monitoring guidance:
-
-**Godot 4:**
-- Open Debugger → Monitors tab; track `Memory → Static Memory` and
-  `Object Count → Objects` across checkpoints
-- Record: Static Memory (KB), Object Count, Orphan Nodes count
-- Alert threshold: Memory growth > 20% from T+0 after the first 15 minutes
-  (some growth on load is expected; sustained growth indicates a leak)
-- Note: `Performance.get_monitor(Performance.MEMORY_STATIC)` returns bytes
-  in Godot 4.6
-
-**Unity:**
-- Open Memory Profiler (Window → Analysis → Memory Profiler)
-- Record: Total Reserved Memory (MB), GC Allocated (MB), Object Count at each checkpoint
-- Alert threshold: GC Allocated growing monotonically across 3+ checkpoints
-
-**Unreal Engine:**
-- Use `stat memory` console command at each checkpoint
-- Record: Physical Memory Used (MB), Physical Memory Available
-- Alert threshold: Physical Memory Used growth > 50MB over the full soak
-
-### Stability observation items (if focus = stability or all)
-
-At each checkpoint, note:
-- [ ] No crash, hang, or freeze occurred since last checkpoint
-- [ ] Frame rate still within target budget ([target FPS] fps)
-- [ ] Audio still playing correctly (no desync or silence)
-- [ ] All HUD elements still rendering correctly
-- [ ] Input responding as expected (no input loss or lag spike)
-
-### Balance / fatigue observation items (if focus = balance or all)
-
-Collect subjective observations at each checkpoint:
-- [ ] Core mechanic still feels rewarding (Y/N)
-- [ ] Perceived difficulty level: [too easy / appropriate / too hard]
-- [ ] Any "I've seen this before" moments since last checkpoint? (novel content exhaustion)
-- [ ] Any moment of frustration since last checkpoint? Note cause.
-- [ ] Any moment of peak engagement since last checkpoint? Note cause.
+记录来自 technical-preferences.md 的性能预算目标：
+- 内存上限：[N MB，或"未设置"]
+- 目标帧率：[N，或"未设置"]
+- 帧预算：[N ms，或"未设置"]
 
 ---
 
-## 5. Generate the Protocol Document
+## 3. 定义观测检查点
+
+根据时长生成定时检查点：
+
+**30 分钟耐久**：T+0、T+10、T+20、T+30
+**1 小时耐久**：T+0、T+15、T+30、T+45、T+60
+**2 小时耐久**：T+0、T+20、T+40、T+60、T+80、T+100、T+120
+**4 小时耐久**：T+0、T+30、T+60、T+90、T+120、T+180、T+240
+
+在每个检查点，观测者记录第 4 阶段定义的观测项。
+
+---
+
+## 4. 生成耐久测试方案
+
+### 内存/稳定性观测项（如 focus = memory 或 all）
+
+引擎专项监控指导：
+
+**Godot 4：**
+- 打开调试器 → 监视器选项卡；跨检查点追踪 `Memory → Static Memory` 和 `Object Count → Objects`
+- 记录：静态内存（KB）、对象数量、孤立节点数
+- 警报阈值：前 15 分钟后（初始加载期允许少量增长），内存增长 > 20%（持续增长表示存在泄漏）
+- 注意：Godot 4.6 中 `Performance.get_monitor(Performance.MEMORY_STATIC)` 返回字节数
+
+**Unity：**
+- 打开内存分析器（Window → Analysis → Memory Profiler）
+- 记录每个检查点：总预留内存（MB）、GC 分配（MB）、对象数量
+- 警报阈值：GC 分配在 3 个或更多检查点中单调递增
+
+**Unreal Engine：**
+- 在每个检查点使用控制台命令 `stat memory`
+- 记录：物理内存使用量（MB）、物理内存可用量
+- 警报阈值：整个耐久期间物理内存使用量增长 > 50MB
+
+### 稳定性观测项（如 focus = stability 或 all）
+
+每个检查点记录：
+- [ ] 自上次检查点起未发生崩溃、卡死或挂起
+- [ ] 帧率仍在目标预算内（[目标帧率] fps）
+- [ ] 音频仍正常播放（无不同步或静音）
+- [ ] 所有 HUD 元素仍正常渲染
+- [ ] 输入响应正常（无输入丢失或延迟峰值）
+
+### 平衡/疲劳观测项（如 focus = balance 或 all）
+
+每个检查点收集主观观察：
+- [ ] 核心机制仍具有奖励感（Y/N）
+- [ ] 感知难度：[太简单 / 适当 / 太难]
+- [ ] 自上次检查点起是否有"已经见过"的感觉？（新鲜内容耗尽）
+- [ ] 自上次检查点起是否有挫败感？记录原因。
+- [ ] 自上次检查点起是否有高度投入的时刻？记录原因。
+
+---
+
+## 5. 生成方案文档
 
 ```markdown
-# Soak Test Protocol
+# 耐久测试方案
 
-> **Date**: [date]
-> **Duration**: [duration]
-> **Focus**: [memory | stability | balance | all]
-> **Engine**: [engine]
-> **Generated by**: /soak-test
-
----
-
-## Pre-Session Setup
-
-Before starting the soak:
-
-- [ ] Game is running from a **fresh launch** (not resumed from a prior session)
-- [ ] All background applications closed (minimise OS memory interference)
-- [ ] Performance monitoring tool open and recording:
-  - **Godot**: Debugger → Monitors tab → Memory section visible
-  - **Unity**: Memory Profiler window open
-  - **Unreal**: `stat memory` ready in console
-- [ ] Soak target confirmed: [session design intent from game concept]
-- [ ] Prior known issues to watch for: [from most recent playtest / qa-plan]
+> **日期**：[日期]
+> **时长**：[时长]
+> **焦点**：[memory | stability | balance | all]
+> **引擎**：[引擎]
+> **生成工具**：/soak-test
 
 ---
 
-## Baseline (T+0) — Record Before Playing
+## 开始前准备
 
-| Metric | Baseline Value |
-|--------|---------------|
-| Memory / Heap | [record before first frame of gameplay] |
-| Object Count | [record] |
-| FPS (first 30 seconds) | [record] |
-| [Engine-specific metric] | [record] |
+启动耐久测试前：
+
+- [ ] 游戏从**全新启动**运行（非从上次会话恢复）
+- [ ] 关闭所有后台应用（最小化系统内存干扰）
+- [ ] 性能监控工具已打开并正在记录：
+  - **Godot**：调试器 → 监视器选项卡 → 内存部分可见
+  - **Unity**：内存分析器窗口已打开
+  - **Unreal**：控制台中 `stat memory` 已就绪
+- [ ] 已确认耐久目标：[来自游戏概念文档的会话设计意图]
+- [ ] 需关注的已知问题：[来自最近游戏测试/qa-plan]
 
 ---
 
-## Checkpoint Log
+## 基线记录（T+0）— 游戏前记录
 
-### T+[N] minutes
+| 指标 | 基线值 |
+|------|-------|
+| 内存/堆 | [游戏第一帧前记录] |
+| 对象数量 | [记录] |
+| FPS（前 30 秒）| [记录] |
+| [引擎专项指标] | [记录] |
 
-**Memory / Stability** *(if applicable)*:
+---
 
-| Metric | Value | Δ from Baseline | Alert? |
-|--------|-------|-----------------|--------|
-| Memory / Heap | | | |
-| Object Count | | | |
+## 检查点日志
+
+### T+[N] 分钟
+
+**内存/稳定性** *（如适用）*：
+
+| 指标 | 数值 | 与基线差值 | 警报？|
+|------|------|-----------|------|
+| 内存/堆 | | | |
+| 对象数量 | | | |
 | FPS | | | |
-| Crashes / Hangs | | | |
+| 崩溃/挂起 | | | |
 
-**Stability checks**:
-- [ ] No crash or hang since last checkpoint
-- [ ] Frame rate within budget ([N] fps target)
-- [ ] Audio correct
-- [ ] HUD rendering correctly
-- [ ] Input responding correctly
+**稳定性检查**：
+- [ ] 自上次检查点起无崩溃或挂起
+- [ ] 帧率在预算内（[N] fps 目标）
+- [ ] 音频正常
+- [ ] HUD 正常渲染
+- [ ] 输入响应正常
 
-**Balance / Fatigue** *(if applicable)*:
-- Core mechanic still rewarding: Y / N
-- Difficulty perception: too easy / appropriate / too hard
-- Notable moments: [note any peak engagement or frustration]
-- Content exhaustion signs: Y / N — [describe]
+**平衡/疲劳** *（如适用）*：
+- 核心机制仍具奖励感：Y / N
+- 难度感知：太简单 / 适当 / 太难
+- 值得关注的时刻：[记录任何高度投入或挫败感时刻]
+- 内容耗尽迹象：Y / N — [描述]
 
-**Free observations**:
-*(Note anything unexpected observed since the last checkpoint)*
-
----
-
-[Repeat Checkpoint Log section for each timed checkpoint]
+**自由观察**：
+*（记录自上次检查点以来观察到的任何意外情况）*
 
 ---
 
-## Post-Session Analysis
+[每个定时检查点重复检查点日志部分]
 
-### Memory Trend
+---
 
-| Checkpoint | Memory | Δ/hr extrapolated |
-|------------|--------|-------------------|
+## 会话后分析
+
+### 内存趋势
+
+| 检查点 | 内存 | Δ/hr（推算）|
+|-------|------|----------|
 | T+0 | | |
 | [T+N] | | |
 
-**Leak detected?** Y / N
-**Estimated time to OOM at current rate**: [N hours / not applicable]
+**检测到泄漏？** Y / N
+**按当前速率推算耗尽内存时间**：[N 小时 / 不适用]
 
-### Stability Summary
+### 稳定性摘要
 
-Total crashes: [N]
-Total hangs: [N]
-Worst FPS observed: [N] fps at [checkpoint]
-Performance degradation: stable / mild / severe
+总崩溃次数：[N]
+总挂起次数：[N]
+观察到最低 FPS：[N] fps（位于 [检查点]）
+性能衰退：稳定 / 轻微 / 严重
 
-### Balance / Fatigue Summary
+### 平衡/疲劳摘要
 
-Fun curve: [engaged throughout / fatigue onset at T+N / repetitive from start]
-Content exhaustion point: [never / at T+N / early]
-Difficulty arc: [appropriate / too easy throughout / difficulty spike at T+N]
+乐趣曲线：[全程投入 / 在 T+N 开始疲劳 / 从一开始就重复]
+内容耗尽时间点：[未出现 / 在 T+N / 较早]
+难度曲线：[适当 / 全程太简单 / 在 T+N 难度骤升]
 
-### Issues Found
+### 发现的问题
 
-| ID | Severity | Checkpoint | Description |
-|----|----------|------------|-------------|
-| SOAK-001 | S[1-4] | T+[N] | [description] |
-
----
-
-## Verdict: PASS / PASS WITH CONCERNS / FAIL
-
-**PASS**: No leaks detected, stability maintained, fun factor consistent
-**PASS WITH CONCERNS**: Minor drift or fatigue noted; addressable in Polish
-**FAIL**: Memory leak confirmed, stability breach, or severe fun fatigue
+| ID | 严重程度 | 检查点 | 描述 |
+|----|---------|-------|------|
+| SOAK-001 | S[1-4] | T+[N] | [描述] |
 
 ---
 
-## Sign-Off
+## 结论：PASS / PASS WITH CONCERNS / FAIL
 
-- **Tester**: [name] — [date]
-- **QA Lead review**: [name] — [date]
+**PASS**：未检测到泄漏，稳定性保持，乐趣因素持续
+**PASS WITH CONCERNS**：存在轻微漂移或疲劳；可在打磨阶段处理
+**FAIL**：确认内存泄漏、稳定性问题或严重的乐趣疲劳
+
+---
+
+## 签署确认
+
+- **测试者**：[姓名] — [日期]
+- **QA 负责人审核**：[姓名] — [日期]
 ```
 
 ---
 
-## 6. Write Output
+## 6. 写入输出
 
-Present the protocol summary in conversation, then ask:
+在对话中展示方案摘要，然后询问：
 
-"May I write this soak test protocol to
-`production/qa/soak-test-[date]-[duration].md`?"
+"是否可以将此耐久测试方案写入 `production/qa/soak-test-[日期]-[时长].md`？"
 
-Write only after approval.
+仅在获得批准后写入。
 
-After writing:
+写入后输出：
 
-"Protocol written. To run the soak:
-1. Open the file and follow the Pre-Session Setup checklist
-2. Record each checkpoint as you play
-3. Complete the Post-Session Analysis section when done
-4. File bugs from 'Issues Found' to `production/qa/bugs/`
-5. Run `/bug-triage sprint` after the session to integrate any S1/S2 issues
+"方案已写入。运行耐久测试步骤：
+1. 打开文件并按照开始前准备清单操作
+2. 游玩过程中在每个检查点记录数据
+3. 结束后完成会话后分析部分
+4. 将"发现的问题"中的缺陷提交至 `production/qa/bugs/`
+5. 会话结束后运行 `/bug-triage sprint`，将所有 S1/S2 问题纳入冲刺管理
 
-If the verdict is FAIL, run `/smoke-check` again after fixing the issues."
+如果结论为 FAIL，修复问题后请再次运行 `/smoke-check`。"
 
 ---
 
-## Collaborative Protocol
+## 协作协议
 
-- **This skill generates a protocol — humans run it** — never attempt to
-  run a soak test automatically. The observations require a human observer.
-- **Duration should match the game's session design** — a 5-minute game
-  doesn't need a 4h soak; a city-builder might. Use judgment and ask if unclear.
-- **First soak should be `all` focus** — narrow focus (memory-only) is for
-  regression soaks after a specific fix, not the first pass
-- **Ask before writing** — always confirm before creating the protocol file
+- **本 skill 生成方案——测试由人工执行** — 永远不要尝试自动运行耐久测试。观察需要真人参与。
+- **时长应与游戏会话设计相匹配** — 5 分钟的游戏不需要 4 小时耐久；城市建设游戏可能需要。根据实际判断，不确定时请询问用户。

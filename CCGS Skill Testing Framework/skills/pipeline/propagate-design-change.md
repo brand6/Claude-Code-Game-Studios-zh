@@ -1,175 +1,160 @@
-# Skill Test Spec: /propagate-design-change
+# Skill 测试规范：/propagate-design-change
 
-## Skill Summary
+## Skill 摘要
 
-`/propagate-design-change` handles GDD revision cascades. When a GDD is updated,
-the skill traces all downstream artifacts that reference it: ADRs, TR-registry
-entries, stories, and epics. It produces a structured impact report showing what
-needs to change and why. The skill does NOT automatically apply changes — it
-proposes edits for each affected artifact and asks "May I write" per artifact
-before making any modification.
+`/propagate-design-change design/gdd/[system].md` 在 GDD 修订后扫描所有下游制品（Story、Epic、ADR、TR 注册表）以识别受影响的内容。Skill 生成影响报告并对每个受影响的制品逐一询问"May I write"更新。
 
-The skill is read-only during analysis and write-gated per artifact during the
-update phase. It has no director gates — the analysis itself is mechanical
-tracing, not a creative review.
+在分析阶段（读取 GDD 和制品）Skill 只读；仅在写入阶段（更新受影响的制品）需要用户批准。无 Director 门控——此 Skill 无论审核模式如何均不生成门控代理。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构性）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需 Fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: COMPLETE, BLOCKED, NO IMPACT
-- [ ] Contains "May I write" collaborative protocol language (per-artifact approval)
-- [ ] Has a next-step handoff at the end
-- [ ] Documents that changes are proposed, not applied automatically
-
----
-
-## Director Gate Checks
-
-No director gates — this skill spawns no director gate agents during analysis.
-The impact report is a mechanical tracing operation; no creative or technical
-director review is required at the analysis stage.
+- [ ] 包含必填 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含 ≥2 个阶段标题
+- [ ] 包含 verdict 关键词：COMPLETE、BLOCKED、NO IMPACT
+- [ ] 包含"May I write"协作协议语言（按制品逐一批准）
+- [ ] 末尾包含下一步交接（适合对应 verdict）
+- [ ] 说明无 Director 门控（不读取 review-mode.txt）
 
 ---
 
-## Test Cases
+## Director 门控检查
 
-### Case 1: Happy Path — GDD revision affects 2 stories and 1 epic
-
-**Fixture:**
-- `design/gdd/[system].md` exists and has been recently revised (git diff shows changes)
-- `production/epics/[layer]/EPIC-[system].md` references this GDD
-- 2 story files reference TR-IDs from this GDD
-- The changed GDD section affects the acceptance criteria of both stories
-
-**Input:** `/propagate-design-change design/gdd/[system].md`
-
-**Expected behavior:**
-1. Skill reads the revised GDD and identifies what changed (git diff or content comparison)
-2. Skill scans ADRs, TR-registry, epics, and stories for references to this GDD
-3. Skill produces an impact report: 1 epic affected, 2 stories affected
-4. Skill shows the proposed change for each artifact
-5. For each artifact: asks "May I update [filepath]?" separately
-6. Applies changes only after per-artifact approval
-
-**Assertions:**
-- [ ] Impact report identifies all 3 affected artifacts (1 epic + 2 stories)
-- [ ] Each affected artifact's proposed change is shown before asking to write
-- [ ] "May I write" is asked per artifact (not once for all artifacts)
-- [ ] Skill does NOT apply any changes without per-artifact approval
-- [ ] Verdict is COMPLETE after all approved changes are applied
+无 Director 门控——该 Skill 无论审核模式如何均不生成任何 Director 门控代理。变更传播是一种机械影响追踪操作；不需要创意或技术审核门控。
 
 ---
 
-### Case 2: No Impact — Changed GDD has no downstream references
+## 测试用例
 
-**Fixture:**
-- `design/gdd/[system].md` exists and has been revised
-- No ADRs, stories, or epics reference this GDD's TR-IDs or GDD path
+### 用例 1：正常路径——GDD 修订影响 2 个 Story 和 1 个 Epic
 
-**Input:** `/propagate-design-change design/gdd/[system].md`
+**Fixture：**
+- `design/gdd/[system].md` 已修订（有可检测的内容变化）
+- `production/epics/[layer]/EPIC-[name].md` 引用该 GDD
+- 该 Epic 下 2 个 Story 文件引用受影响的要求
+- 其他 Story 未引用该 GDD
 
-**Expected behavior:**
-1. Skill reads the revised GDD
-2. Skill scans all ADRs, stories, and epics for references
-3. No references found
-4. Skill outputs: "No downstream impact found for [system].md — no artifacts reference this GDD."
-5. No write operations are performed
+**输入：** `/propagate-design-change design/gdd/[system].md`
 
-**Assertions:**
-- [ ] Skill outputs the "No downstream impact found" message
-- [ ] Verdict is NO IMPACT
-- [ ] No "May I write" asks are issued (nothing to update)
-- [ ] Skill does NOT error or crash when no references are found
+**预期行为：**
+1. Skill 读取已修订的 GDD 和所有潜在受影响的制品
+2. 生成影响报告：2 个 Story + 1 个 Epic 受影响，列出其他制品未受影响
+3. 向用户展示完整影响报告
+4. 对 Epic 询问"May I write `production/epics/[layer]/EPIC-[name].md`?"
+5. 对每个受影响的 Story 逐一询问"May I write `production/epics/[layer]/story-[name].md`?"
+6. 批准后写入更新的制品
 
----
-
-### Case 3: In-Progress Story Warning — Referenced story is currently being developed
-
-**Fixture:**
-- A story referencing this GDD has `Status: In Progress`
-- The developer has already started implementing this story
-
-**Input:** `/propagate-design-change design/gdd/[system].md`
-
-**Expected behavior:**
-1. Skill identifies the In Progress story as an affected artifact
-2. Skill outputs an elevated warning: "CAUTION: [story-file] is currently In Progress — a developer may be working on this. Coordinate before updating."
-3. The warning appears in the impact report before the "May I write" ask for that story
-4. User can still approve or skip the update for that story
-
-**Assertions:**
-- [ ] In Progress story is flagged with an elevated warning (distinct from regular affected-artifact entries)
-- [ ] Warning appears before the "May I write" ask for that story
-- [ ] Skill still offers to update the story — the warning does not block the option
-- [ ] Other (non-In-Progress) artifacts are not affected by this warning
+**断言：**
+- [ ] 任何"May I write"询问前先向用户展示完整影响报告
+- [ ] 逐制品询问"May I write"——不是一次性批准整批
+- [ ] 未受影响的制品未被修改
+- [ ] Verdict 为 COMPLETE
 
 ---
 
-### Case 4: Edge Case — No argument provided
+### 用例 2：无影响路径——无下游引用
 
-**Fixture:**
-- Multiple GDDs exist in `design/gdd/`
+**Fixture：**
+- `design/gdd/[system].md` 已修订
+- 无 Story、Epic 或 ADR 文件引用该 GDD
 
-**Input:** `/propagate-design-change` (no argument)
+**输入：** `/propagate-design-change design/gdd/[system].md`
 
-**Expected behavior:**
-1. Skill detects no argument is provided
-2. Skill outputs a usage error: "No GDD specified. Usage: /propagate-design-change design/gdd/[system].md"
-3. Skill lists recently modified GDDs as suggestions (git log)
-4. No analysis is performed
+**预期行为：**
+1. Skill 读取 GDD 并扫描所有下游制品
+2. 未找到引用
+3. Skill 输出："No downstream artifacts reference this GDD. No updates required."
+4. 不提示任何"May I write"
+5. Verdict 为 NO IMPACT
 
-**Assertions:**
-- [ ] Skill outputs a usage error when no argument is given
-- [ ] Usage example is shown with the correct path format
-- [ ] No impact analysis is performed without a target GDD
-- [ ] Skill does NOT silently pick a GDD without user input
-
----
-
-### Case 5: Director Gate — No gate spawned regardless of review mode
-
-**Fixture:**
-- A GDD has been revised with downstream references
-- `production/session-state/review-mode.txt` exists with `full`
-
-**Input:** `/propagate-design-change design/gdd/[system].md`
-
-**Expected behavior:**
-1. Skill reads the GDD and traces downstream references
-2. Skill does NOT read `production/session-state/review-mode.txt`
-3. No director gate agents are spawned at any point
-4. Impact report is produced and per-artifact approval proceeds normally
-
-**Assertions:**
-- [ ] No director gate agents are spawned (no CD-, TD-, PR-, AD- prefixed gates)
-- [ ] Skill does NOT read `production/session-state/review-mode.txt`
-- [ ] Output contains no "Gate: [GATE-ID]" or gate-skipped entries
-- [ ] Review mode has no effect on this skill's behavior
+**断言：**
+- [ ] Skill 完成分析，输出 NO IMPACT 结论
+- [ ] 不生成"May I write"提示
+- [ ] 不写入任何文件
+- [ ] Verdict 为 NO IMPACT
 
 ---
 
-## Protocol Compliance
+### 用例 3：进行中 Story——写入前显示提升警告
 
-- [ ] Reads revised GDD and all potentially affected artifacts before producing impact report
-- [ ] Impact report shown in full before any "May I write" ask
-- [ ] "May I write" asked per artifact — never for the entire set at once
-- [ ] In Progress stories flagged with elevated warning before their approval ask
-- [ ] No director gates — no review-mode.txt read
-- [ ] Ends with next-step handoff appropriate to verdict (COMPLETE or NO IMPACT)
+**Fixture：**
+- GDD 已修订
+- 一个受影响的 Story 的 Status 为 In Progress（有人正在实现该 Story）
+
+**输入：** `/propagate-design-change design/gdd/[system].md`
+
+**预期行为：**
+1. Skill 生成影响报告，标注 In Progress 的 Story
+2. 对进行中的 Story 在"May I write"询问前显示提升警告
+3. 警告格式："⚠ CAUTION: story-[name].md is In Progress. Design change may conflict with active implementation."
+4. 仍然进行"May I write"询问，用户自行决定
+
+**断言：**
+- [ ] 进行中的 Story 的影响报告中包含提升警告
+- [ ] 对进行中的 Story 的"May I write"询问前显示警告
+- [ ] 警告后仍然进行"May I write"询问（不自动阻止）
 
 ---
 
-## Coverage Notes
+### 用例 4：边缘情况——未提供参数
 
-- ADR impact (when a GDD change requires an ADR update or new ADR) follows the
-  same per-artifact approval pattern as story/epic updates — not independently
-  fixture-tested.
-- TR-registry impact (when changed GDD requires new or updated TR-IDs) is part
-  of the analysis phase but not independently fixture-tested.
-- The git diff comparison method (detecting what changed in the GDD) is a runtime
-  concern — fixtures use pre-arranged content differences.
+**Fixture：**
+- 未提供参数
+
+**输入：** `/propagate-design-change`（无参数）
+
+**预期行为：**
+1. Skill 检测到未提供参数
+2. Skill 输出用法错误："No GDD specified. Usage: /propagate-design-change design/gdd/[system].md"
+3. Skill 列出最近修改的 GDD 作为建议（通过 git log）
+4. 不进行任何分析
+
+**断言：**
+- [ ] 未提供参数时 Skill 输出用法错误
+- [ ] 显示正确路径格式的用法示例
+- [ ] 未指定目标 GDD 时不进行影响分析
+- [ ] Skill 不在无用户输入的情况下静默选择 GDD
+
+---
+
+### 用例 5：Director 门控——无论审核模式如何均不生成门控
+
+**Fixture：**
+- GDD 已修订，存在下游引用
+- `production/session-state/review-mode.txt` 存在，内容为 `full`
+
+**输入：** `/propagate-design-change design/gdd/[system].md`
+
+**预期行为：**
+1. Skill 读取 GDD 并追踪下游引用
+2. Skill 不读取 `production/session-state/review-mode.txt`
+3. 全程不生成任何 Director 门控代理
+4. 生成影响报告，正常进行逐制品批准
+
+**断言：**
+- [ ] 不生成 Director 门控代理（无 CD-、TD-、PR-、AD- 前缀的门控）
+- [ ] Skill 不读取 `production/session-state/review-mode.txt`
+- [ ] 输出不包含任何"Gate: [GATE-ID]"或门控跳过条目
+- [ ] 审核模式对该 Skill 行为无影响
+
+---
+
+## 协议合规
+
+- [ ] 生成影响报告前读取已修订的 GDD 和所有可能受影响的制品
+- [ ] 任何"May I write"询问前完整展示影响报告
+- [ ] 逐制品询问"May I write"——不是一次性批准整批
+- [ ] 进行中的 Story 在批准询问前显示提升警告
+- [ ] 无 Director 门控——不读取 review-mode.txt
+- [ ] 末尾包含适合对应 verdict 的下一步交接（COMPLETE 或 NO IMPACT）
+
+---
+
+## 覆盖范围说明
+
+- ADR 影响（GDD 变更需要更新或新建 ADR 时）遵循与 Story/Epic 更新相同的逐制品批准模式——不单独进行 Fixture 测试。
+- TR 注册表影响（GDD 变更需要新建或更新 TR-ID 时）属于分析阶段，不单独进行 Fixture 测试。
+- GDD 差异比较方法（检测 GDD 中变更内容）是运行时问题——Fixture 使用预先安排的内容差异。

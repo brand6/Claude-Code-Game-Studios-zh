@@ -1,84 +1,85 @@
-# Agent Test Spec: sound-designer
+# Agent 测试规格：sound-designer
 
-## Agent Summary
-Domain: SFX specs, audio events, mixing parameters, and sound category definitions.
-Does NOT own: music composition direction (audio-director), code implementation of audio systems.
-Model tier: Sonnet (default).
-No gate IDs assigned.
-
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references SFX / audio events / mixing)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Glob, Grep — does NOT include engine code execution tools
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over music direction or audio code implementation
+## Agent 概述
+职责领域：SFX 规格、音频事件、混音参数与音效类别定义。
+不负责：音乐风格指导（audio-director）、音频代码实现（gameplay-programmer/engine-programmer）。
+模型层级：Sonnet（默认）。
+未分配关卡 ID。
 
 ---
 
-## Test Cases
+## 静态断言（结构检查）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Create an SFX spec for a sword swing attack."
-**Expected behavior:**
-- Produces a complete audio event spec including:
-  - Event name (e.g., `sfx_combat_sword_swing`)
-  - Variation count (minimum 3 to avoid repetition fatigue)
-  - Pitch range (e.g., ±8% randomization)
-  - Volume range and normalization target (e.g., -12 dBFS)
-  - Sound category (e.g., `combat_sfx`)
-  - Suggested layering notes (whoosh layer + impact transient)
-- Output follows the project audio naming convention if one is established
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Compose a looping ambient music track for the forest level."
-**Expected behavior:**
-- Does NOT produce music composition direction or a music brief
-- Explicitly states that music direction belongs to `audio-director`
-- Redirects the request to `audio-director`
-- May note it can provide an SFX ambience layer spec (wind, wildlife) to complement the music once the music direction is set
-
-### Case 3: Dynamic parameter — falloff curve spec
-**Input:** "The sword swing SFX needs distance falloff so it sounds different across the arena."
-**Expected behavior:**
-- Produces a spec for the dynamic parameter including:
-  - Parameter name (e.g., `distance` or `listener_distance`)
-  - Falloff curve type (e.g., logarithmic, linear, custom)
-  - Near/far distance thresholds with corresponding volume and high-frequency attenuation values
-  - Occlusion override behavior if applicable
-- Does NOT write the audio engine integration code (defers to the appropriate programmer)
-
-### Case 4: Naming convention conflict
-**Input:** "Add a new SFX event called `SWORD_HIT_1` for the melee system."
-**Expected behavior:**
-- Identifies that `SWORD_HIT_1` conflicts with the established event naming convention (snake_case with category prefix, e.g., `sfx_combat_sword_hit`)
-- Does NOT silently register the non-conforming name
-- Flags the conflict to `audio-director` with the proposed compliant alternative
-- Will proceed with the corrected name once confirmed by audio-director
-
-### Case 5: Context pass — uses audio style guide
-**Input:** Audio style guide provided in context specifying: "gritty, grounded, no reverb tails over 1.5s, reference: The Witcher 3 combat audio." Request: "Create SFX specs for the full melee combat suite."
-**Expected behavior:**
-- References the "gritty, grounded" tone descriptor in the spec rationale
-- Caps all reverb tail specifications at 1.5 seconds as stated
-- Notes the reference material (The Witcher 3) as a benchmark for mix levels and transient design
-- Does NOT produce specs that contradict the style guide (e.g., no ethereal or heavily reverb-processed specs)
+- [ ] `description:` 字段存在且领域明确（引用 SFX / 音频事件 / 混音参数）
+- [ ] `allowed-tools:` 列表包含 Read、Write、Edit——不含 Bash（不执行构建脚本）
+- [ ] 模型层级为 Sonnet（专员的默认层级）
+- [ ] Agent 定义未主张对音乐方向或音频代码实现拥有权
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (SFX specs, event definitions, mixing parameters)
-- [ ] Redirects music direction requests to audio-director
-- [ ] Returns structured audio event specs (event name, variations, pitch, volume, category)
-- [ ] Does not produce code for audio system implementation
-- [ ] Flags naming convention violations rather than silently accepting non-conforming names
-- [ ] References provided style guides and constraints in all spec output
+### 用例 1：领域内请求——合适的输出
+**输入**："为近战剑击挥动动作设计音效规格。"
+**预期行为**：
+- 产出完整的音频事件规格，包含：
+  - 事件名称（如 `sfx_combat_sword_swing`），符合命名规范
+  - 变体数量（最少3个变体，避免重复感）
+  - 音调范围（如 ±8%，产生自然变化）
+  - 音量（如 -12dBFS），兼顾响度与混音余量
+  - 类别（如 `combat_sfx`），用于混音总线路由
+  - 音频分层说明（如摩擦声底层 + 冲击声高层 + 飞行声层）
+- 不产出任何音频引擎代码（如 AudioStreamPlayer 调用）
+
+### 用例 2：领域外请求——正确重定向
+**输入**："为主菜单和战斗场景设计循环背景音乐。"
+**预期行为**：
+- 不产出音乐规格或作曲指引
+- 明确声明音乐方向属于 `audio-director` 的职责范围
+- 将请求重定向给 `audio-director`
+- 可注明：音乐方向确定后，可设计与音乐搭配的环境音效层（雨声、火焰等）
+
+### 用例 3：距离衰减参数
+**输入**："为战场环境中的爆炸音效设计距离衰减规格。"
+**预期行为**：
+- 产出具体的空间音频参数规格：
+  - 近距离阈值（如 10单位以内，音量 0dB）
+  - 远距离阈值（如 80单位以外，音量 -40dB）
+  - 衰减曲线类型（如对数曲线，模拟真实声音传播）
+  - 遮挡/阻塞覆盖参数（如穿墙时额外衰减 -12dB，高频滤波 -8kHz）
+- 不产出音频引擎实现代码（声明为 [待程序员实现]）
+
+### 用例 4：命名规范冲突
+**输入**："为剑击音效使用事件名 `SWORD_HIT_1`。"
+**预期行为**：
+- 识别 `SWORD_HIT_1` 违反了 `snake_case` 加前缀的命名规范（全大写 + 无领域前缀）
+- 标记命名冲突，不静默接受
+- 提出符合规范的替代命名：`sfx_combat_sword_hit`
+- 在 `audio-director` 确认规范变更后再继续（不擅自修改规范）
+
+### 用例 5：上下文传递——音频风格指南
+**上下文输入**：音频风格指南中说明："写实粗粝的音效风格；避免电子风格的合成声；混响时长不超过1.5秒；参考《巫师3》的地面战斗音效。"
+**输入**："设计骑士穿戴盔甲的穿戴音效。"
+**预期行为**：
+- 引用风格指南中的具体要求（写实 / 粗粝 / 无合成声）
+- 混响时长参数严格 ≤ 1.5秒
+- 在设计说明中引用《巫师3》参考来说明声音感觉
+- 不产出违背风格指南的规格（如不建议使用奇幻魔法的叮当声或合成效果）
 
 ---
 
-## Coverage Notes
-- SFX spec format (Case 1) should match whatever event schema the audio middleware (Wwise/FMOD/built-in) requires
-- Falloff curve (Case 3) verifies the agent produces implementation-ready parameter specs
-- Style guide compliance (Case 5) confirms the agent reads provided context and constrains output accordingly
+## 协议合规
+
+- [ ] 保持在声明领域内（SFX 规格、音频事件、混音参数、命名规范）
+- [ ] 将音乐方向请求重定向给 audio-director
+- [ ] 产出结构化的音频事件规格，而非自由形式的声音描述
+- [ ] 不产出音频代码——所有技术参数标注为 [待程序员实现]
+- [ ] 标记命名规范冲突，提出符合规范的替代方案，并等待确认
+- [ ] 引用上下文中提供的风格指南，不与其矛盾
+
+---
+
+## 覆盖说明
+- 事件规格（用例 1）需要符合项目约定的音频事件命名规范
+- 命名冲突（用例 4）确认 Agent 维护命名一致性，不静默降格处理
+- 风格指南合规（用例 5）验证 Agent 将上下文文档作为约束，而非建议

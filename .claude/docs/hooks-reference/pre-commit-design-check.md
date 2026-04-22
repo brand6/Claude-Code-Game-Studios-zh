@@ -1,70 +1,67 @@
-# Hook: pre-commit-design-check
+# Hook：pre-commit-design-check
 
-## Trigger
+## 触发条件
 
-Runs before any commit that modifies files in `design/` or `assets/data/`.
+在任何修改 `design/` 或 `assets/data/` 目录中文件的提交之前运行。
 
-## Purpose
+## 用途
 
-Ensures design documents and game data files maintain consistency and
-completeness before they enter version control. Catches missing sections,
-broken cross-references, and invalid data before they propagate.
+在设计文档进入版本控制前强制执行设计文档规范。确保 GDD 包含所有必需章节，并验证数据文件的 JSON 格式正确。
 
-## Implementation
+## 实现
 
 ```bash
 #!/bin/bash
-# Pre-commit hook: Design document and game data validation
-# Place in .git/hooks/pre-commit or configure via your hook manager
+# Pre-commit hook：设计文档检查
 
 DESIGN_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^design/')
 DATA_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^assets/data/')
 
 EXIT_CODE=0
 
-# Check design documents for required sections
-if [ -n "$DESIGN_FILES" ]; then
-    for file in $DESIGN_FILES; do
-        if [[ "$file" == *.md ]]; then
-            # Check for required sections in GDD documents
-            if [[ "$file" == design/gdd/* ]]; then
-                for section in "Overview" "Detailed" "Edge Cases" "Dependencies" "Acceptance Criteria"; do
-                    if ! grep -qi "$section" "$file"; then
-                        echo "ERROR: $file missing required section: $section"
-                        EXIT_CODE=1
-                    fi
-                done
-            fi
-        fi
-    done
-fi
+# 检查 GDD 是否包含必需章节
+for file in $DESIGN_FILES; do
+    if [[ "$file" == *.md ]]; then
+        MISSING_SECTIONS=""
 
-# Validate JSON data files
-if [ -n "$DATA_FILES" ]; then
-    for file in $DATA_FILES; do
-        if [[ "$file" == *.json ]]; then
-            # Find a working Python command
-            PYTHON_CMD=""
-            for cmd in python python3 py; do
-                if command -v "$cmd" >/dev/null 2>&1; then
-                    PYTHON_CMD="$cmd"
-                    break
-                fi
-            done
-            if [ -n "$PYTHON_CMD" ] && ! "$PYTHON_CMD" -m json.tool "$file" > /dev/null 2>&1; then
-                echo "ERROR: $file is not valid JSON"
-                EXIT_CODE=1
-            fi
+        if ! grep -q "## Overview" "$file"; then
+            MISSING_SECTIONS="$MISSING_SECTIONS Overview"
         fi
-    done
-fi
+        if ! grep -q "## Detailed Design" "$file"; then
+            MISSING_SECTIONS="$MISSING_SECTIONS 'Detailed Design'"
+        fi
+        if ! grep -q "## Edge Cases" "$file"; then
+            MISSING_SECTIONS="$MISSING_SECTIONS 'Edge Cases'"
+        fi
+        if ! grep -q "## Dependencies" "$file"; then
+            MISSING_SECTIONS="$MISSING_SECTIONS Dependencies"
+        fi
+        if ! grep -q "## Acceptance Criteria" "$file"; then
+            MISSING_SECTIONS="$MISSING_SECTIONS 'Acceptance Criteria'"
+        fi
+
+        if [ -n "$MISSING_SECTIONS" ]; then
+            echo "FAIL: $file missing required sections:$MISSING_SECTIONS"
+            EXIT_CODE=1
+        fi
+    fi
+done
+
+# 验证数据文件的 JSON 合法性
+for file in $DATA_FILES; do
+    if [[ "$file" == *.json ]]; then
+        if ! python3 -c "import json,sys; json.load(open('$file'))" 2>/dev/null; then
+            echo "FAIL: $file contains invalid JSON"
+            EXIT_CODE=1
+        fi
+    fi
+done
 
 exit $EXIT_CODE
 ```
 
-## Agent Integration
+## Agent 集成
 
-When this hook fails, the committer should:
-1. For missing design sections: invoke the `game-designer` agent to complete
-   the document
-2. For invalid JSON: invoke the `tools-programmer` agent or fix manually
+当此 Hook 失败时：
+1. GDD 缺少章节：调用 `game-designer` 补全文档
+2. JSON 格式错误：调用 `tools-programmer` 修复语法

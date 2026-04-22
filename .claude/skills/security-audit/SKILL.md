@@ -1,244 +1,257 @@
 ---
 name: security-audit
-description: "Audit the game for security vulnerabilities: save tampering, cheat vectors, network exploits, data exposure, and input validation gaps. Produces a prioritised security report with remediation guidance. Run before any public release or multiplayer launch."
+description: "审计游戏的安全漏洞：存档篡改、作弊向量、网络漏洞、数据泄露和输入验证缺陷。产出带有修复指导的优先级安全报告。在任何公开发布或多人游戏上线前运行。"
 argument-hint: "[full | network | save | input | quick]"
+agent: security-engineer
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Bash, Write, Task
-agent: security-engineer
 ---
 
-# Security Audit
+# 安全审计
 
-Security is not optional for any shipped game. Even single-player games have
-save tampering vectors. Multiplayer games have cheat surfaces, data exposure
-risks, and denial-of-service potential. This skill systematically audits the
-codebase for the most common game security failures and produces a prioritised
-remediation plan.
+本技能对游戏的安全态势进行系统性审查，涵盖面向玩家的安全威胁，包括：作弊防护、存档完整性、网络通信安全和输入验证。
 
-**Run this skill:**
-- Before any public release (required for the Polish → Release gate)
-- Before enabling any online/multiplayer feature
-- After implementing any system that reads from disk or network
-- When a security-related bug is reported
+**前置条件：** 本技能由安全工程师智能体负责执行。
 
-**Output:** `production/security/security-audit-[date].md`
+**输出：** `production/security/security-audit-[date].md`
+
+**运行时机：**
+- 多人游戏功能实施完成后
+- 每次公开发布前（Alpha、Beta、Gold）
+- 存档系统或网络代码发生重大变更后
+- 集成第三方 SDK 或插件后
 
 ---
 
-## Phase 1: Parse Arguments and Scope
+## 阶段 1：解析参数
 
-**Modes:**
-- `full` — all categories (recommended before release)
-- `network` — network/multiplayer only
-- `save` — save file and serialization only
-- `input` — input validation and injection only
-- `quick` — high-severity checks only (fastest, for iterative use)
-- No argument — run `full`
-
-Read `.claude/docs/technical-preferences.md` to determine:
-- Engine and language (affects which patterns to search for)
-- Target platforms (affects which attack surfaces apply)
-- Whether multiplayer/networking is in scope
+**审计模式：**
+- `full` — 完整审计（所有类别，默认模式）
+- `network` — 仅限网络安全审计
+- `save` — 仅限存档安全审计
+- `input` — 仅限输入验证审计
+- `quick` — 关键路径快速扫描（用于迭代内检查点）
 
 ---
 
-## Phase 2: Spawn Security Engineer
+## 阶段 2：派遣安全工程师
 
-Spawn `security-engineer` via Task. Pass:
-- The audit scope/mode
-- Engine and language from technical preferences
-- A manifest of all source directories: `src/`, `assets/data/`, any config files
-
-The security-engineer runs the audit across 6 categories (see Phase 3). Collect their full findings before proceeding.
+作为安全工程师智能体，执行以下审计工作。读取 `CLAUDE.md` 了解项目技术栈，确定代码路径和实现细节。
 
 ---
 
-## Phase 3: Audit Categories
+## 阶段 3：审计类别
 
-The security-engineer evaluates each of the following. Skip categories not applicable to the project scope.
+### 类别 A：存档安全
 
-### Category 1: Save File and Serialization Security
-- Are save files validated before loading? (no blind deserialization)
-- Are save file paths constructed from user input? (path traversal risk)
-- Are save files checksummed or signed? (tamper detection)
-- Does the game trust numeric values from save files without bounds checking?
-- Are there any eval() or dynamic code execution calls near save loading?
+读取存档系统实现（`src/core/` 或 `src/gameplay/` 下与存档相关的文件）。
 
-Grep patterns: `File.open`, `load`, `deserialize`, `JSON.parse`, `from_json`, `read_file` — check each for validation.
+检查：
+- **存档格式**：是否为明文（JSON/INI）？是否可被玩家工具轻易修改？
+- **完整性验证**：存档文件是否包含哈希或校验和？
+- **反篡改措施**：服务端是否对存档数据进行验证？还是完全信任客户端数据？
+- **存档路径**：存档是否存储在可被玩家直接修改的路径？
+- **加密**：是否对货币余额、背包内容等重要游戏状态数据进行了加密？
+- **存档注入**：是否可以通过手工制作的存档文件触发任意代码执行或游戏状态操控？
 
-### Category 2: Network and Multiplayer Security (skip if single-player only)
-- Is game state authoritative on the server, or does the client dictate outcomes?
-- Are incoming network packets validated for size, type, and value range?
-- Are player positions and state changes validated server-side?
-- Is there rate limiting on any network calls?
-- Are authentication tokens handled correctly (never sent in plaintext)?
-- Does the game expose any debug endpoints in release builds?
+### 类别 B：网络安全（如存在网络代码）
 
-Grep for: `recv`, `receive`, `PacketPeer`, `socket`, `NetworkedMultiplayerPeer`, `rpc`, `rpc_id` — check each call site for validation.
+读取网络代码（`src/networking/` 或对应目录）。
 
-### Category 3: Input Validation
-- Are any player-supplied strings used in file paths? (path traversal)
-- Are any player-supplied strings logged without sanitization? (log injection)
-- Are numeric inputs (e.g., item quantities, character stats) bounds-checked before use?
-- Are achievement/stat values checked before being written to any backend?
+检查：
+- **权威性**：游戏逻辑是否在服务端运行并具有权威性，还是完全基于客户端信任？
+- **输入验证**：服务端是否在处理前验证所有客户端输入（移动、动作、购买等）？
+- **速率限制**：是否存在对动作（如攻击、跳跃、购买）的速率限制，以防止宏或自动化操作？
+- **数据包完整性**：数据包是否可以被重放或伪造？
+- **经济验证**：交易是否在服务端验证，防止客户端直接修改货币？
+- **身份验证令牌**：身份验证令牌是否安全存储和传输（使用 HTTPS/TLS）？
+- **API 密钥暴露**：API 密钥或密钥是否硬编码在客户端代码中？
 
-Grep for: `get_input`, `Input.get_`, `input_map`, user-facing text fields — check validation.
+### 类别 C：输入验证
 
-### Category 4: Data Exposure
-- Are any API keys, credentials, or secrets hardcoded in `src/` or `assets/`?
-- Are debug symbols or verbose error messages included in release builds?
-- Does the game log sensitive player data to disk or console?
-- Are any internal file paths or system information exposed to players?
+Grep 代码库中的输入处理函数。
 
-Grep for: `api_key`, `secret`, `password`, `token`, `private_key`, `DEBUG`, `print(` in release-facing code.
+检查：
+- **玩家名称/文本输入**：是否对玩家名称/聊天消息进行长度限制和字符净化？
+- **文件路径输入**：是否存在路径遍历风险（如读取存档文件时）？
+- **整数溢出**：数值输入是否有范围检查以防止整数溢出或负值利用？
+- **缓冲区边界**：使用非托管代码或低级 API 时是否进行边界检查？
 
-### Category 5: Cheat and Anti-Tamper Vectors
-- Are gameplay-critical values stored only in memory, not in easily-editable files?
-- Are any critical game progression flags (e.g., "has paid for DLC") validated server-side?
-- Is there any protection against memory editing tools (Cheat Engine, etc.) for multiplayer?
-- Are leaderboard/score submissions validated before acceptance?
+### 类别 D：数据暴露
 
-Note: Client-side anti-cheat is largely unenforceable. Focus on server-side validation for anything competitive or monetised.
+检查：
+- **日志文件**：日志是否包含密钥、会话令牌或敏感玩家数据？
+- **崩溃报告**：崩溃转储是否可能包含内存数据或用户账户信息？
+- **调试代码**：是否有在生产构建中启用了调试功能（上帝模式、无限资源等）？
+- **客户端密钥**：DRM、分析或后端服务的 API 密钥是否以明文形式存储在客户端？
 
-### Category 6: Dependency and Supply Chain
-- Are any third-party plugins or libraries used? List them.
-- Do any plugins have known CVEs in the version being used?
-- Are plugin sources verified (official marketplace, reviewed repository)?
+### 类别 E：作弊防护
 
-Glob for: `addons/`, `plugins/`, `third_party/`, `vendor/` — list all external dependencies.
+评估对常见作弊工具的抵抗能力：
+- **内存扫描**：存储关键值（血量、弹药、货币）的内存地址是否可被 Cheat Engine 类工具轻易找到？
+- **速度外挂**：游戏速度或物理是否会受到系统时钟操控的影响？
+- **注入检测**：是否有检测 DLL 注入或进程挂钩的措施（如有必要）？
 
----
+### 类别 F：依赖与供应链
 
-## Phase 4: Classify Findings
-
-For each finding, assign:
-
-**Severity:**
-| Level | Definition |
-|-------|-----------|
-| **CRITICAL** | Remote code execution, data breach, or trivially-exploitable cheat that breaks multiplayer integrity |
-| **HIGH** | Save tampering that bypasses progression, credential exposure, or server-side authority bypass |
-| **MEDIUM** | Client-side cheat enablement, information disclosure, or input validation gap with limited impact |
-| **LOW** | Defence-in-depth improvement — hardening that reduces attack surface but no direct exploit exists |
-
-**Status:** Open / Accepted Risk / Out of Scope
+检查：
+- **第三方 SDK**：审计已集成的第三方 SDK（分析、广告、支付），确认其隐私政策及是否存在已知漏洞
+- **资源包完整性**：可下载内容或资源更新是否进行完整性验证（哈希检查）？
+- **过时依赖**：是否有已知安全漏洞的过时依赖项？
 
 ---
 
-## Phase 5: Generate Report
+## 阶段 4：分类发现
+
+对每个发现项，分配严重等级：
+
+| 严重等级 | 标准 |
+|---------|------|
+| **CRITICAL（严重）** | 可被利用的漏洞：任意代码执行、存档注入、服务端被完全绕过。发布前**必须修复**。 |
+| **HIGH（高危）** | 显著作弊向量或数据暴露，会影响公平性或玩家信任。强烈建议在发布前修复。 |
+| **MEDIUM（中危）** | 部分缓解的问题或需要大量工作才能利用的漏洞。在合理范围内修复。 |
+| **LOW（低危）** | 轻微问题或仅影响高级用户的理论漏洞。记录在案，按需修复。 |
+
+---
+
+## 阶段 5：生成报告
 
 ```markdown
-# Security Audit Report
+# 安全审计报告
 
-**Date**: [date]
-**Scope**: [full | network | save | input | quick]
-**Engine**: [engine + version]
-**Audited by**: security-engineer via /security-audit
-**Files scanned**: [N source files, N config files]
+**日期**：[日期]
+**审计范围**：[full | network | save | input | quick]
+**技术栈**：[引擎] / [语言]
 
----
+## 执行摘要
 
-## Executive Summary
+[3-5 句话概述安全态势、关键发现及建议优先级。]
 
-| Severity | Count | Must Fix Before Release |
-|----------|-------|------------------------|
-| CRITICAL | [N] | Yes — all |
-| HIGH | [N] | Yes — all |
-| MEDIUM | [N] | Recommended |
-| LOW | [N] | Optional |
+**风险评分**：[HIGH / MEDIUM / LOW]（根据最高严重等级的发现数量综合评定）
 
-**Release recommendation**: [CLEAR TO SHIP / FIX CRITICALS FIRST / DO NOT SHIP]
+## 发现汇总
+
+| 严重等级 | 数量 |
+|---------|------|
+| CRITICAL | [N] |
+| HIGH | [N] |
+| MEDIUM | [N] |
+| LOW | [N] |
 
 ---
 
 ## CRITICAL Findings
 
-### SEC-001: [Title]
-**Category**: [Save / Network / Input / Data / Cheat / Dependency]
-**File**: `[path]` line [N]
-**Description**: [What the vulnerability is]
-**Attack scenario**: [How a malicious user would exploit it]
-**Remediation**: [Specific code change or pattern to apply]
-**Effort**: [Low / Medium / High]
+### [编号]. [发现标题]
 
-[repeat per finding]
+**类别**：[存档 / 网络 / 输入 / 数据 / 作弊 / 供应链]
+**位置**：`[文件路径]`（行 [N]，如已知）
+
+**描述**：[对漏洞的清晰说明]
+
+**利用场景**：[恶意玩家如何利用此漏洞——要具体]
+
+**建议修复方案**：[具体的技术修复建议——代码示例或架构变更]
+
+**验证方式**：[如何确认修复是否有效]
+
+[每项发现重复以上格式]
 
 ---
 
 ## HIGH Findings
 
-[same format]
+[按相同格式列出 HIGH 级别发现]
 
 ---
 
 ## MEDIUM Findings
 
-[same format]
+[按相同格式列出 MEDIUM 级别发现]
 
 ---
 
 ## LOW Findings
 
-[same format]
+[按相同格式列出 LOW 级别发现]
 
 ---
 
 ## Accepted Risk
 
-[Any findings explicitly accepted by the team with rationale]
+[团队明确接受并说明原因的任何发现项]
 
 ---
 
 ## Dependency Inventory
 
-| Plugin / Library | Version | Source | Known CVEs |
-|-----------------|---------|--------|------------|
-| [name] | [version] | [source] | [none / CVE-XXXX-NNNN] |
+| 插件 / 库 | 版本 | 来源 | 已知 CVE |
+|----------------|---------|--------|------------|
+| [名称] | [版本] | [来源] | [无 / CVE-XXXX-NNNN] |
 
 ---
 
-## Remediation Priority Order
+## 修复路线图
 
-1. [SEC-NNN] — [1-line description] — Est. effort: [Low/Medium/High]
-2. ...
+优先级修复顺序：
+
+1. [CRITICAL 发现，带预估修复工时]
+2. [HIGH 发现]
+3. [MEDIUM 发现]
+
+---
+
+## 无问题项
+
+| 类别 | 结论 |
+|------|------|
+| 存档安全 | ✅ 无发现 / ⚠ 见上文发现 |
+| 网络安全 | ✅ / ⚠ |
+| 输入验证 | ✅ / ⚠ |
+| 数据暴露 | ✅ / ⚠ |
+| 作弊防护 | ✅ / ⚠ |
+| 供应链 | ✅ / ⚠ |
 
 ---
 
 ## Re-Audit Trigger
 
-Run `/security-audit` again after remediating any CRITICAL or HIGH findings.
-The Polish → Release gate requires this report with no open CRITICAL or HIGH items.
+在修复任何 CRITICAL 或 HIGH 发现后，重新运行 `/security-audit`。
+Polish → Release 门禁要求本报告中无未解决的 CRITICAL 或 HIGH 项。
+
+---
+*由 /security-audit 生成 — [日期]*
+*安全工程师执行*
 ```
 
 ---
 
-## Phase 6: Write Report
+## 阶段 6：写入报告
 
-Present the report summary (executive summary + CRITICAL/HIGH findings only) in conversation.
+询问："May I write this security audit to `production/security/security-audit-[date].md`？"
 
-Ask: "May I write the full security audit report to `production/security/security-audit-[date].md`?"
-
-Write only after approval.
+若同意，写入文件（如需则创建目录）。
 
 ---
 
-## Phase 7: Gate Integration
+## 阶段 7：门禁集成
 
-This report is a required artifact for the **Polish → Release gate**.
+若发现了任何 **CRITICAL** 漏洞：
+> "⛔ CRITICAL 安全发现必须在任何公开发布前解决。在这些问题得到修复之前，不得进行 `/launch-checklist`。"
 
-After remediating findings, re-run: `/security-audit quick` to confirm CRITICAL/HIGH items are resolved before running `/gate-check release`.
+若无 CRITICAL/HIGH 发现：
+> "✅ 无阻断性安全发现。报告已写入 `production/security/`。运行 `/gate-check release` 时包含此路径。"
 
-If CRITICAL findings exist:
-> "⛔ CRITICAL security findings must be resolved before any public release. Do not proceed to `/launch-checklist` until these are addressed."
-
-If no CRITICAL/HIGH findings:
-> "✅ No blocking security findings. Report written to `production/security/`. Include this path when running `/gate-check release`."
+建议后续操作：
+- 修复发现项后重新运行 `/security-audit`，验证修复效果
+- 在 `/gate-check` 期间将此报告作为安全证明
+- 若存在网络漏洞，建议在游戏上线前由专业安全工程师进行渗透测试
 
 ---
 
 ## Collaborative Protocol
 
-- **Never assume a pattern is safe** — flag it and let the user decide
-- **Accepted risk is a valid outcome** — some LOW findings are acceptable trade-offs for a solo team; document the decision
-- **Multiplayer games have a higher bar** — any HIGH finding in a multiplayer context should be treated as CRITICAL
-- **This is not a penetration test** — this audit covers common patterns; a real pentest by a human security professional is recommended before any competitive or monetised multiplayer launch
+- **永远不假定一个模式是安全的** —— 标记并让用户决定
+- **已接受风险是有效结果** —— 对于独立团队来说，某些 LOW 级发现是合理的权衡；记录该决定
+- **多人游戏标准更高** —— 多人游戏场景下任何 HIGH 级发现应视为 CRITICAL
+- **这不是渗透测试** —— 本审计覆盖常见模式；在任何竞争性或货币化多人游戏上线前，建议由专业安全人员进行真正的渗透测试

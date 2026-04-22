@@ -1,187 +1,206 @@
 # Skill Test Spec: /create-architecture
 
-## Skill Summary
+## Skill 概述
 
-`/create-architecture` guides the user through section-by-section authoring of a
-technical architecture document. It uses a skeleton-first approach — the file is
-created with all required section headers before any content is filled. Each
-section is discussed, drafted, and written individually after user approval. If an
-architecture document already exists, the skill offers retrofit mode to update
-specific sections.
-
-In `full` review mode, TD-ARCHITECTURE (technical-director) and LP-FEASIBILITY
-(lead-programmer) spawn after the complete draft is finished. In `lean` or `solo`
-mode, both gates are skipped. The skill writes to `docs/architecture/architecture.md`.
+引导骨架优先的架构文档逐节编写。
+完整模式：所有章节起草完成后，TD-ARCHITECTURE 和 LP-FEASIBILITY 门控并行运行。
+精简/独立模式：门控跳过。
+若文档已存在，则进入改造模式。
+输出：`docs/architecture/architecture.md`。
+下一步：`/architecture-review` 或 `/create-control-manifest`。
+裁决：APPROVED / NEEDS REVISION / MAJOR REVISION NEEDED。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构性）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需夹具。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: APPROVED, NEEDS REVISION, MAJOR REVISION NEEDED
-- [ ] Contains "May I write" collaborative protocol language (per-section approval)
-- [ ] Has a next-step handoff at the end (`/architecture-review` or `/create-control-manifest`)
-- [ ] Documents skeleton-first approach
-- [ ] Documents gate behavior: TD-ARCHITECTURE + LP-FEASIBILITY in full mode; skipped in lean/solo
-- [ ] Documents retrofit mode for existing architecture documents
-
----
-
-## Director Gate Checks
-
-In `full` mode: TD-ARCHITECTURE (technical-director) and LP-FEASIBILITY
-(lead-programmer) spawn in parallel after all sections are drafted and before
-any final approval write.
-
-In `lean` mode: both gates are skipped. Output notes:
-"TD-ARCHITECTURE skipped — lean mode" and "LP-FEASIBILITY skipped — lean mode".
-
-In `solo` mode: both gates are skipped with equivalent notes.
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 完整模式中 TD-ARCHITECTURE 和 LP-FEASIBILITY 门控并行派生
+- [ ] 精简/独立模式中门控跳过并注明
+- [ ] 骨架文件优先创建（所有章节标题，内容为空）
+- [ ] 按章节询问"May I write section [N]?"
+- [ ] Proposed 状态 ADR 引用被标记为风险
+- [ ] 输出路径为 `docs/architecture/architecture.md`
+- [ ] 裁决关键字：APPROVED / NEEDS REVISION / MAJOR REVISION NEEDED
+- [ ] 末尾包含下一步交接：`/architecture-review` 或 `/create-control-manifest`
 
 ---
 
-## Test Cases
+## 门控检查
 
-### Case 1: Happy Path — New architecture doc, skeleton-first, full mode gates approve
+### TD-ARCHITECTURE 门控（技术总监架构审查）
 
-**Fixture:**
-- No existing `docs/architecture/architecture.md`
-- `docs/architecture/` contains Accepted ADRs for reference
-- `production/session-state/review-mode.txt` contains `full`
+**触发条件：** 完整模式下所有章节均已起草后
 
-**Input:** `/create-architecture`
+**派生 agent：** technical-director（内部门控 ID：TD-ARCHITECTURE）
 
-**Expected behavior:**
-1. Skill creates skeleton `docs/architecture/architecture.md` with all required section headers
-2. For each section: drafts content, shows draft, asks "May I write [section]?", writes after approval
-3. After all sections are drafted: TD-ARCHITECTURE and LP-FEASIBILITY spawn in parallel
-4. Both gates return APPROVED
-5. Final "May I confirm architecture is complete?" asked
-6. Session state updated
+**预期行为：**
+- technical-director 评审完整架构文档，检查架构完整性、引擎兼容性、系统边界清晰度
+- 返回裁决：APPROVED / NEEDS REVISION / MAJOR REVISION NEEDED
 
-**Assertions:**
-- [ ] Skeleton file is created with all section headers before any content is written
-- [ ] "May I write [section]?" asked per section during authoring
-- [ ] TD-ARCHITECTURE and LP-FEASIBILITY spawn in parallel (not sequentially)
-- [ ] Both gates complete before the final completion confirmation
-- [ ] Verdict is APPROVED when both gates return APPROVED
-- [ ] Next-step handoff to `/architecture-review` or `/create-control-manifest` is present
+**断言：**
+- [ ] 仅在完整模式下派生 technical-director
+- [ ] 精简/独立模式中不派生
+- [ ] 与 LP-FEASIBILITY 并行派生（同时发出 Task 调用）
 
----
+### LP-FEASIBILITY 门控（首席程序员可行性评审）
 
-### Case 2: Failure Path — TD-ARCHITECTURE returns MAJOR REVISION
+**触发条件：** 完整模式下所有章节均已起草后（与 TD-ARCHITECTURE 并行）
 
-**Fixture:**
-- Architecture doc is fully drafted (all sections)
-- `production/session-state/review-mode.txt` contains `full`
-- TD-ARCHITECTURE gate returns MAJOR REVISION: "[specific structural issue]"
+**派生 agent：** lead-programmer（内部门控 ID：LP-FEASIBILITY）
 
-**Input:** `/create-architecture`
+**预期行为：**
+- lead-programmer 评估实现可行性、技术债务风险、团队能力匹配度
+- 返回裁决：APPROVED / NEEDS REVISION / MAJOR REVISION NEEDED
 
-**Expected behavior:**
-1. All sections are drafted and written
-2. TD-ARCHITECTURE gate runs and returns MAJOR REVISION with specific feedback
-3. Skill surfaces the feedback to the user
-4. Architecture is NOT marked as finalized
-5. User is asked: revise the flagged sections, or accept the document as a draft
-
-**Assertions:**
-- [ ] Architecture is NOT marked finalized when TD-ARCHITECTURE returns MAJOR REVISION
-- [ ] Gate feedback is shown to the user with specific issue descriptions
-- [ ] User is given the option to revise specific sections
-- [ ] Skill does NOT auto-finalize despite MAJOR REVISION feedback
+**断言：**
+- [ ] 仅在完整模式下派生 lead-programmer
+- [ ] 精简/独立模式中不派生
+- [ ] 与 TD-ARCHITECTURE 并行（同时 Task 调用）
 
 ---
 
-### Case 3: Lean Mode — Both gates skipped; architecture written with user approval only
+## 测试用例
 
-**Fixture:**
-- No existing architecture doc
-- `production/session-state/review-mode.txt` contains `lean`
+### 用例 1：正常路径——完整模式，两个门控均 APPROVED
 
-**Input:** `/create-architecture`
+**测试夹具：**
+- 完整模式：`production/session-state/review-mode.txt` 为 `full`
+- 所有相关 GDD 位于 `design/gdd/`
+- 所有引用的 ADR 状态均为 Accepted
+- 两个门控均返回 APPROVED
 
-**Expected behavior:**
-1. Skeleton file is created
-2. All sections are authored and written per-section with user approval
-3. After completion: TD-ARCHITECTURE and LP-FEASIBILITY are skipped
-4. Output notes: "TD-ARCHITECTURE skipped — lean mode" and "LP-FEASIBILITY skipped — lean mode"
-5. Architecture is considered complete based on user approval alone
+**输入：** `/create-architecture`
 
-**Assertions:**
-- [ ] Both gate skip notes appear in output
-- [ ] Architecture document is written with only user approval in lean mode
-- [ ] Skill does NOT block completion because gates were skipped
-- [ ] Next-step handoff is still present
+**预期行为：**
+1. 上下文收集：读取所有 GDD、现有 ADR、引擎参考文档
+2. 立即创建包含所有章节标题的骨架文件：`docs/architecture/architecture.md`
+3. 按章节逐节引导，每节含独立"May I write"询问
+4. 所有章节起草完成后，并行派生 TD-ARCHITECTURE 和 LP-FEASIBILITY
+5. 两者均返回 APPROVED
+6. 裁决：APPROVED
+7. 下一步：`/architecture-review` 或 `/create-control-manifest`
 
----
-
-### Case 4: Retrofit Mode — Existing architecture doc, user updates a section
-
-**Fixture:**
-- `docs/architecture/architecture.md` already exists with all sections populated
-
-**Input:** `/create-architecture`
-
-**Expected behavior:**
-1. Skill detects existing architecture doc and reads its current content
-2. Skill offers retrofit mode: "Architecture doc already exists. Which section would you like to update?"
-3. User selects a section
-4. Skill authors only that section, asks "May I write [section]?"
-5. Only the selected section is updated — other sections unchanged
-
-**Assertions:**
-- [ ] Skill detects and reads the existing architecture doc before offering retrofit
-- [ ] User is asked which section to update — not asked to rewrite the whole document
-- [ ] Only the selected section is updated
-- [ ] Other sections are not modified during a retrofit session
+**断言：**
+- [ ] 骨架文件在内容讨论之前创建
+- [ ] TD-ARCHITECTURE 和 LP-FEASIBILITY 的 Task 调用同时发出
+- [ ] 两者均 APPROVED 时裁决为 APPROVED
+- [ ] 输出路径为 `docs/architecture/architecture.md`
+- [ ] 末尾引用 `/architecture-review` 或 `/create-control-manifest`
 
 ---
 
-### Case 5: Director Gate — Architecture references a Proposed ADR; flagged as risk
+### 用例 2：完整模式，TD-ARCHITECTURE 返回 MAJOR REVISION
 
-**Fixture:**
-- Architecture doc is being authored
-- One section references or depends on an ADR that has `Status: Proposed`
-- `production/session-state/review-mode.txt` contains `full`
+**测试夹具：**
+- 完整模式
+- TD-ARCHITECTURE 返回 MAJOR REVISION NEEDED：系统边界不清晰，多个系统职责重叠，需要重新设计模块划分
+- LP-FEASIBILITY 返回 APPROVED
 
-**Input:** `/create-architecture`
+**输入：** `/create-architecture`（门控评审场景）
 
-**Expected behavior:**
-1. Skill authors all sections
-2. During authoring, skill detects a reference to a Proposed ADR
-3. Skill flags: "Note: [section] references ADR-NNN which is Proposed — this is a risk until the ADR is accepted"
-4. Risk flag is embedded in the relevant section's content
-5. TD-ARCHITECTURE and LP-FEASIBILITY still run — they are informed of the Proposed ADR risk
+**预期行为：**
+1. 所有章节起草完成
+2. TD-ARCHITECTURE 和 LP-FEASIBILITY 并行评审
+3. TD-ARCHITECTURE 返回 MAJOR REVISION NEEDED
+4. 编排者显示：裁决为 MAJOR REVISION NEEDED——需要重大修订
+5. 具体问题列出（系统边界问题、职责重叠）
+6. 因有 MAJOR REVISION NEEDED，不以 APPROVED 状态最终化文档
+7. `AskUserQuestion` 提供选项：
+   - 重新设计受影响的架构章节后重新提交评审
+   - 在此停止，与技术总监深入讨论后再继续
 
-**Assertions:**
-- [ ] Proposed ADR reference is detected and flagged during section authoring
-- [ ] Risk note is embedded in the architecture document section
-- [ ] TD-ARCHITECTURE and LP-FEASIBILITY still spawn (the risk does not block the gates)
-- [ ] Risk flag names the specific ADR number and title
-
----
-
-## Protocol Compliance
-
-- [ ] Skeleton file created with all section headers before any content is written
-- [ ] "May I write [section]?" asked per section during authoring
-- [ ] TD-ARCHITECTURE and LP-FEASIBILITY spawn in parallel in full mode
-- [ ] Skipped gates noted by name and mode in lean/solo output
-- [ ] Proposed ADR references flagged as risks in the document
-- [ ] Ends with next-step handoff: `/architecture-review` or `/create-control-manifest`
+**断言：**
+- [ ] TD-ARCHITECTURE 返回 MAJOR REVISION NEEDED 时，裁决不为 APPROVED
+- [ ] 具体修订原因（系统边界问题）在输出中列出
+- [ ] `AskUserQuestion` 提供修订并重评审的选项
+- [ ] 裁决为 MAJOR REVISION NEEDED
 
 ---
 
-## Coverage Notes
+### 用例 3：精简模式——门控跳过
 
-- The required section list for architecture documents is defined in the skill
-  body and in the `/architecture-review` skill — not re-enumerated here.
-- Engine version stamping in the architecture doc (parallel to ADR stamping)
-  is part of the authoring workflow — tested implicitly via Case 1.
-- The retrofit mode for updating multiple sections in one session follows the
-  same per-section approval pattern — not independently tested for multi-section
-  retrofits.
+**测试夹具：**
+- 精简模式：`production/session-state/review-mode.txt` 为 `lean`
+
+**输入：** `/create-architecture`
+
+**预期行为：**
+1. 骨架文件创建；按章节逐节完成
+2. 所有章节完成后，无门控派生
+3. 输出注明："[TD-ARCHITECTURE] 跳过——精简模式；[LP-FEASIBILITY] 跳过——精简模式"
+4. 裁决：APPROVED（精简模式下完成即视为 APPROVED，但注明未经门控审查）
+
+**断言：**
+- [ ] 精简模式下不派生 TD-ARCHITECTURE 和 LP-FEASIBILITY
+- [ ] 两个门控的跳过均明确注明（含模式名称）
+- [ ] 无门控输出
+
+---
+
+### 用例 4：改造模式——架构文档已存在
+
+**测试夹具：**
+- `docs/architecture/architecture.md` 已存在，包含部分章节
+
+**输入：** `/create-architecture`
+
+**预期行为：**
+1. Skill 读取现有 `docs/architecture/architecture.md`
+2. 编排者注明："发现现有架构文档——进入改造模式"
+3. 分析现有内容，识别完整章节 vs 缺失章节
+4. `AskUserQuestion` 提供：
+   - 仅补充缺失章节
+   - 修订特定章节（用户指定）
+   - 从头重写整个架构文档
+
+**断言：**
+- [ ] 发现现有架构文档时不被静默覆盖
+- [ ] 编排者识别哪些章节已完整、哪些需要补充
+- [ ] `AskUserQuestion` 提供改造选项
+
+---
+
+### 用例 5：引用 Proposed 状态 ADR——标记为风险
+
+**测试夹具：**
+- 架构文档引用 ADR-007-physics-backend，其状态为 Proposed（非 Accepted）
+- 编写"物理系统"章节时引用此 ADR
+
+**输入：** `/create-architecture`（章节写作场景）
+
+**预期行为：**
+1. 编写"物理系统"章节时，Skill 检测到 ADR-007-physics-backend 状态为 Proposed
+2. 在该章节中嵌入风险说明："⚠ 风险：ADR-007-physics-backend（物理后端架构）状态为 Proposed——此架构决策尚未最终确定，该章节依赖可能变更的决策。"
+3. TD-ARCHITECTURE 和 LP-FEASIBILITY 门控仍正常派生（风险标记不阻塞门控）
+4. 风险标记包含具体 ADR 编号和标题
+
+**断言：**
+- [ ] Proposed 状态 ADR 引用在章节起草时被检测到并标记为风险
+- [ ] 风险说明嵌入架构文档的相关章节中
+- [ ] TD-ARCHITECTURE 和 LP-FEASIBILITY 仍正常派生（风险不阻塞门控）
+- [ ] 风险标记包含具体 ADR 编号和标题
+
+---
+
+## 协议合规性
+
+- [ ] 骨架文件在任何章节内容讨论之前创建
+- [ ] 按章节逐节询问"May I write [章节]?"
+- [ ] 完整模式中 TD-ARCHITECTURE 和 LP-FEASIBILITY 并行派生
+- [ ] 精简/独立模式跳过门控并明确注明
+- [ ] Proposed 状态 ADR 引用在文档中标记为风险
+- [ ] 末尾包含下一步交接：`/architecture-review` 或 `/create-control-manifest`
+
+---
+
+## 覆盖率说明
+
+- 架构文档所需章节列表在 Skill 主体和 `/architecture-review` Skill 中定义——
+  未在此 spec 中重新枚举。
+- 架构文档中的引擎版本标注（与 ADR 标注并行）是编写工作流的一部分——
+  通过用例 1 隐式测试。
+- 改造模式下单次会话中更新多个章节遵循相同的逐章节批准模式——
+  未独立测试多章节改造场景。

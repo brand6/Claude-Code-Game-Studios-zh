@@ -1,131 +1,122 @@
 ---
 name: estimate
-description: "Estimates task effort by analyzing complexity, dependencies, historical velocity, and risk factors. Produces a structured estimate with confidence levels."
-argument-hint: "[task-description]"
+description: "通过分析复杂度、依赖项、历史速度和风险因素来估算任务工作量。提供带置信区间的结构化估算。"
+argument-hint: "[task: 描述] [story: path/to/story.md]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep
 ---
 
-## Phase 1: Understand the Task
+# 工作量估算
 
-Read the task description from the argument. If the description is too vague to estimate meaningfully, ask for clarification before proceeding.
+本技能分析任务或用户故事的工作量，提供基于三点法（乐观/预期/悲观）的结构化估算。估算基于任务复杂度、受影响的代码范围、风险因素和项目上下文。
 
-Read CLAUDE.md for project context: tech stack, coding standards, architectural patterns, and any estimation guidelines.
-
-Read relevant design documents from `design/gdd/` if the task relates to a documented feature or system.
-
----
-
-## Phase 2: Scan Affected Code
-
-Identify files and modules that would need to change:
-
-- Assess complexity (size, dependency count, cyclomatic complexity)
-- Identify integration points with other systems
-- Check for existing test coverage in the affected areas
-- Read past sprint data from `production/sprints/` for similar completed tasks and historical velocity
+**规则：**
+- 给出范围，而非单点估算
+- 推荐预算时使用"预期"估算
+- 结果四舍五入到半天
+- 不静默添加缓冲——风险要明确说明
 
 ---
 
-## Phase 3: Analyze Complexity Factors
+## 阶段 1：理解任务
 
-**Code Complexity:**
-- Lines of code in affected files
-- Number of dependencies and coupling level
-- Whether this touches core/engine code vs leaf/feature code
-- Whether existing patterns can be followed or new patterns are needed
+解析输入：
+- 如果提供了 `story:` → 读取故事文件，提取：标题、验收标准、已知依赖项
+- 如果提供了 `task:` 描述 → 使用描述作为任务范围
+- 如果两者均未提供 → 使用 `AskUserQuestion` 询问："请描述需要估算的任务，或提供用户故事文件路径。"
 
-**Scope:**
-- Number of systems touched
-- New code vs modification of existing code
-- Amount of new test coverage required
-- Data migration or configuration changes needed
-
-**Risk:**
-- New technology or unfamiliar libraries
-- Unclear or ambiguous requirements
-- Dependencies on unfinished work
-- Cross-system integration complexity
-- Performance sensitivity
+确认对任务范围的理解：
+> "任务：[标题或摘要]
+> 验收标准：[N] 条
+> 依赖项：[列表或"无"]"
 
 ---
 
-## Phase 4: Generate the Estimate
+## 阶段 2：扫描受影响的代码
+
+使用 `Grep` 和 `Glob` 扫描与任务相关的现有代码：
+
+- 搜索与任务主题相关的文件（类名、系统名、功能关键词）
+- 识别：
+  - 需要修改的现有代码（修改 vs 新增）
+  - 受此变更影响的依赖系统
+  - 相似功能的先例（有助于校准估算）
+
+报告：
+> "已扫描代码库：
+> 相关文件：[N] 个
+> 主要修改目标：[文件 / 系统]
+> 类似先例：[找到 / 未找到]"
+
+---
+
+## 阶段 3：分析复杂度因素
+
+评估以下每个因素：
+
+| 因素 | 影响 | 评估 |
+|------|------|------|
+| **实现新颖性** | 是从零创建还是修改现有系统？ | 新增 / 修改 |
+| **状态复杂度** | 涉及多少状态？是否有边缘情况？ | 低 / 中 / 高 |
+| **跨系统依赖** | 需要与多少其他系统交互？ | [N] 个系统 |
+| **引擎/框架风险** | 用到了不熟悉的引擎特性？ | 低 / 中 / 高 |
+| **测试负担** | 需要多少测试覆盖（单元 / 集成 / 手动 QA）？ | [类型] |
+| **文档/设计清晰度** | GDD 或规格是否明确？ | 清晰 / 模糊 / 缺失 |
+| **历史速度** | 该类任务过去的完成速度如何？ | 有先例 / 无先例 |
+
+---
+
+## 阶段 4：生成估算
+
+综合所有因素，生成结构化估算：
 
 ```markdown
-## Task Estimate: [Task Name]
-Generated: [Date]
+## 工作量估算：[任务标题]
 
-### Task Description
-[Restate the task clearly in 1-2 sentences]
+**日期**：[日期]
+**范围基础**：[用户故事 / 任务描述]
 
-### Complexity Assessment
+### 三点估算
 
-| Factor | Assessment | Notes |
-|--------|-----------|-------|
-| Systems affected | [List] | [Core, gameplay, UI, etc.] |
-| Files likely modified | [Count] | [Key files listed below] |
-| New code vs modification | [Ratio] | |
-| Integration points | [Count] | [Which systems interact] |
-| Test coverage needed | [Low / Medium / High] | |
-| Existing patterns available | [Yes / Partial / No] | |
+| 场景 | 估算 | 假设 |
+|------|------|------|
+| 乐观 | [N] 天 | 无意外，设计清晰，无阻断性依赖 |
+| 预期（推荐预算） | [N] 天 | 正常复杂度，偶有小阻断 |
+| 悲观 | [N] 天 | 存在以下假设的风险（见下方） |
 
-**Key files likely affected:**
-- `[path/to/file1]` -- [what changes here]
+### 推荐预算
+**[X] 天**（预期估算）
 
-### Effort Estimate
+### 风险因素
+- **[风险 1]**：[影响说明] — 潜在增加 +[N] 天
+- **[风险 2]**：[影响说明] — 潜在增加 +[N] 天
 
-| Scenario | Days | Assumption |
-|----------|------|------------|
-| Optimistic | [X] | Everything goes right, no surprises |
-| Expected | [Y] | Normal pace, minor issues, one round of review |
-| Pessimistic | [Z] | Significant unknowns surface, blocked for a day |
+### 拆分建议
+如果估算 > 3 天：
+- 子任务 1：[说明] — 约 [N] 天
+- 子任务 2：[说明] — 约 [N] 天
 
-**Recommended budget: [Y days]**
-
-### Confidence: [High / Medium / Low]
-
-[Explain which factors drive the confidence level for this specific task.]
-
-### Risk Factors
-
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-
-### Dependencies
-
-| Dependency | Status | Impact if Delayed |
-|-----------|--------|-------------------|
-
-### Suggested Breakdown
-
-| # | Sub-task | Estimate | Notes |
-|---|----------|----------|-------|
-| 1 | [Research / spike] | [X days] | |
-| 2 | [Core implementation] | [X days] | |
-| 3 | [Testing and validation] | [X days] | |
-| | **Total** | **[Y days]** | |
-
-### Notes and Assumptions
-- [Key assumption that affects the estimate]
-- [Any caveats about scope boundaries]
+### 置信度
+[高 / 中 / 低] — [简短说明，例如："设计清晰，有类似先例" 或 "GDD 有歧义，引擎特性未测试"]
 ```
-
-Output the estimate with a brief summary: recommended budget, confidence level, and the single biggest risk factor.
-
-This skill is read-only — no files are written. Verdict: **COMPLETE** — estimate generated.
 
 ---
 
-## Phase 5: Next Steps
+## 阶段 5：后续步骤
 
-- If confidence is Low: recommend a time-boxed spike (`/prototype`) before committing.
-- If the task is > 10 days: recommend breaking it into smaller stories via `/create-stories`.
-- To schedule the task: run `/sprint-plan update` to add it to the next sprint.
+估算展示后：
 
-### Guidelines
+使用 `AskUserQuestion`：
+- "这个估算是否符合你的直觉？还是你觉得有某些因素被高估或低估了？"
+- 选项：`[A] 接受此估算` / `[B] 调整某个因素` / `[C] 将此估算嵌入用户故事文件`
 
-- Always give a range (optimistic / expected / pessimistic), never a single number
-- The recommended budget should be the expected estimate, not the optimistic one
-- Round to half-day increments — estimating in hours implies false precision for tasks longer than a day
-- Do not pad estimates silently — call out risk explicitly so the team can decide
+如果选 [C]：将估算摘要追加至用户故事文件的"估算"章节（需用户确认路径和写入权限）。
+
+**如果置信度为低：** 建议在提交前进行时间盒探针（`/prototype`）来消除不确定性。
+
+**如果任务 > 10 天：** 通过 `/create-stories` 将其拆分为更小的故事。
+
+**排期任务：** 运行 `/sprint-plan update` 将其添加到下一个迭代。
+
+**如果置信度为低：**
+> "⚠️ 置信度偏低，因为 [原因]。建议在迭代计划中使用悲观估算；或先做一次 2–4 小时的探针任务来消除不确定性。"

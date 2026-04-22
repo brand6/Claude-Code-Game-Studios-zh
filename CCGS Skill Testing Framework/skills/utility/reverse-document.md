@@ -1,180 +1,175 @@
-# Skill Test Spec: /reverse-document
+# 技能测试规范：/reverse-document
 
-## Skill Summary
+## 技能概要
 
-`/reverse-document` generates design or architecture documentation from existing
-source code. It reads the specified source file(s), infers design intent from
-class structure, method names, constants, and comments, and produces either a
-GDD skeleton (for gameplay systems) or an architecture overview (for technical
-systems). The output is a best-effort inference — magic numbers and undocumented
-logic may result in a PARTIAL verdict.
+`/reverse-document` 从现有源代码生成设计或架构文档，
+推断设计意图，并生成 GDD 骨架（游戏系统）或架构概述（技术系统）。
 
-The skill asks "May I write to [inferred path]?" before creating the document.
-No director gates apply. Verdicts: COMPLETE (clean inference), PARTIAL (some
-fields are ambiguous and need human review).
+当源代码结构清晰（清晰的类名、有意义的变量名、内联注释）时，
+技能生成完整的文档草稿，判决为 COMPLETE。
+当存在魔法数字或逻辑不明确时，技能在文档中标记模糊区域，
+判决为 PARTIAL。
 
----
-
-## Static Assertions (Structural)
-
-Verified automatically by `/skill-test static` — no fixture needed.
-
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: COMPLETE, PARTIAL
-- [ ] Contains "May I write" collaborative protocol language before writing the doc
-- [ ] Has a next-step handoff (e.g., `/design-review` to validate the generated doc)
+多个相互依赖的文件可以一起处理，以生成跨系统概述文档。
+不适用 director 门控。
 
 ---
 
-## Director Gate Checks
+## 静态断言（结构性）
 
-None. `/reverse-document` is a documentation utility. No director gates apply.
+由 `/skill-test static` 自动验证——无需夹具。
 
----
-
-## Test Cases
-
-### Case 1: Well-Structured Source — Accurate design doc skeleton produced
-
-**Fixture:**
-- `src/gameplay/health_system.gd` exists with:
-  - `@export var max_health: int = 100`
-  - `func take_damage(amount: int)` with clamping logic
-  - `signal health_changed(new_value: int)`
-  - Docstrings on all public methods
-
-**Input:** `/reverse-document src/gameplay/health_system.gd`
-
-**Expected behavior:**
-1. Skill reads the source file and identifies the health system
-2. Skill infers design intent: max health, take_damage behavior, health signal
-3. Skill produces GDD skeleton for health system with 8 required sections:
-   Overview, Player Fantasy, Detailed Rules, Formulas, Edge Cases, Dependencies,
-   Tuning Knobs, Acceptance Criteria
-4. Formulas section includes the inferred clamping formula
-5. Tuning Knobs notes `max_health = 100` as a configurable value
-6. Skill asks "May I write to `design/gdd/health-system.md`?"
-7. File written; verdict is COMPLETE
-
-**Assertions:**
-- [ ] All 8 required GDD sections are present in the output
-- [ ] `max_health = 100` appears as a Tuning Knob
-- [ ] Clamping formula is captured in the Formulas section
-- [ ] "May I write" is asked with the inferred path
-- [ ] Verdict is COMPLETE
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含至少 2 个阶段标题
+- [ ] 包含判决关键词：COMPLETE、PARTIAL
+- [ ] 在写入文档前包含"May I write"协作协议语言
+- [ ] 包含下一步交接（例如 `/design-review` 以验证生成的文档）
 
 ---
 
-### Case 2: Ambiguous Source — Magic Numbers, PARTIAL Verdict
+## Director 门控检查
 
-**Fixture:**
-- `src/gameplay/enemy_ai.gd` exists with:
-  - Inline magic numbers: `if distance < 150:`, `speed = 3.5`
-  - No comments or docstrings
-  - Complex state machine logic that is not self-explanatory
-
-**Input:** `/reverse-document src/gameplay/enemy_ai.gd`
-
-**Expected behavior:**
-1. Skill reads the file and detects magic numbers with no context
-2. Skill produces a GDD skeleton with notes: "AMBIGUOUS VALUE: 150 (unknown units —
-   is this pixels, world units, or tiles?)"
-3. Skill marks the Formulas and Tuning Knobs sections as requiring human review
-4. Skill asks "May I write to `design/gdd/enemy-ai.md`?" with PARTIAL advisory
-5. File written with PARTIAL markers; verdict is PARTIAL
-
-**Assertions:**
-- [ ] AMBIGUOUS VALUE annotations appear for magic numbers
-- [ ] Sections needing human review are marked explicitly
-- [ ] Verdict is PARTIAL (not COMPLETE)
-- [ ] File is still written — PARTIAL is not a blocking failure
+无。`/reverse-document` 是文档生成工具。不适用 director 门控。
 
 ---
 
-### Case 3: Multiple Interdependent Files — Cross-System Overview Produced
+## 测试用例
 
-**Fixture:**
-- User provides 2 source files: `combat_system.gd` and `damage_resolver.gd`
-- The files reference each other (combat calls damage_resolver)
+### 用例 1：正常路径——结构清晰的源代码生成完整 GDD，COMPLETE
 
-**Input:** `/reverse-document src/gameplay/combat_system.gd src/gameplay/damage_resolver.gd`
+**夹具：**
+- `src/gameplay/combat/damage-system.gd` 存在：
+  - 清晰的函数名：`calculate_damage()`、`apply_status_effect()`
+  - 内联注释解释了游戏设计意图
+  - 有意义的常量名：`BASE_DAMAGE_MULTIPLIER = 1.5`
 
-**Expected behavior:**
-1. Skill reads both files and detects the dependency relationship
-2. Skill produces a cross-system architecture overview (not individual GDDs)
-3. Overview describes: Combat System → Damage Resolver interaction, shared
-   interfaces, data flow between the two
-4. Skill asks "May I write to `docs/architecture/combat-damage-overview.md`?"
-5. Overview written after approval; verdict is COMPLETE (or PARTIAL if ambiguous)
+**输入：** `/reverse-document src/gameplay/combat/damage-system.gd`
 
-**Assertions:**
-- [ ] Both files are analyzed together (not as two separate docs)
-- [ ] Cross-system dependency is documented in the output
-- [ ] Output file is written to `docs/architecture/` (not `design/gdd/`)
-- [ ] Verdict is COMPLETE or PARTIAL
+**预期行为：**
+1. 技能读取 `damage-system.gd`
+2. 技能推断游戏系统目的：伤害计算和状态效果
+3. 技能生成 GDD 骨架草稿，包含：
+   - 系统概述
+   - 核心机制（根据函数名推断）
+   - 参数（根据常量推断）
+   - 缺失的已知内容（如：是否有设计意图说明）
+4. 技能询问"May I write to `design/gdd/damage-system.md`?"
+5. 文件写入；判决为 COMPLETE
 
----
-
-### Case 4: Source File Not Found — Error
-
-**Fixture:**
-- `src/gameplay/inventory_system.gd` does not exist
-
-**Input:** `/reverse-document src/gameplay/inventory_system.gd`
-
-**Expected behavior:**
-1. Skill attempts to read the specified file — not found
-2. Skill outputs: "Source file not found: src/gameplay/inventory_system.gd"
-3. Skill suggests checking the path or running `/map-systems` to identify
-   the correct source file
-4. No document is created
-
-**Assertions:**
-- [ ] Error message names the missing file with the full path
-- [ ] Alternative suggestion (check path or `/map-systems`) is provided
-- [ ] No write tool is called
-- [ ] No verdict is issued (error state)
+**断言：**
+- [ ] 推断的游戏系统目的与源代码相符
+- [ ] GDD 骨架中包含从函数名推断的核心机制
+- [ ] 写入前询问"May I write"
+- [ ] 判决为 COMPLETE
 
 ---
 
-### Case 5: Director Gate Check — No gate; reverse-document is a utility
+### 用例 2：含魔法数字的模糊源代码——PARTIAL
 
-**Fixture:**
-- Well-structured source file exists
+**夹具：**
+- `src/gameplay/economy/shop-system.gd` 包含硬编码的魔法数字：
+  - `if player_gold >= 42` → 未命名的价格阈值
+  - `discount = item_price * 0.73` → 未命名的折扣常量
+  - 几乎没有内联注释
 
-**Input:** `/reverse-document src/gameplay/health_system.gd`
+**输入：** `/reverse-document src/gameplay/economy/shop-system.gd`
 
-**Expected behavior:**
-1. Skill generates and writes the design doc
-2. No director agents are spawned
-3. No gate IDs appear in output
+**预期行为：**
+1. 技能读取 `shop-system.gd`
+2. 技能检测到多个魔法数字（42、0.73）及模糊的设计意图
+3. 技能生成包含模糊区域标注的 GDD 草稿：
+   - "UNCLEAR: `42` — appears to be a gold threshold; design intent unknown"
+   - "UNCLEAR: `0.73` — appears to be a 27% discount; source unknown"
+4. 判决为 PARTIAL（存在模糊区域需要人工审查）
 
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No gate skip messages appear
-- [ ] Verdict is COMPLETE or PARTIAL — no gate verdict involved
-
----
-
-## Protocol Compliance
-
-- [ ] Reads source file(s) before generating any content
-- [ ] Produces all 8 required GDD sections when target is a gameplay system
-- [ ] Annotates ambiguous values with AMBIGUOUS VALUE markers
-- [ ] Produces cross-system overview (not individual GDDs) for multiple files
-- [ ] Asks "May I write" before creating any output file
-- [ ] Verdict is COMPLETE (clean inference) or PARTIAL (ambiguous fields)
+**断言：**
+- [ ] 模糊区域以 UNCLEAR 或类似标记标注
+- [ ] 魔法数字（42、0.73）在文档中被识别并标记
+- [ ] 判决为 PARTIAL（不是 COMPLETE）
+- [ ] 写入前询问"May I write"（PARTIAL 文档仍然写入，附标注）
 
 ---
 
-## Coverage Notes
+### 用例 3：多个互相依赖的文件——生成跨系统概述
 
-- Architecture overview format (for technical/infrastructure systems) differs
-  from GDD format; the inferred output type is determined by the nature of the
-  source file (gameplay logic → GDD; engine/infra code → architecture doc).
-- The case where a source file is readable but contains only auto-generated
-  boilerplate with no meaningful logic is not tested; skill would likely produce
-  a near-empty skeleton with a PARTIAL verdict.
-- C# and Blueprint source files follow the same inference pattern as GDScript;
-  language-specific differences are handled in the skill body.
+**夹具：**
+- `src/core/save-manager.gd`：处理存档/读档
+- `src/gameplay/progression/level-up-system.gd`：处理角色升级
+- 两个文件有互相调用的函数引用
+
+**输入：** `/reverse-document src/core/save-manager.gd src/gameplay/progression/level-up-system.gd`
+
+**预期行为：**
+1. 技能读取两个文件
+2. 技能检测到文件间的依赖关系（level-up-system 调用 save-manager 函数）
+3. 技能生成跨系统概述，说明两个系统如何协同工作
+4. 文档标注系统间的依赖关系
+5. 询问"May I write to `design/gdd/save-progression-systems.md`?"
+6. 写入文件；判决为 COMPLETE（或若存在模糊区域则为 PARTIAL）
+
+**断言：**
+- [ ] 两个系统均出现在生成的文档中
+- [ ] 系统间的依赖关系在文档中有所记录
+- [ ] 生成一个文档（而非每个文件各一个）
+
+---
+
+### 用例 4：源文件未找到——报错
+
+**夹具：**
+- `src/gameplay/ai/pathfinding.gd` 不存在
+
+**输入：** `/reverse-document src/gameplay/ai/pathfinding.gd`
+
+**预期行为：**
+1. 技能尝试读取文件——未找到
+2. 技能输出："Error: `src/gameplay/ai/pathfinding.gd` not found"
+3. 技能建议检查文件路径或运行 `/map-systems` 以确认正确的源文件
+4. 不生成文档
+
+**断言：**
+- [ ] 源文件未找到时输出错误消息
+- [ ] 提供备选建议（检查路径或运行 `/map-systems`）
+- [ ] 不写入任何文件
+- [ ] 不发出 COMPLETE 或 PARTIAL 判决——技能终止于报错状态
+
+---
+
+### 用例 5：Director 门控检查——无门控；reverse-document 为文档生成工具
+
+**夹具：**
+- 有效的源文件
+
+**输入：** `/reverse-document`
+
+**预期行为：**
+1. 技能生成并写入文档
+2. 未调用任何 director agent
+3. 输出中无门控 ID
+
+**断言：**
+- [ ] 未调用 director 门控
+- [ ] 输出中无门控跳过消息
+- [ ] 技能在不经过任何门控检查的情况下达到 COMPLETE 或 PARTIAL
+
+---
+
+## 协议合规
+
+- [ ] 读取源文件以推断设计意图
+- [ ] 在文档草稿中标记模糊区域（魔法数字、不明确的逻辑）
+- [ ] 源代码清晰时判决为 COMPLETE
+- [ ] 存在模糊区域时判决为 PARTIAL
+- [ ] 写入前询问"May I write"
+- [ ] 对多文件输入生成跨系统概述
+
+---
+
+## 覆盖说明
+
+- 生成架构概述与 GDD 骨架的判断逻辑在技能主体中定义（由文件路径暗示）；
+  `src/core/` 和 `src/networking/` 中的文件生成架构文档，
+  `src/gameplay/` 中的文件生成 GDD 文档。
+- 语言适配（GDScript vs. C# vs. Blueprints）在技能主体中定义；
+  此规范不对跨引擎语言分析进行硬编码断言。
+- 逆向文档的质量取决于源代码的质量——此规范接受 PARTIAL 判决作为低质量代码的有效结果。

@@ -1,178 +1,179 @@
-# Skill Test Spec: /soak-test
+# 技能测试规范：/soak-test
 
-## Skill Summary
+## 技能概要
 
-`/soak-test` generates a structured soak test protocol — an extended runtime
-test plan designed to surface memory leaks, performance drift, and stability
-issues that only appear under sustained gameplay. The skill produces a document
-specifying the test duration, system under test, monitoring checkpoints (e.g.,
-memory sample every 30 minutes), pass/fail thresholds, and conditions for early
-termination.
+`/soak-test` 为延长运行时测试生成结构化浸泡测试协议。
+浸泡测试用于捕获仅在持续游玩后才会出现的缓慢泄漏、性能漂移
+和极端用例（例如 2 小时在线会话后的内存泄漏）。
 
-The skill asks "May I write to `production/qa/soak-[slug]-[date].md`?" before
-persisting. If a previous soak test for the same system exists, the skill offers
-to extend the duration or add new conditions. No director gates apply. The verdict
-is COMPLETE when the soak test protocol is written.
+技能会提示用户输入目标系统和浸泡时长（若未提供），生成检查点
+时间表、观察清单和记录指导，然后询问
+"May I write the soak test protocol to `production/qa/soak-[系统]-[日期].md`?"。
+若已存在之前的浸泡测试记录，技能会提供扩展现有记录与创建新记录的选项。
+无 director 门控；始终以 COMPLETE 判定结束。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构性）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需夹具。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keyword: COMPLETE
-- [ ] Contains "May I write" collaborative protocol language before writing the protocol
-- [ ] Has a next-step handoff (e.g., `/regression-suite` or `/release-checklist`)
-
----
-
-## Director Gate Checks
-
-None. `/soak-test` is a QA planning utility. No director gates apply.
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含至少 2 个阶段标题
+- [ ] 包含判定关键词：COMPLETE
+- [ ] 在写入浸泡测试协议前包含"May I write"协作协议语言
+- [ ] 包含下一步交接（例如 `/regression-suite` 或 `/release-checklist`）
 
 ---
 
-## Test Cases
+## Director 门控检查
 
-### Case 1: Happy Path — Online gameplay feature, 2-hour soak protocol
-
-**Fixture:**
-- User specifies: system = "online multiplayer lobby", duration = "2 hours"
-- `technical-preferences.md` has engine configured
-
-**Input:** `/soak-test online-lobby 2h`
-
-**Expected behavior:**
-1. Skill generates a 2-hour soak test protocol for the online lobby system
-2. Protocol includes: monitoring checkpoints every 30 minutes, metrics to track
-   (memory usage, connection count, packet loss), pass thresholds, early termination
-   conditions (crash or >20% memory growth)
-3. Networking-specific checks are included (session drop rate, reconnect handling)
-4. Skill asks "May I write to `production/qa/soak-online-lobby-2026-04-06.md`?"
-5. File is written on approval; verdict is COMPLETE
-
-**Assertions:**
-- [ ] Protocol duration matches the requested 2 hours
-- [ ] Monitoring checkpoints are at reasonable intervals (e.g., every 30 minutes)
-- [ ] Network-specific checks are included (not just generic memory checks)
-- [ ] "May I write" is asked with the correct file path
-- [ ] Verdict is COMPLETE
+无。`/soak-test` 是 QA 工具技能，不适用 director 门控。
 
 ---
 
-### Case 2: No Target Defined — Prompts for system, duration, and conditions
+## 测试用例
 
-**Fixture:**
-- No arguments provided
-- No soak test config in session state
+### 用例 1：正常路径——2 小时在线大厅浸泡测试
 
-**Input:** `/soak-test`
+**夹具：**
+- 项目配置为在线多人游戏（有大厅系统）
+- 已提供参数：`online-lobby 120m`
 
-**Expected behavior:**
-1. Skill detects no target system or duration specified
-2. Skill asks: "What system or feature should be soak-tested?"
-3. After user responds with system: Skill asks: "What duration? (e.g., 1h, 4h, 8h)"
-4. After user responds with duration: Skill asks for specific conditions or
-   uses defaults (normal gameplay loop, default player count)
-5. Skill generates protocol from collected inputs and asks "May I write"
+**输入：** `/soak-test online-lobby 120m`
 
-**Assertions:**
-- [ ] At minimum 2 follow-up questions are asked (system + duration)
-- [ ] Default conditions are applied when user doesn't specify custom ones
-- [ ] Protocol is not generated until system and duration are known
-- [ ] Verdict is COMPLETE after file is written
+**预期行为：**
+1. 技能为在线大厅系统生成为期 2 小时的浸泡测试协议
+2. 协议包含检查点：@15m、@30m、@60m、@90m、@120m
+3. 每个检查点包括：
+   - 内存使用测量（与基线对比）
+   - 活跃连接计数
+   - 帧时间记录（是否漂移）
+   - 已知大厅系统风险（连接泄漏、幽灵房间）
+4. 观察清单涵盖大厅特有内容（玩家加入/离开、主机迁移）
+5. 技能询问"May I write the soak test protocol to `production/qa/soak-online-lobby-[date].md`?"
+6. 用户批准；文件写入；判定结果为 COMPLETE
 
----
-
-### Case 3: Previous Soak Test Exists — Offers to extend or add conditions
-
-**Fixture:**
-- `production/qa/soak-online-lobby-2026-03-15.md` exists with a 1-hour protocol
-- User wants to extend to 4 hours with new memory threshold conditions
-
-**Input:** `/soak-test online-lobby 4h`
-
-**Expected behavior:**
-1. Skill finds existing soak test for online-lobby
-2. Skill reports: "Previous soak test found: soak-online-lobby-2026-03-15.md (1h)"
-3. Skill presents options: create new protocol (4h standalone), or extend the
-   existing protocol to 4h and add new conditions
-4. User selects extend; existing checkpoints are preserved, new ones added
-5. Skill asks "May I write to `production/qa/soak-online-lobby-2026-04-06.md`?"
-   (new file, not overwriting old one)
-
-**Assertions:**
-- [ ] Existing soak test is surfaced and referenced
-- [ ] User is offered extend vs. new options
-- [ ] New file is created (old file is not overwritten)
-- [ ] Extended protocol includes both old and new checkpoints
-- [ ] Verdict is COMPLETE
+**断言：**
+- [ ] 协议包含至少 5 个检查点（时间间隔合理）
+- [ ] 每个检查点包含具体的可观察内容（非通用提示）
+- [ ] 在线大厅风险（连接泄漏、幽灵房间）均已涵盖
+- [ ] 写入前询问"May I write"
+- [ ] 判定结果为 COMPLETE
 
 ---
 
-### Case 4: Mobile Target Platform — Memory-specific checkpoints added
+### 用例 2：未定义目标——提示用户输入系统和时长
 
-**Fixture:**
-- `technical-preferences.md` specifies target platform: Mobile
-- User requests soak test for "gameplay session" at 30 minutes
+**夹具：**
+- 未提供参数
 
-**Input:** `/soak-test gameplay 30m`
+**输入：** `/soak-test`
 
-**Expected behavior:**
-1. Skill reads `technical-preferences.md` and detects mobile target platform
-2. Soak test protocol includes mobile-specific memory checkpoints:
-   - Check heap memory growth vs. device baseline
-   - Check texture memory at checkpoint intervals
-   - Add warning threshold at 300MB (mobile ceiling)
-3. Protocol also includes thermal/battery drain advisory notes
-4. Skill asks "May I write?" and writes on approval; verdict is COMPLETE
+**预期行为：**
+1. 技能检测到未提供目标系统
+2. 技能提示："Which system should the soak test target?
+   （示例：online-lobby、inventory、save-system）"
+3. 用户回答："save-system"
+4. 技能提示："What duration? （推荐：30m–4h，取决于会话长度）"
+5. 用户回答："60m"
+6. 技能生成 save-system 的 60 分钟浸泡测试协议
+7. 询问"May I write?"；写入；判定结果为 COMPLETE
 
-**Assertions:**
-- [ ] Mobile platform is detected from technical-preferences.md
-- [ ] Memory checkpoints include mobile-appropriate thresholds (not desktop)
-- [ ] Thermal/battery notes are present in the protocol
-- [ ] Verdict is COMPLETE
-
----
-
-### Case 5: Director Gate Check — No gate; soak-test is a planning utility
-
-**Fixture:**
-- Valid system and duration provided
-
-**Input:** `/soak-test combat 1h`
-
-**Expected behavior:**
-1. Skill generates and writes the soak test protocol
-2. No director agents are spawned
-3. No gate IDs appear in output
-
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No gate skip messages appear
-- [ ] Skill reaches COMPLETE without any gate check
+**断言：**
+- [ ] 未提供目标时询问目标系统
+- [ ] 询问时长（不使用硬编码默认值）
+- [ ] 协议内容与提供的目标系统（save-system）相关
+- [ ] 判定结果为 COMPLETE
 
 ---
 
-## Protocol Compliance
+### 用例 3：已存在之前的浸泡测试——提供扩展与新建选项
 
-- [ ] Collects system, duration, and conditions before generating protocol
-- [ ] Includes monitoring checkpoints at regular intervals
-- [ ] Includes pass/fail thresholds and early termination conditions
-- [ ] Adapts checkpoints to target platform (mobile vs. desktop)
-- [ ] Asks "May I write" before creating the protocol file
-- [ ] Verdict is COMPLETE when file is written
+**夹具：**
+- `production/qa/soak-online-lobby-2025-02-10.md` 存在
+- 请求针对 `online-lobby` 的新浸泡测试
+
+**输入：** `/soak-test online-lobby 60m`
+
+**预期行为：**
+1. 技能检测到已存在 `soak-online-lobby-2025-02-10.md`
+2. 技能提供选项：
+   - 扩展现有浸泡测试记录（追加新会话数据）
+   - 为今天创建全新的浸泡测试协议
+3. 用户选择"创建新记录"
+4. 技能生成今天的新浸泡测试协议
+5. 询问"May I write to `soak-online-lobby-[today].md`?"
+6. 写入新文件（现有文件未修改）；判定结果为 COMPLETE
+
+**断言：**
+- [ ] 检测到现有浸泡测试文件
+- [ ] 向用户提供扩展与新建的选项
+- [ ] 用户选择新建时，不修改现有文件
+- [ ] 新文件以今天日期命名
+- [ ] 判定结果为 COMPLETE
 
 ---
 
-## Coverage Notes
+### 用例 4：移动平台——特定平台内存检查点
 
-- Soak tests for specific engine subsystems (rendering pipeline, physics
-  simulation) follow the same protocol structure and are not separately tested.
-- The case where the user provides a duration shorter than the minimum useful
-  soak period (e.g., 5 minutes) is not tested; the skill would note this is
-  too short for meaningful results.
-- Automated execution of the soak test protocol is outside this skill's scope —
-  this skill generates the plan, not the runner.
+**夹具：**
+- `technical-preferences.md` 显示目标平台为 iOS 和 Android
+- 请求 inventory-system 的浸泡测试
+
+**输入：** `/soak-test inventory 30m`
+
+**预期行为：**
+1. 技能检测到目标平台为移动端
+2. 技能添加移动特有检查点：
+   - 后台/前台切换内存处理
+   - 推送通知中断测试
+   - 低内存警告（移动系统针对低 RAM 会触发此警告）
+   - 热状态（设备过热后的性能）
+3. 检查点比桌面端更频繁（每 5m 而非 15m，因移动端内存问题出现更快）
+4. 生成协议；询问"May I write?"；写入；判定结果为 COMPLETE
+
+**断言：**
+- [ ] 协议包含移动特有检查点（后台/前台、低内存警告）
+- [ ] 检查点频率高于桌面端建议
+- [ ] 协议引用 iOS 和 Android 两个平台
+- [ ] 判定结果为 COMPLETE
+
+---
+
+### 用例 5：Director 门控检查——无门控；soak-test 是 QA 工具
+
+**夹具：**
+- 带有参数的浸泡测试请求
+
+**输入：** `/soak-test combat 30m`
+
+**预期行为：**
+1. 技能完成完整的协议生成
+2. 任何时候都不会生成 director agent
+3. 输出中不出现门控 ID
+
+**断言：**
+- [ ] 未调用任何 director 门控
+- [ ] 不出现门控跳过消息
+- [ ] 判定结果为 COMPLETE——无门控判定
+
+---
+
+## 协议合规性
+
+- [ ] 若未提供参数，提示输入目标系统和时长
+- [ ] 检测到相同系统的现有浸泡测试时提供选项
+- [ ] 读取技术偏好以进行平台特定内容调整
+- [ ] 写入协议前询问"May I write"
+- [ ] 始终以 COMPLETE 判定结束
+
+---
+
+## 覆盖说明
+
+- 浸泡测试协议的执行超出技能范围——该技能仅生成协议，不运行测试。
+- 同一系统多日的多个浸泡测试（比较随时间变化的漂移）未单独测试。
+  建议将历史比较委托给 `/perf-profile`。
+- 分发给 QA 测试人员（而非开发者）的浸泡测试在工作流程上相同；
+  此处未测试此场景，因为它是执行/调度关注点，而非技能行为关注点。

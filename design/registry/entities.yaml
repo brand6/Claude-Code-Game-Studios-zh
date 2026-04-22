@@ -1,56 +1,55 @@
-# Game World Entity Registry
+# 游戏世界实体注册表
 #
-# PURPOSE: Single source of truth for all named game-world facts that appear
-# in more than one document. Skills check this before writing new content to
-# detect cross-doc inconsistencies at authoring time.
+# 用途：存储出现在多个文档中的所有具名游戏世界事实的单一可信来源。
+# Skills 在撰写新内容之前会检查此文件，以便在撰写时检测跨文档不一致。
 #
-# RULES:
-#   - Only register facts that cross system boundaries. Internal-only facts
-#     (a formula used in one GDD only) do NOT need to be registered.
-#   - Never delete entries — set status: deprecated instead.
-#   - When a value changes: update the value, set revised: to today's date,
-#     and add a comment with the old value and which GDD changed it.
-#   - source: is the authoritative GDD — the one that "owns" this fact.
-#     Other GDDs that reference it list themselves in referenced_by.
-#   - When a new GDD references an existing entry, append its path to
-#     referenced_by. Do not create a duplicate entry.
+# 规则：
+#   - 只注册跨系统边界的事实。仅在内部使用的事实
+#     （仅在一份 GDD 中使用的公式）无需注册。
+#   - 永远不要删除条目——将 status 设为 deprecated 即可。
+#   - 值发生变化时：更新值，将 revised: 设为今日日期，
+#     并添加注释说明旧值及哪份 GDD 做出了修改。
+#   - source: 是权威 GDD——即"拥有"此事实的文档。
+#     引用它的其他 GDD 将自身列入 referenced_by。
+#   - 当新 GDD 引用现有条目时，将其路径追加到
+#     referenced_by，不要创建重复条目。
 #
-# WRITTEN BY: /design-system (Phase 5 — after GDD sections are approved)
-#             /consistency-check (when resolving conflicts)
-# READ BY:    /design-system (Phase 2 — before authoring begins, and after
-#               Section C/D writes to conflict-check new entities/formulas)
-#             /consistency-check (primary input — grep-first, GDD-second)
-#             /review-all-gdds (Phase 1 — baseline for Phase 2 checks)
-#             /architecture-review (data structure and interface validation)
+# 写入方：/design-system（第 5 阶段——GDD 章节获批后）
+#             /consistency-check（解决冲突时）
+# 读取方：    /design-system（第 2 阶段——撰写开始前，以及 C/D 章节
+#               写入后用于冲突检查新实体/公式）
+#             /consistency-check（主要输入——先 grep，再读 GDD）
+#             /review-all-gdds（第 1 阶段——第 2 阶段检查的基准）
+#             /architecture-review（数据结构和接口验证）
 #
-# SEARCH PATTERNS (for skills using Grep):
-#   All entity names:        Grep pattern="^  - name:" path="design/registry/entities.yaml"
-#   Specific entity:         Grep pattern="  - name: goblin" path="design/registry/entities.yaml"
-#   All items:               Grep pattern="^  - name:" path="design/registry/entities.yaml" (items section)
-#   What combat.md owns:     Grep pattern="source: design/gdd/combat.md"
-#   What inventory.md uses:  Grep pattern="referenced_by.*inventory"
-#   All gold values:          Grep pattern="value_gold:"
-#   Deprecated entries:      Grep pattern="status: deprecated"
+# 搜索模式（供使用 Grep 的 skills 参考）：
+#   所有实体名：        Grep pattern="^  - name:" path="design/registry/entities.yaml"
+#   特定实体：          Grep pattern="  - name: goblin" path="design/registry/entities.yaml"
+#   所有道具：          Grep pattern="^  - name:" path="design/registry/entities.yaml"（items 区段）
+#   combat.md 拥有的：  Grep pattern="source: design/gdd/combat.md"
+#   inventory.md 使用： Grep pattern="referenced_by.*inventory"
+#   所有金币值：         Grep pattern="value_gold:"
+#   已废弃条目：         Grep pattern="status: deprecated"
 #
-# FORMAT: YAML. Consistent indentation is critical for grep reliability.
-#   Sections: entities | items | formulas | constants
-#   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
+# 格式：YAML。一致的缩进对 grep 可靠性至关重要。
+#   区段：entities | items | formulas | constants
+#   每个条目：name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
 last_updated: ""
 
-# ─── ENTITIES ────────────────────────────────────────────────────────────────
-# Named game-world objects: enemies, NPCs, characters, factions, bosses.
-# Register an entity here when it appears in more than one GDD — e.g., an
-# enemy defined in combat.md that also drops items listed in inventory.md.
+# ─── 实体 ────────────────────────────────────────────────────────────────
+# 具名游戏世界对象：敌人、NPC、角色、派系、Boss。
+# 当一个实体出现在多份 GDD 中时在此注册——例如，在 combat.md 中定义的
+# 敌人同时在 inventory.md 中列出掉落物。
 #
-# Required fields: name, status, source, referenced_by, added
-# Attribute fields: any key stats that could appear in another GDD
-#   (health, damage, drops, faction, etc.)
+# 必填字段：name, status, source, referenced_by, added
+# 属性字段：可能出现在其他 GDD 中的关键数值
+#   （生命值、伤害、掉落物、派系等）
 
 entities: []
 
-# Example (remove when first real entry is added):
+# 示例（添加第一条真实条目时删除）：
 #
 # entities:
 #   - name: goblin
@@ -62,33 +61,33 @@ entities: []
 #     health: 40
 #     damage: 8
 #     drops:
-#       - item: goblin_arm        # must match an entry in items section
+#       - item: goblin_arm        # 必须匹配 items 区段中的条目
 #         qty: 1
 #         drop_rate: 0.8          # 0.0–1.0
 #     added: 2026-03-26
 #     revised: ""
 
 
-# ─── ITEMS ───────────────────────────────────────────────────────────────────
-# Named collectables, equipment, consumables, crafting materials, currency.
-# Register an item when its name or value appears in more than one GDD.
+# ─── 道具 ───────────────────────────────────────────────────────────────────
+# 具名可收集物、装备、消耗品、制作材料、货币。
+# 当一个道具的名称或数值出现在多份 GDD 中时在此注册。
 #
-# Required fields: name, status, source, referenced_by, added
-# Attribute fields: value_gold, weight, stackable, category, and any stat
-#   modifiers that another system (e.g., economy, crafting) might reference.
+# 必填字段：name, status, source, referenced_by, added
+# 属性字段：value_gold、weight、stackable、category，以及任一
+#   可能被其他系统（如 economy、crafting）引用的属性修饰项。
 
 items: []
 
-# Example:
+# 示例：
 #
 # items:
 #   - name: goblin_arm
 #     status: active
-#     source: design/gdd/combat.md   # drop defined in combat GDD
+#     source: design/gdd/combat.md   # 掉落定义于 combat GDD
 #     referenced_by:
 #       - design/gdd/combat.md
-#       - design/gdd/inventory.md    # inventory GDD lists its weight/stack rules
-#       - design/gdd/economy.md      # economy GDD references its sell price
+#       - design/gdd/inventory.md    # inventory GDD 列出其重量/堆叠规则
+#       - design/gdd/economy.md      # economy GDD 引用其出售价格
 #     value_gold: 5
 #     weight: 1
 #     stackable: true
@@ -97,18 +96,17 @@ items: []
 #     revised: ""
 
 
-# ─── FORMULAS ────────────────────────────────────────────────────────────────
-# Named calculations with defined variables and output ranges.
-# Register a formula when its output feeds into another system's input,
-# or when another GDD references it by name.
+# ─── 公式 ────────────────────────────────────────────────────────────────
+# 具名计算公式，具有定义明确的变量和输出范围。
+# 当一个公式的输出成为另一系统的输入，或另一份 GDD 通过名称引用它时在此注册。
 #
-# Required fields: name, status, source, referenced_by, variables[],
+# 必填字段：name, status, source, referenced_by, variables[],
 #   output_range[min, max], added
-# Optional: expression (the actual formula), notes
+# 可选字段：expression（实际公式）、notes
 
 formulas: []
 
-# Example:
+# 示例：
 #
 # formulas:
 #   - name: damage_formula
@@ -116,7 +114,7 @@ formulas: []
 #     source: design/gdd/combat.md
 #     referenced_by:
 #       - design/gdd/combat.md
-#       - design/gdd/progression.md   # progression GDD scales attack variable
+#       - design/gdd/progression.md   # progression GDD 缩放 attack 变量
 #     variables:
 #       - attack
 #       - defense
@@ -124,24 +122,24 @@ formulas: []
 #       - crit_multiplier
 #     output_range: [0, 999]
 #     expression: "max(0, attack - defense) * (1 + crit_chance * crit_multiplier)"
-#     notes: "Output feeds into health-system damage intake. Min is 0 (armour
-#       can absorb all damage). Max is uncapped in formula but tuning knob
-#       damage_cap in combat.md clamps at 999."
+#     notes: "输出进入 health-system 的伤害输入。最小值为 0（护甲
+#       可吸收全部伤害）。公式本身理论上无上限，但 combat.md 中的
+#       调参项 damage_cap 将其限制为 999。"
 #     added: 2026-03-26
 #     revised: ""
 
 
-# ─── CONSTANTS ───────────────────────────────────────────────────────────────
-# Named numerical values referenced across multiple systems.
-# Register a constant when it is defined in one GDD but another GDD must
-# agree with it (e.g., gold carry limit defined in economy but checked in
-# inventory, or base inventory slots defined in inventory but displayed in HUD).
+# ─── 常量 ───────────────────────────────────────────────────────────────
+# 跨多个系统引用的具名数值。
+# 当某个常量定义于一份 GDD，但另一份 GDD 也必须与之保持一致时在此注册
+# （例如：economy 中定义的金币携带上限需要 inventory 检查，
+# 或 inventory 中定义的基础背包格数需要在 HUD 中显示）。
 #
-# Required fields: name, status, source, referenced_by, value, unit, added
+# 必填字段：name, status, source, referenced_by, value, unit, added
 
 constants: []
 
-# Example:
+# 示例：
 #
 # constants:
 #   - name: gold_carry_limit
@@ -149,8 +147,8 @@ constants: []
 #     source: design/gdd/economy.md
 #     referenced_by:
 #       - design/gdd/economy.md
-#       - design/gdd/inventory.md   # inventory enforces the carry limit
-#       - design/gdd/ui.md          # HUD displays current gold vs limit
+#       - design/gdd/inventory.md   # inventory 强制执行携带上限
+#       - design/gdd/ui.md          # HUD 显示当前金币与上限
 #     value: 9999
 #     unit: gold
 #     added: 2026-03-26
@@ -161,7 +159,7 @@ constants: []
 #     source: design/gdd/inventory.md
 #     referenced_by:
 #       - design/gdd/inventory.md
-#       - design/gdd/progression.md  # progression unlocks additional slots
+#       - design/gdd/progression.md  # progression 解锁额外槽位
 #     value: 20
 #     unit: slots
 #     added: 2026-03-26

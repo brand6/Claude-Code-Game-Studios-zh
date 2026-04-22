@@ -1,84 +1,84 @@
-# Agent Test Spec: producer
+# Agent 测试规格：producer
 
-## Agent Summary
-**Domain owned:** Scope management, sprint planning validation, milestone tracking, epic prioritization, production phase gate.
-**Does NOT own:** Game design decisions (creative-director / game-designer), technical architecture (technical-director), creative direction.
-**Model tier:** Opus (multi-document synthesis, high-stakes phase gate verdicts).
-**Gate IDs handled:** PR-SCOPE, PR-SPRINT, PR-MILESTONE, PR-EPIC, PR-PHASE-GATE.
-
----
-
-## Static Assertions (Structural)
-
-Verified by reading the agent's `.claude/agents/producer.md` frontmatter:
-
-- [ ] `description:` field is present and domain-specific (references scope, sprint, milestone, production — not generic)
-- [ ] `allowed-tools:` list is primarily read-focused; Bash only if sprint/milestone files require parsing
-- [ ] Model tier is `claude-opus-4-6` per coordination-rules.md (directors with gate synthesis = Opus)
-- [ ] Agent definition does not claim authority over design decisions or technical architecture
+## Agent 摘要
+**拥有领域：** 范围管理、冲刺规划验证、里程碑跟踪、史诗优先级排定、生产阶段关卡。
+**不拥有：** 游戏设计决策（creative-director / game-designer）、技术架构（technical-director）、创意方向。
+**模型层级：** Opus（多文档综合、高风险阶段关卡裁决）。
+**处理的关卡 ID：** PR-SCOPE、PR-SPRINT、PR-MILESTONE、PR-EPIC、PR-PHASE-GATE。
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output format
-**Scenario:** A sprint plan is submitted for Sprint 7. The plan includes 12 story points across 4 team members over 2 weeks. Historical velocity from the last 3 sprints averages 11.5 points. Request is tagged PR-SPRINT.
-**Expected:** Returns `PR-SPRINT: REALISTIC` with rationale noting the plan is within one standard deviation of historical velocity and capacity appears matched.
-**Assertions:**
-- [ ] Verdict is exactly one of REALISTIC / CONCERNS / UNREALISTIC
-- [ ] Verdict token is formatted as `PR-SPRINT: REALISTIC`
-- [ ] Rationale references the specific story point count and historical velocity figures
-- [ ] Output stays within production scope — does not comment on whether the stories are well-designed or technically sound
+通过读取 agent 的 `.claude/agents/producer.md` frontmatter 验证：
 
-### Case 2: Out-of-domain request — redirects or escalates
-**Scenario:** Team member asks producer to evaluate whether the game's "weight-based inventory" mechanic feels fun and engaging.
-**Expected:** Agent declines to evaluate game feel and redirects to game-designer or creative-director.
-**Assertions:**
-- [ ] Does not make any binding assessment of the mechanic's design quality
-- [ ] Explicitly names `game-designer` or `creative-director` as the correct handler
-- [ ] May note if the mechanic's scope has production implications (e.g., dependencies on other systems), but defers all design evaluation
-
-### Case 3: Gate verdict — correct vocabulary
-**Scenario:** A new feature proposal adds three new systems (crafting, weather, and faction reputation) to a milestone that was scoped for two systems only. None of these additions appear in the current milestone plan. Request is tagged PR-SCOPE.
-**Expected:** Returns `PR-SCOPE: CONCERNS` with specific identification of the three unplanned systems and their absence from the milestone scope document.
-**Assertions:**
-- [ ] Verdict is exactly one of REALISTIC / CONCERNS / UNREALISTIC — not freeform text
-- [ ] Verdict token is formatted as `PR-SCOPE: CONCERNS`
-- [ ] Rationale names the three specific systems being added out of scope
-- [ ] Does not evaluate whether the systems are good design — only whether they fit the plan
-
-### Case 4: Conflict escalation — correct parent
-**Scenario:** game-designer wants to add a late-breaking mechanic (dynamic weather affecting all gameplay systems) that technical-director warns will require 3 additional sprints. game-designer and technical-director are in disagreement about whether to proceed.
-**Expected:** Producer does not take a side on whether the mechanic is worth adding (design decision) or feasible (technical decision). Producer quantifies the production impact (3 sprints of delay, milestone slip risk), presents the trade-off to the user, and follows coordination-rules.md conflict resolution: escalate to the shared parent (in this case, surface the conflict for user decision since creative-director and technical-director are both top-tier).
-**Assertions:**
-- [ ] Quantifies the production impact in concrete terms (sprint count, milestone date slip)
-- [ ] Does not make a binding design or technical decision
-- [ ] Surfaces the conflict to the user with the scope implications clearly stated
-- [ ] References coordination-rules.md conflict resolution protocol (escalate to shared parent or user)
-
-### Case 5: Context pass — uses provided context
-**Scenario:** Agent receives a gate context block that includes the current milestone deadline (8 weeks away) and velocity data from the last 4 sprints (8, 10, 9, 11 points). A sprint plan is submitted with 14 story points.
-**Expected:** Assessment uses the provided velocity data to project whether 14 points is achievable, and references the 8-week milestone window to assess whether the current sprint's scope leaves adequate buffer.
-**Assertions:**
-- [ ] Uses the specific velocity figures from the provided context (not generic estimates)
-- [ ] References the 8-week deadline in the capacity assessment
-- [ ] Calculates or estimates remaining sprint count within the milestone window
-- [ ] Does not give generic scope advice disconnected from the supplied deadline and velocity data
+- [ ] `description:` 字段存在且针对特定领域（引用范围、冲刺、里程碑、生产 — 而非通用描述）
+- [ ] `allowed-tools:` 列表主要以读取为主；仅在冲刺/里程碑文件需要解析时包含 Bash
+- [ ] 模型层级为 `claude-opus-4-6`，符合 coordination-rules.md（具有关卡综合职能的 directors = Opus）
+- [ ] Agent 定义不声明对设计决策或技术架构的权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Returns verdicts using REALISTIC / CONCERNS / UNREALISTIC vocabulary only
-- [ ] Stays within declared production domain
-- [ ] Escalates design/technical conflicts by quantifying scope impact and presenting to user
-- [ ] Uses gate IDs in output (e.g., `PR-SPRINT: REALISTIC`) not inline prose verdicts
-- [ ] Does not make binding game design or technical architecture decisions
+### 用例 1：领域内请求 — 适当的输出格式
+**场景：** 第 7 冲刺的冲刺计划提交审查。计划包含 4 名团队成员在 2 周内完成的 12 个故事点。过去 3 个冲刺的历史速度平均为 11.5 个故事点。请求标记为 PR-SPRINT。
+**预期：** 返回 `PR-SPRINT: REALISTIC`，附理由说明计划在历史速度一个标准差以内，且容量与规划匹配。
+**断言：**
+- [ ] 裁决恰好为 REALISTIC / CONCERNS / UNREALISTIC 之一
+- [ ] 裁决令牌格式为 `PR-SPRINT: REALISTIC`
+- [ ] 理由引用具体的故事点数和历史速度数字
+- [ ] 输出保持在生产范围内 — 不评论故事设计是否合理或技术是否可行
+
+### 用例 2：领域外请求 — 重定向或升级
+**场景：** 团队成员请求 producer 评估游戏的"基于重量的库存"机制是否有趣且有吸引力。
+**预期：** Agent 拒绝评估游戏手感，并重定向至 game-designer 或 creative-director。
+**断言：**
+- [ ] 不对机制的设计质量做出任何约束性评估
+- [ ] 明确指明 `game-designer` 或 `creative-director` 为正确的处理方
+- [ ] 可以指出该机制的范围是否有生产影响（例如对其他系统的依赖），但将所有设计评估交由对方
+
+### 用例 3：关卡裁决 — 正确的裁决词汇
+**场景：** 一个新功能提案在一个仅计划两个系统的里程碑中增加了三个新系统（合成、天气和派系声望）。这些新增内容均未出现在当前里程碑计划中。请求标记为 PR-SCOPE。
+**预期：** 返回 `PR-SCOPE: CONCERNS`，具体指出三个计划外系统及其未出现在里程碑范围文档中的情况。
+**断言：**
+- [ ] 裁决恰好为 REALISTIC / CONCERNS / UNREALISTIC 之一 — 而非自由文本
+- [ ] 裁决令牌格式为 `PR-SCOPE: CONCERNS`
+- [ ] 理由指出被超范围添加的三个具体系统名称
+- [ ] 不评估这些系统的设计是否优秀 — 仅评估是否符合计划
+
+### 用例 4：冲突升级 — 正确的上级
+**场景：** game-designer 希望在临近截止前增加一个机制（影响所有游戏系统的动态天气），technical-director 警告这将需要额外 3 个冲刺。game-designer 和 technical-director 在是否推进方面存在分歧。
+**预期：** Producer 不对该机制是否值得添加（设计决策）或是否可行（技术决策）表态。Producer 量化生产影响（3 个冲刺延迟、里程碑推迟风险），将权衡方案呈现给用户，并遵循 coordination-rules.md 冲突解决流程：升级至共同上级（本例中，由于 creative-director 和 technical-director 均为最高层，应将冲突呈现给用户决策）。
+**断言：**
+- [ ] 以具体数据（冲刺数、里程碑日期推迟）量化生产影响
+- [ ] 不做约束性设计或技术决策
+- [ ] 向用户呈现冲突，并清晰说明范围影响
+- [ ] 引用 coordination-rules.md 冲突解决协议（升级至共同上级或用户）
+
+### 用例 5：上下文传递 — 使用所提供的上下文
+**场景：** Agent 收到一个关卡上下文块，包含当前里程碑截止日期（8 周后）和过去 4 个冲刺的速度数据（8、10、9、11 个故事点）。提交了一个包含 14 个故事点的冲刺计划。
+**预期：** 评估使用所提供的速度数据来预测 14 个故事点是否可达，并引用 8 周的里程碑窗口来评估当前冲刺范围是否留有足够缓冲。
+**断言：**
+- [ ] 使用所提供上下文中的具体速度数字（而非通用估算）
+- [ ] 在容量评估中引用 8 周的截止期限
+- [ ] 计算或估算里程碑窗口内的剩余冲刺数
+- [ ] 不给出与所提供截止日期和速度数据脱节的通用范围建议
 
 ---
 
-## Coverage Notes
-- PR-EPIC (epic-level prioritization) is not covered — a dedicated case should be added when the /create-epics skill produces structured epic documents.
-- PR-MILESTONE (milestone health review) is not covered — deferred to integration with /milestone-review skill.
-- PR-PHASE-GATE (full production phase advancement) involving synthesis of multiple sub-gate results is deferred.
-- Multi-sprint burn-down and velocity trend analysis are not covered here.
+## 协议合规性
+
+- [ ] 仅使用 REALISTIC / CONCERNS / UNREALISTIC 词汇返回裁决
+- [ ] 严守声明的生产领域
+- [ ] 通过量化范围影响并呈现给用户来升级设计/技术冲突
+- [ ] 在输出中使用关卡 ID（例如 `PR-SPRINT: REALISTIC`），而非内联散文裁决
+- [ ] 不做约束性游戏设计或技术架构决策
+
+---
+
+## 覆盖说明
+- PR-EPIC（史诗级优先级排定）未覆盖 — 待 /create-epics 技能产出结构化史诗文档后应补充专项用例。
+- PR-MILESTONE（里程碑健康度评审）未覆盖 — 推迟至与 /milestone-review 技能集成。
+- PR-PHASE-GATE（完整生产阶段推进）涉及综合多个子关卡结果，推迟处理。
+- 多冲刺燃尽率和速度趋势分析未在此覆盖。

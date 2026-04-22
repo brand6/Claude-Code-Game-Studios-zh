@@ -1,139 +1,139 @@
 ---
 name: milestone-review
-description: "Generates a comprehensive milestone progress review including feature completeness, quality metrics, risk assessment, and go/no-go recommendation. Use at milestone checkpoints or when evaluating readiness for a milestone deadline."
+description: "生成全面的里程碑进度审查报告，包含功能完成度、质量指标、风险评估及上线/不上线建议。在里程碑检查点或评估里程碑截止日期就绪情况时使用。"
 argument-hint: "[milestone-name|current] [--review full|lean|solo]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write, Task, AskUserQuestion
 ---
 
-## Phase 0: Parse Arguments
+## 阶段0：解析参数
 
-Extract the milestone name (`current` or a specific name) and resolve the review mode (once, store for all gate spawns this run):
-1. If `--review [full|lean|solo]` was passed → use that
-2. Else read `production/review-mode.txt` → use that value
-3. Else → default to `lean`
+提取里程碑名称（`current` 或具体名称），并确定评审模式（本次运行只确定一次，所有关卡检查均使用该模式）：
+1. 如果传入了 `--review [full|lean|solo]` → 使用该值
+2. 否则读取 `production/review-mode.txt` → 使用其中的值
+3. 否则 → 默认为 `lean`
 
-See `.claude/docs/director-gates.md` for the full check pattern.
-
----
-
-## Phase 1: Load Milestone Data
-
-Read the milestone definition from `production/milestones/`. If the argument is `current`, use the most recently modified milestone file.
-
-Read all sprint reports for sprints within this milestone from `production/sprints/`.
+完整的关卡检查模式详见 `.claude/docs/director-gates.md`。
 
 ---
 
-## Phase 2: Scan Codebase Health
+## 阶段1：加载里程碑数据
 
-- Scan for `TODO`, `FIXME`, `HACK` markers that indicate incomplete work
-- Check the risk register at `production/risk-register/`
+从 `production/milestones/` 读取里程碑定义。若参数为 `current`，使用最近修改的里程碑文件。
+
+从 `production/sprints/` 读取该里程碑内所有冲刺的报告。
 
 ---
 
-## Phase 3: Generate the Milestone Review
+## 阶段2：扫描代码库健康状况
+
+- 扫描 `TODO`、`FIXME`、`HACK` 标记，识别未完成的工作
+- 检查 `production/risk-register/` 中的风险登记册
+
+---
+
+## 阶段3：生成里程碑审查报告
 
 ```markdown
-# Milestone Review: [Milestone Name]
+# 里程碑审查：[里程碑名称]
 
-## Overview
-- **Target Date**: [Date]
-- **Current Date**: [Today]
-- **Days Remaining**: [N]
-- **Sprints Completed**: [X/Y]
+## 概览
+- **目标日期**：[日期]
+- **当前日期**：[今天]
+- **剩余天数**：[N]
+- **已完成冲刺**：[X/Y]
 
-## Feature Completeness
+## 功能完成度
 
-### Fully Complete
-| Feature | Acceptance Criteria | Test Status |
-|---------|-------------------|-------------|
+### 已全部完成
+| 功能 | 验收标准 | 测试状态 |
+|------|---------|---------|
 
-### Partially Complete
-| Feature | % Done | Remaining Work | Risk to Milestone |
-|---------|--------|---------------|------------------|
+### 部分完成
+| 功能 | 完成度% | 剩余工作 | 里程碑风险 |
+|------|--------|--------|---------|
 
-### Not Started
-| Feature | Priority | Can Cut? | Impact of Cutting |
-|---------|----------|----------|------------------|
+### 未开始
+| 功能 | 优先级 | 可否削减？ | 削减影响 |
+|------|-------|---------|--------|
 
-## Quality Metrics
-- **Open S1 Bugs**: [N] -- [List]
-- **Open S2 Bugs**: [N]
-- **Open S3 Bugs**: [N]
-- **Test Coverage**: [X%]
-- **Performance**: [Within budget? Details]
+## 质量指标
+- **P1 Bug 数量**：[N] -- [列表]
+- **P2 Bug 数量**：[N]
+- **P3 Bug 数量**：[N]
+- **测试覆盖率**：[X%]
+- **性能表现**：[是否在预算内？详情]
 
-## Code Health
-- **TODO count**: [N across codebase]
-- **FIXME count**: [N]
-- **HACK count**: [N]
-- **Technical debt items**: [List critical ones]
+## 代码健康度
+- **TODO 数量**：[N 处]
+- **FIXME 数量**：[N]
+- **HACK 数量**：[N]
+- **技术债务条目**：[列出关键项]
 
-## Risk Assessment
-| Risk | Status | Impact if Realized | Mitigation Status |
-|------|--------|-------------------|------------------|
+## 风险评估
+| 风险 | 状态 | 实际影响 | 缓解状态 |
+|------|------|--------|--------|
 
-## Velocity Analysis
-- **Planned vs Completed** (across all sprints): [X/Y tasks = Z%]
-- **Trend**: [Improving / Stable / Declining]
-- **Adjusted estimate for remaining work**: [Days needed at current velocity]
+## 速度分析
+- **计划 vs 完成**（全部冲刺汇总）：[X/Y 任务 = Z%]
+- **趋势**：[提升中 / 稳定 / 下降]
+- **剩余工作调整后估算**：[按当前速度需要的天数]
 
-## Scope Recommendations
-### Protect (Must ship with milestone)
-- [Feature and why]
+## 范围建议
+### 必须保留（随里程碑发布）
+- [功能及理由]
 
-### At Risk (May need to cut or simplify)
-- [Feature and risk]
+### 存在风险（可能需要削减或简化）
+- [功能及风险]
 
-### Cut Candidates (Can defer without compromising milestone)
-- [Feature and impact of cutting]
+### 候选削减项（推迟不影响里程碑）
+- [功能及削减影响]
 
-## Go/No-Go Assessment
+## 上线/不上线评估
 
-**Recommendation**: [GO / CONDITIONAL GO / NO-GO]
+**建议**：[GO / CONDITIONAL GO / NO-GO]
 
-**Conditions** (if conditional):
-- [Condition 1 that must be met]
-- [Condition 2 that must be met]
+**条件**（如为有条件上线）：
+- [必须满足的条件1]
+- [必须满足的条件2]
 
-**Rationale**: [Explanation of the recommendation]
+**理由**：[对建议的解释]
 
-## Action Items
-| # | Action | Owner | Deadline |
-|---|--------|-------|----------|
+## 行动项
+| # | 行动 | 负责人 | 截止日期 |
+|---|------|------|--------|
 ```
 
 ---
 
-## Phase 3b: Producer Risk Assessment
+## 阶段3b：制作人风险评估
 
-**Review mode check** — apply before spawning PR-MILESTONE:
-- `solo` → skip. Note: "PR-MILESTONE skipped — Solo mode." Present the Go/No-Go section without a producer verdict.
-- `lean` → skip (not a PHASE-GATE). Note: "PR-MILESTONE skipped — Lean mode." Present the Go/No-Go section without a producer verdict.
-- `full` → spawn as normal.
+**评审模式检查** — 在生成 PR-MILESTONE 子任务前应用：
+- `solo` → 跳过。备注："PR-MILESTONE 已跳过——单人模式。"在没有制作人裁定的情况下呈现上线/不上线章节。
+- `lean` → 跳过（非 PHASE-GATE）。备注："PR-MILESTONE 已跳过——精简模式。"在没有制作人裁定的情况下呈现上线/不上线章节。
+- `full` → 正常生成。
 
-Before generating the Go/No-Go recommendation, spawn `producer` via Task using gate **PR-MILESTONE** (`.claude/docs/director-gates.md`).
+在生成上线/不上线建议之前，通过 Task 以关卡 **PR-MILESTONE**（`.claude/docs/director-gates.md`）生成 `producer` 子任务。
 
-Pass: milestone name and target date, current completion percentage, blocked story count, velocity data from sprint reports (if available), list of cut candidates.
+传入：里程碑名称和目标日期、当前完成百分比、阻塞故事数量、冲刺报告中的速度数据（若有）、候选削减项列表。
 
-Present the producer's assessment inline within the Go/No-Go section. The producer's verdict (ON TRACK / AT RISK / OFF TRACK) informs the overall recommendation — do not issue a GO against an OFF TRACK producer verdict without explicit user acknowledgement.
-
----
-
-## Phase 4: Save Review
-
-Present the review to the user.
-
-Ask: "May I write this to `production/milestones/[milestone-name]-review.md`?"
-
-If yes, write the file, creating the directory if needed. Verdict: **COMPLETE** — milestone review saved.
-
-If no, stop here. Verdict: **BLOCKED** — user declined write.
+在上线/不上线章节中内联呈现制作人的评估。制作人的裁定（ON TRACK / AT RISK / OFF TRACK）影响整体建议——在没有用户明确认可的情况下，不得在 OFF TRACK 裁定下发出 GO 建议。
 
 ---
 
-## Phase 5: Next Steps
+## 阶段4：保存审查报告
 
-- Run `/gate-check` for a formal phase gate verdict if this milestone marks a development phase boundary.
-- Run `/sprint-plan` to adjust the next sprint based on the scope recommendations above.
+向用户呈现审查报告。
+
+询问："可以将报告写入 `production/milestones/[milestone-name]-review.md` 吗？"
+
+若是，写入文件（如需创建目录）。裁定：**COMPLETE** — 里程碑审查已保存。
+
+若否，在此停止。裁定：**BLOCKED** — 用户拒绝写入。
+
+---
+
+## 阶段5：下一步建议
+
+- 若该里程碑标志着开发阶段边界，运行 `/gate-check` 进行正式阶段关卡裁定。
+- 运行 `/sprint-plan`，根据上述范围建议调整下一个冲刺计划。

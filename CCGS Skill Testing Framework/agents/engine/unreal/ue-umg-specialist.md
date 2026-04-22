@@ -1,79 +1,81 @@
-# Agent Test Spec: ue-umg-specialist
+# Agent 测试规格：ue-umg-specialist
 
-## Agent Summary
-- **Domain**: UMG widget hierarchy design, data binding patterns, CommonUI input routing and action tags, widget styling (WidgetStyle assets), UI optimization (widget pooling, ListView, invalidation)
-- **Does NOT own**: UX flow and screen navigation design (ux-designer), gameplay logic (gameplay-programmer), backend data sources (game code), server communication
-- **Model tier**: Sonnet
-- **Gate IDs**: None; defers UX flow decisions to ux-designer
-
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references UMG, widget hierarchy, CommonUI)
-- [ ] `allowed-tools:` list matches the agent's role (Read/Write for UI assets and Blueprint files; no server or gameplay source tools)
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over UX flow, navigation architecture, or gameplay data logic
+## Agent 概述
+- **职责领域**：UMG Widget 层级结构、数据绑定、CommonUI 输入路由与 Action Tag、WidgetStyle 资源、Widget 池化 / ListView / 无效化（Invalidation）
+- **不负责**：UX 流程设计（ux-designer）、Gameplay 逻辑（gameplay-programmer）、后端数据源设计（systems-designer 或 gameplay-programmer）
+- **模型层级**：Sonnet
+- **关卡 ID**：无；跨领域裁决委托给 unreal-specialist 或 lead-programmer
 
 ---
 
-## Test Cases
+## 静态断言（结构检查）
 
-### Case 1: In-domain request — inventory widget with data binding
-**Input**: "Create an inventory widget that shows a grid of item slots. Each slot should display item icon, quantity, and rarity color. It needs to update when the inventory changes."
-**Expected behavior**:
-- Produces a UMG widget structure: a parent WBP_Inventory containing a UniformGridPanel or TileView, with a child WBP_InventorySlot widget per item
-- Describes data binding approach: either Event Dispatchers on an Inventory Component triggering a refresh, or a ListView with a UObject item data class implementing IUserObjectListEntry
-- Specifies how rarity color is driven: a WidgetStyle asset or a data table lookup, not hardcoded color values
-- Output includes the widget hierarchy, binding pattern, and the refresh trigger mechanism
-
-### Case 2: Out-of-domain request — UX flow design
-**Input**: "Design the full navigation flow for our inventory system — how the player opens it, transitions to character stats, and exits to the pause menu."
-**Expected behavior**:
-- Does not produce a navigation flow or screen transition architecture
-- States clearly: "Navigation flow and screen transition design is owned by ux-designer; I can implement the UMG widget structure once the flow is defined"
-- Does not make UX decisions (back button behavior, transition animations, modal vs. fullscreen) without a UX spec
-
-### Case 3: Domain boundary — CommonUI input action mismatch
-**Input**: "Our inventory widget isn't responding to the controller Back button. We're using CommonUI."
-**Expected behavior**:
-- Identifies the likely cause: the widget's Back input action tag does not match the project's registered CommonUI InputAction data asset
-- Explains the CommonUI input routing model: widgets declare input actions via `CommonUI_InputAction` tags; the CommonActivatableWidget handles routing
-- Provides the fix: verify that the widget's Back action tag matches the registered tag in the project's CommonUI input action data table
-- Distinguishes this from a hardware input binding issue (which would be Enhanced Input territory)
-
-### Case 4: Widget performance issue — many widget instances per frame
-**Input**: "Our leaderboard widget creates 500 individual WBP_LeaderboardRow instances at once. The game hitches for 300ms when opening the leaderboard."
-**Expected behavior**:
-- Identifies the root cause: 500 widget instantiations in a single frame causes a construction hitch
-- Recommends switching to ListView or TileView with virtualization — only visible rows are constructed
-- Explains the IUserObjectListEntry interface requirement for ListView data objects
-- If ListView is not appropriate, recommends pooling: pre-instantiate a fixed number of rows and recycle them with new data
-- Output is a concrete recommendation with the specific UMG component to use, not a vague "optimize it"
-
-### Case 5: Context pass — CommonUI setup already configured
-**Input context**: Project uses CommonUI with the following registered InputAction tags: UI.Action.Confirm, UI.Action.Back, UI.Action.Pause, UI.Action.Secondary.
-**Input**: "Add a 'Sort Inventory' button to the inventory widget that works with CommonUI."
-**Expected behavior**:
-- Uses UI.Action.Secondary (or recommends registering a new tag like UI.Action.Sort if Secondary is already allocated)
-- Does NOT invent a new InputAction tag without noting that it must be registered in the CommonUI data table
-- Does NOT use a non-CommonUI input binding approach (e.g., raw key press in Event Graph) when CommonUI is the established pattern
-- References the provided tag list explicitly in the recommendation
+- [ ] `description:` 字段存在且领域明确（引用 UMG、CommonUI、Widget 层级结构、数据绑定）
+- [ ] `allowed-tools:` 列表与 Agent 角色匹配（Read、Write、Edit；无服务器或部署工具）
+- [ ] 模型层级为 Sonnet（专员的默认层级）
+- [ ] Agent 定义未主张对 UX 流程设计或 Gameplay 逻辑拥有权
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (UMG structure, data binding, CommonUI, widget performance)
-- [ ] Redirects UX flow and navigation design requests to ux-designer
-- [ ] Returns structured findings (widget hierarchy + binding pattern) rather than freeform opinions
-- [ ] Uses existing CommonUI InputAction tags from context; does not invent new ones without flagging registration requirement
-- [ ] Recommends virtualized lists (ListView/TileView) before widget pooling for large collections
+### 用例 1：领域内请求——背包格子 UI（含数据绑定）
+**输入**："用 UMG 实现一个背包格子 UI，当物品数据更新时格子内容能够实时刷新。"
+**预期行为**：
+- 使用 `UListView` 或 `UTileView`（而非手动创建 Grid Panel 内的 Widget）并绑定 `UObject` 数据源
+- 产出实现 `IUserObjectListEntry` 接口的 `WBP_InventorySlot` Widget Blueprint 结构
+- 通过数据变更事件驱动绑定（`OnListItemObjectSet`，而非 Tick 轮询）
+- 描述 Widget 生命周期：`NativeOnListItemObjectSet` 和 `NativeOnEntryReleased`
+- 不将手动循环构建的网格 Widget 组合作为大型列表的推荐方案
+
+### 用例 2：领域外——UX 流程重定向
+**输入**："设计玩家在背包中拾取、装备和丢弃物品的完整交互流程。"
+**预期行为**：
+- 不产出 UX 流程设计内容
+- 明确声明："交互流程设计属于 ux-designer 的职责范围"
+- 将请求重定向给 ux-designer
+- 注明它将实现 ux-designer 规格中定义的任何 Widget 交互逻辑
+
+### 用例 3：领域边界——CommonUI 输入 Action Tag 不匹配
+**输入**："我们在控制器模式下按 B 键（返回按钮）时，CommonUI 没有正确处理焦点。"
+**预期行为**：
+- 诊断为 CommonUI `InputAction` 标签配置问题
+- 检查 `UI.Action.Back`（或项目自定义 tag）是否已在 CommonUI 输入映射配置中正确绑定
+- 解释 CommonUI 的输入路由层级：激活 Widget 堆栈通过 Action Tag 消费输入，而非直接监听按键
+- 提供诊断步骤：检查 Widget 的 `bIsFocusable` 标志、`CommonActivatableWidget` 基类，以及 Action Tag 绑定
+- 不在未提供 CommonUI 输入系统解释的情况下直接给出原始键绑定修复方案
+
+### 用例 4：性能——大量 Widget 实例化
+**输入**："排行榜界面实例化了 500 个 `WBP_LeaderboardRow` Widget，导致 UI 明显卡顿。"
+**预期行为**：
+- 将 500 个静态 Widget 实例识别为性能问题（内存高、实例化耗时长）
+- 推荐 `UListView` 虚拟化方案：只实例化可见 Widget，滚动时复用
+- 提供迁移建议：将数据源转换为 `UObject` 列表，并使 Row Widget 实现 `IUserObjectListEntry`
+- 注明若存在加载延迟应使用 `UListView` 的异步填充模式
+- 不在未提及性能影响的情况下建议保留 500 个静态 Widget
+
+### 用例 5：上下文传递——项目 CommonUI Action Tag 体系
+**输入上下文**：项目使用如下 CommonUI InputAction 标签：`UI.Action.Confirm`、`UI.Action.Back`、`UI.Action.Pause`、`UI.Action.Secondary`。
+**输入**："在背包界面实现一个 '比较物品' 的辅助操作——按下游戏手柄 X 键触发。"
+**预期行为**：
+- 使用已有的 `UI.Action.Secondary` tag 将辅助操作映射到手柄 X 键
+- 不创建新的 InputAction tag（除非已有的 tag 均不合适，且须明确说明原因）
+- 产出用于监听 `UI.Action.Secondary` 的 CommonActivatableWidget Blueprint 逻辑
+- 注明 CommonUI 的 InputAction 绑定使用 WidgetStyleSheet 或 Project Input Config，而非直接绑定物理按键
 
 ---
 
-## Coverage Notes
-- Case 3 (CommonUI input routing) requires project to have CommonUI configured; test is skipped if project does not use CommonUI
-- Case 4 (performance) is a high-impact failure mode — 300ms hitches are shipping-blocking; prioritize this test case
-- Case 5 is the most important context-awareness test for UI pipeline consistency
-- No automated runner; review manually or via `/skill-test`
+## 协议合规性
+
+- [ ] 保持在声明的职责范围内（UMG、CommonUI、Widget 层级结构、数据绑定、性能）
+- [ ] 将 UX 流程设计请求重定向给 ux-designer
+- [ ] 返回结构化 UMG 实现方案（Widget 层级结构、绑定接口、ListView 模式）
+- [ ] 优先使用 ListView 虚拟化，而非为大型数据集创建静态 Widget
+- [ ] 在使用 Action Tag 时引用项目已有的 CommonUI tag 体系，而非新增冗余 tag
+
+---
+
+## 覆盖说明
+- 用例 4（Widget 性能）是最常见的 UMG 失效模式；建议定期测试
+- 用例 5 验证 Agent 能够将项目上下文（已有 Action Tag）应用于实现决策
+- 无自动化运行器；手动审查或通过 `/skill-test` 进行

@@ -1,79 +1,83 @@
-# Agent Test Spec: technical-artist
+# Agent 测试规格：technical-artist
 
-## Agent Summary
-Domain: Shaders, VFX, rendering optimization, art pipeline tools, and visual performance.
-Does NOT own: art style decisions or color palette (art-director), gameplay code (gameplay-programmer).
-Model tier: Sonnet (default).
-No gate IDs assigned.
-
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references shaders / VFX / rendering)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Bash, Glob, Grep
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over art style direction or gameplay logic
+## Agent 概述
+职责领域：着色器、VFX、渲染优化、美术流水线工具与视觉性能。
+不负责：美术风格与色彩方案（art-director）、游戏玩法代码（gameplay-programmer）。
+模型层级：Sonnet（默认）。
+未分配关卡 ID。
 
 ---
 
-## Test Cases
+## 静态断言（结构检查）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Create a dissolve effect shader for enemy death sequences."
-**Expected behavior:**
-- Produces shader code or a Shader Graph node spec appropriate to the configured engine (Godot shading language / Unity Shader Graph / Unreal Material Blueprint)
-- Defines a `dissolve_amount` uniform (0.0–1.0) as the animation driver
-- Uses a noise texture sample to determine the dissolve threshold
-- Notes edge-lighting technique as an optional enhancement
-- Output is engine-version-aware (checks version reference if post-cutoff APIs are needed)
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Define the art bible color palette: primary, secondary, and accent colors for the UI."
-**Expected behavior:**
-- Does NOT produce color palette decisions or art direction documents
-- Explicitly states that art style decisions belong to `art-director`
-- Redirects the request to `art-director`
-- May note it can later implement a color-grading or palette LUT shader once the palette is decided
-
-### Case 3: Performance warning — GPU particle count
-**Input:** "The VFX system is triggering a GPU particle count warning at 50,000 particles in the explosion pool."
-**Expected behavior:**
-- Produces an optimization spec addressing the specific warning
-- Proposes concrete strategies: particle budget caps per emitter, LOD-based particle reduction, GPU instancing, or switching to mesh-based VFX for distant effects
-- Provides before/after GPU cost estimates where calculable
-- Does NOT change gameplay behavior of the explosion (delegates any gameplay impact to gameplay-programmer)
-
-### Case 4: Engine version compatibility
-**Input:** "Use the new texture sampler API for the water shader."
-**Expected behavior:**
-- Checks the engine version reference (e.g., `docs/engine-reference/godot/VERSION.md`) before suggesting any API
-- Flags if the requested API is post-cutoff (e.g., Godot 4.4+ texture type changes)
-- Provides the correct syntax for the project's pinned engine version
-- If uncertain about post-cutoff behavior, explicitly states the uncertainty and directs to verified docs
-
-### Case 5: Context pass — uses performance budget
-**Input:** Performance budget from `technical-preferences.md` provided in context: 2ms GPU frame budget, max 200 draw calls. Request: "Optimize the forest rendering system."
-**Expected behavior:**
-- References the specific 2ms GPU budget and 200 draw call limit from the provided context
-- Proposes optimizations calibrated to those exact targets (e.g., "batching reduces draw calls from 340 to ~180, within the 200 limit")
-- Does NOT propose optimizations that would exceed the stated budgets in other dimensions
-- Produces a ranked list of optimizations by expected impact vs. implementation cost
+- [ ] `description:` 字段存在且领域明确（引用着色器 / VFX / 视觉性能）
+- [ ] `allowed-tools:` 列表包含 Read、Write、Edit、Bash、Glob、Grep
+- [ ] 模型层级为 Sonnet（专员的默认层级）
+- [ ] Agent 定义未主张对美术风格决策或游戏玩法代码拥有权
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (shaders, VFX, rendering optimization, art pipeline)
-- [ ] Redirects art style decisions to art-director
-- [ ] Returns structured findings (shader code, optimization specs with metrics, node graphs)
-- [ ] Does not modify gameplay code files without explicit delegation
-- [ ] Checks engine version reference before suggesting post-cutoff APIs
-- [ ] Quantifies performance changes against stated budgets
+### 用例 1：领域内请求——合适的输出
+**输入**："为角色创建溶解消失效果着色器。"
+**预期行为**：
+- 按项目配置的引擎（Godot/Unity/Unreal）产出着色器代码
+- 包含 `dissolve_amount` uniform（范围 0-1，0 为完全显示，1 为完全溶解）
+- 使用噪声纹理采样作为溶解阈值，产生有机的溶解边缘
+- 包含可选的边缘发光（`edge_color` uniform）
+- 标注着色器代码中与引擎版本相关的 API（版本感知）
+
+### 用例 2：领域外请求——正确重定向
+**输入**："定义游戏世界的主色调——推荐一套色彩方案。"
+**预期行为**：
+- 不产出色彩方案或美术风格建议
+- 明确声明美术风格和色彩方案属于 `art-director` 的职责范围
+- 将请求重定向给 `art-director`
+- 可注明：色彩方案确定后，可实现颜色分级 LUT（查找表）将方案应用到渲染流水线
+
+### 用例 3：粒子性能优化
+**输入**："粒子系统使用了5万个粒子，GPU 警告显示性能开销过高。"
+**预期行为**：
+- 产出针对高粒子数量的优化策略：
+  - 为各发射器设置粒子上限
+  - LOD（细节层次）分级削减——距相机越远减少粒子数
+  - 可能的情况下使用 GPU 实例化
+  - 距离较远时使用网格面片替代粒子
+- 提供优化前/后的 GPU 消耗估算（即使是大概数量级）
+- 不修改粒子系统的游戏玩法行为（仅做视觉优化）
+
+### 用例 4：引擎版本 API 验证
+**输入**："使用项目当前引擎版本的最新纹理采样 API 更新材质着色器。"
+**预期行为**：
+- 在查阅引擎版本参考（VERSION.md）之后产出着色器代码
+- 使用固定版本的纹理采样 API 语法，而非猜测
+- 如果引擎版本参考中未包含该 API 信息，明确声明不确定性并标注
+- 不产出可能使用已废弃 API 的着色器代码而不发出警告
+
+### 用例 5：上下文传递——性能预算
+**上下文输入**：技术偏好配置中提供 GPU 预算 2ms，绘制调用上限 200。当前场景分析：GPU 3.4ms，绘制调用 340 次。
+**输入**："推荐针对此场景的优化方案。"
+**预期行为**：
+- 引用上下文中的具体数字（当前 3.4ms，超出 2ms 预算；当前 340 次调用，超出 200 上限）
+- 量化每项建议的预期收益（如"静态几何体批处理预计将绘制调用从 340 减少至 ~180，达到 200 的限制"）
+- 按收益/成本比排序建议
+- 不产出无具体预算基准的笼统建议
 
 ---
 
-## Coverage Notes
-- Dissolve shader (Case 1) should include a visual test reference in `production/qa/evidence/`
-- Engine version check (Case 4) confirms the agent treats VERSION.md as authoritative
-- Performance budget case (Case 5) verifies the agent reads and applies provided context numbers
+## 协议合规
+
+- [ ] 保持在声明领域内（着色器、VFX、渲染优化、美术流水线）
+- [ ] 将美术风格/色彩请求重定向给 art-director
+- [ ] 产出带具体指标的结构化分析结果（优化前/后，与预算对比）
+- [ ] 不修改游戏玩法代码——视觉调整仅限视觉层
+- [ ] 产出着色器前检查 VERSION.md
+- [ ] 优化建议与上下文中的明确预算挂钩
+
+---
+
+## 覆盖说明
+- 着色器代码（用例 1 和用例 4）须与引擎版本兼容——标注任何版本感知的 API
+- 预算合规（用例 5）确认 Agent 使用具体数字而非行业基准
+- 粒子优化（用例 3）验证 Agent 能区分视觉优化与玩法行为修改

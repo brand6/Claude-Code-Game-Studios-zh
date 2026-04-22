@@ -1,81 +1,81 @@
-# Agent Test Spec: ue-gas-specialist
+# Agent 测试规格：ue-gas-specialist
 
-## Agent Summary
-- **Domain**: Gameplay Ability System (GAS) — abilities (UGameplayAbility), gameplay effects (UGameplayEffect), attribute sets (UAttributeSet), gameplay tags, ability tasks (UAbilityTask), ability specs (FGameplayAbilitySpec), GAS prediction and latency compensation
-- **Does NOT own**: UI display of ability state (ue-umg-specialist), net replication of GAS data beyond built-in GAS prediction (ue-replication-specialist), art or VFX for ability feedback (vfx-artist)
-- **Model tier**: Sonnet
-- **Gate IDs**: None; defers cross-domain calls to the appropriate specialist
-
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references GAS, abilities, GameplayEffects, AttributeSets)
-- [ ] `allowed-tools:` list matches the agent's role (Read/Write for GAS source files; no deployment or server tools)
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over UI implementation or low-level net serialization
+## Agent 概述
+- **职责领域**：Gameplay Ability System（GAS）——UGameplayAbility、UGameplayEffect、UAttributeSet、GameplayTags、AbilityTasks，以及 GAS 客户端预测
+- **不负责**：能力状态的 UI 显示（ue-umg-specialist）、底层网络序列化（ue-replication-specialist）、美术资源（art-director）
+- **模型层级**：Sonnet
+- **关卡 ID**：无；跨领域裁决委托给 unreal-specialist 或 lead-programmer
 
 ---
 
-## Test Cases
+## 静态断言（结构检查）
 
-### Case 1: In-domain request — dash ability with cooldown
-**Input**: "Implement a dash ability that moves the player forward 500 units and has a 1.5 second cooldown."
-**Expected behavior**:
-- Produces a GAS AbilitySpec structure or outline: UGameplayAbility subclass with ActivateAbility logic, an AbilityTask for movement (e.g., AbilityTask_ApplyRootMotionMoveToForce or custom root motion), and a UGameplayEffect for the cooldown
-- Cooldown GameplayEffect uses Duration policy with the 1.5s duration and a GameplayTag to block re-activation
-- Tags clearly named following a hierarchy convention (e.g., Ability.Dash, Cooldown.Ability.Dash)
-- Output includes both the ability class outline and the GameplayEffect definition
-
-### Case 2: Out-of-domain request — GAS state replication
-**Input**: "How do I replicate the player's ability cooldown state to all clients so the UI updates correctly?"
-**Expected behavior**:
-- Clarifies that GAS has built-in replication for AbilitySpecs and GameplayEffects via the AbilitySystemComponent's replication mode
-- Explains the three ASC replication modes (Full, Mixed, Minimal) and when to use each
-- For custom replication needs beyond GAS built-ins, explicitly states: "For custom net serialization of GAS data, coordinate with ue-replication-specialist"
-- Does NOT attempt to write custom replication code outside GAS's own systems without flagging the domain boundary
-
-### Case 3: Domain boundary — incorrect GameplayTag hierarchy
-**Input**: "We have an ability that applies a tag called 'Stunned' and another that checks for 'Status.Stunned'. They're not matching."
-**Expected behavior**:
-- Identifies the root cause: tag names must be exact or use hierarchical matching via TagContainer queries
-- Flags the naming inconsistency: 'Stunned' is a root-level tag; 'Status.Stunned' is a child tag under 'Status' — these are different tags
-- Recommends a project tag naming convention: all status effects under Status.*, all abilities under Ability.*
-- Provides the fix: either rename the applied tag to 'Status.Stunned' or update the query to match 'Stunned'
-- Notes where tag definitions should live (DefaultGameplayTags.ini or a DataTable)
-
-### Case 4: Conflict — attribute set conflict between two abilities
-**Input**: "Our Shield ability and our Armor ability both modify a 'DefenseValue' attribute. They're stacking in ways that aren't intended — after both are active, defense goes well above maximum."
-**Expected behavior**:
-- Identifies this as a GameplayEffect stacking and magnitude calculation problem
-- Proposes a resolution using Execution Calculations (UGameplayEffectExecutionCalculation) or Modifier Aggregators to cap the combined result
-- Alternatively recommends using Gameplay Effect Stacking policies (Aggregate, None) to prevent unintended additive stacking
-- Produces a concrete resolution: either an Execution Calculation class outline or a change to the Modifier Op (Override instead of Additive for the cap)
-- Does NOT propose removing one of the abilities as the solution
-
-### Case 5: Context pass — designing against an existing attribute set
-**Input context**: Project has an existing AttributeSet with attributes: Health, MaxHealth, Stamina, MaxStamina, Defense, AttackPower.
-**Input**: "Design a Berserker ability that increases AttackPower by 50% when Health drops below 30%."
-**Expected behavior**:
-- Uses the existing Health, MaxHealth, and AttackPower attributes — does NOT invent new attributes
-- Designs a Passive GameplayAbility (or triggered Effect) that fires on Health change, checks Health/MaxHealth ratio via a GameplayEffectExecutionCalculation or Attribute-Based magnitude
-- Uses a Gameplay Cue or Gameplay Tag to track the Berserker active state
-- References the actual attribute names from the provided AttributeSet (AttackPower, not "Damage" or "Strength")
+- [ ] `description:` 字段存在且领域明确（引用 GAS——UGameplayAbility、UGameplayEffect、UAttributeSet、GameplayTags）
+- [ ] `allowed-tools:` 列表包含 Read、Write、Edit，无服务器或部署工具
+- [ ] 模型层级为 Sonnet（专员的默认层级）
+- [ ] Agent 定义未主张对 UI 显示或底层复制序列化拥有权
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (GAS: abilities, effects, attributes, tags, ability tasks)
-- [ ] Redirects custom replication requests to ue-replication-specialist with clear explanation of boundary
-- [ ] Returns structured findings (ability outline + GameplayEffect definition) rather than vague descriptions
-- [ ] Enforces tag hierarchy naming conventions proactively
-- [ ] Uses only attributes and tags present in the provided context; does not invent new ones without noting it
+### 用例 1：领域内请求——含冷却的 Dash 技能
+**输入**："使用 GAS 实现一个具有 1.5 秒冷却时间的 Dash 技能。"
+**预期行为**：
+- 定义继承 `UGameplayAbility` 的 `UGA_Dash` 类
+- 使用 `UGameplayEffect` 并将 `DurationPolicy` 设为 `HasDuration`（持续时间 1.5 秒）实现冷却效果
+- 在 `UGA_Dash::CanActivateAbility()` 中通过 `GameplayTag` 阻断来阻止重复激活（如 `Ability.Cooldown.Dash`）
+- 产出用于移动偏移的 `UAbilityTask_ApplyRootMotionConstantForce` 或等价的 AbilityTask
+- 代码结构符合 GAS 约定（构造函数初始化标志、ActivateAbility 生命周期）
+
+### 用例 2：领域内——GAS 复制模式
+**输入**："我们的多人 GAS 游戏在同步 Gameplay Effects 时出现延迟——应该选择哪种复制模式？"
+**预期行为**：
+- 解释三种 GAS 复制模式：Full（全量，适用于单人/小型多人）、Mixed（混合，适用于玩家主控角色）、Minimal（最小，适用于 AI/NPC）
+- 根据游戏类型推荐特定模式（如多人动作游戏使用 Mixed）
+- 说明客户端预测的影响：使用 Mixed/Full 模式时，预测的 Gameplay Effects 会立即在客户端本地应用
+- 不将 GAS 复制配置错误地指向 ue-replication-specialist——这属于 GAS 配置，而非底层复制
+
+### 用例 3：领域边界——Tag 层级结构不匹配导致技能无法激活
+**输入**："Dash 技能未触发，但我已在技能资源中添加了 `Ability.Dash` tag，并在 AbilitySystemComponent 上授予了 `Character.Movement.Dash` tag。"
+**预期行为**：
+- 识别 GameplayTag 层级结构不匹配
+- 解释激活时的 tag 匹配规则：GrantedTags 和 ActivationRequiredTags 必须对应正确
+- 明确区分所使用的具体 GAS tag 槽位：ActivationRequiredTags、ActivationBlockedTags、OwnedTagsContainer
+- 提供诊断步骤：使用 `UAbilitySystemComponent::GetActivatableGameplayAbilitySpecsByAllMatchingTags` 确认 tag 解析
+- 不在未提供 tag 匹配规则解释的情况下直接给出修正后的 tag 字符串
+
+### 用例 4：领域冲突——属性叠加
+**输入**："当护盾 GameplayEffect 和护甲 GameplayEffect 同时应用时，我们不确定它们是否应当叠加。最近因这个问题出现了平衡性 Bug。"
+**预期行为**：
+- 识别为 GAS 叠加策略问题（`GameplayEffectStackingType`：`AggregateBySource`、`AggregateByTarget`、`NoStacking` 等）
+- 解释可用的叠加策略，并说明各自对护甲/护盾叠加逻辑的影响
+- 注明平衡性影响：叠加方式会直接影响有效 HP 的伤害计算
+- 标记此决策需要与 game-designer 或 systems-designer 协调以确定预期的游戏感受
+- 产出多种叠加配置方案（非单一的主观答案），并说明各自的平衡性含义
+
+### 用例 5：上下文传递——使用已有 AttributeSet
+**输入上下文**：项目已有一个包含以下属性的 `UBaseAttributeSet`：Health、MaxHealth、Stamina、Defense、AttackPower。
+**输入**："为连击攻击系统添加一个 `ComboMultiplier` 属性。"
+**预期行为**：
+- 将 `ComboMultiplier` 添加到已有的 `UBaseAttributeSet`，而非创建新的 AttributeSet
+- 提供正确的 UPROPERTY 宏声明和 `GAMEPLAYATTRIBUTE_VALUE_GETTER`/`SETTER` 访问器模板
+- 注明属性复制注意事项（若多人项目需设为 `Replicated`）
+- 不忽略已有的 AttributeSet 上下文，也不建议创建单独的 AttributeSet 仅用于存储 ComboMultiplier
 
 ---
 
-## Coverage Notes
-- Case 3 (tag hierarchy) is a frequent source of subtle bugs; test whenever tag naming conventions change
-- Case 4 requires knowledge of GAS stacking policies — verify this case if the GAS integration depth changes
-- Case 5 is the most important context-awareness test; failing it means the agent ignores project state
-- No automated runner; review manually or via `/skill-test`
+## 协议合规性
+
+- [ ] 保持在声明的职责范围内（GAS——Ability、Effect、AttributeSet、Tag、AbilityTask）
+- [ ] 将 UI 状态显示请求重定向给 ue-umg-specialist
+- [ ] 将底层序列化问题重定向给 ue-replication-specialist
+- [ ] 在叠加策略决策中调用 game-designer / systems-designer 参与
+- [ ] 返回结构化 GAS 代码，符合 UE C++ / GAS 约定
+
+---
+
+## 覆盖说明
+- 用例 3（Tag 层级结构）是高频问题；建议针对 tag 配置错误定期测试
+- 用例 4（叠加策略）验证 Agent 不自行做出平衡性决策——这是设计领域，而非纯技术问题
+- 无自动化运行器；手动审查或通过 `/skill-test` 进行

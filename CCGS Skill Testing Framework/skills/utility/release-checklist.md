@@ -1,177 +1,176 @@
-# Skill Test Spec: /release-checklist
+# 技能测试规范：/release-checklist
 
-## Skill Summary
+## 技能概要
 
-`/release-checklist` generates an internal release readiness checklist covering:
-sprint story completion, open bug severity, QA sign-off status, build stability,
-and changelog readiness. It is an internal gate — not a platform/store checklist
-(that is `/launch-checklist`). When a previous release checklist exists, it shows
-a delta of resolved and newly introduced issues.
+`/release-checklist` 生成内部发布就绪清单，验证里程碑或冲刺是否已准备好发布。
+这与 `/launch-checklist`（面向平台发布）不同——本技能聚焦于内部质量门控：
 
-The skill writes its checklist report to `production/releases/release-checklist-[date].md`
-after a "May I write" ask. No director gates apply — `/gate-check` handles
-formal phase gate logic. Verdicts: RELEASE READY, RELEASE BLOCKED, or CONCERNS.
+- 冲刺故事完成度（Done 状态）
+- 开放缺陷的严重程度（是否存在 HIGH/CRITICAL 未关闭缺陷）
+- QA 签核状态（`production/qa/` 目录）
+- 构建稳定性（Smoke 检查状态）
+- 更新日志就绪情况（`/changelog` 是否已运行）
 
----
-
-## Static Assertions (Structural)
-
-Verified automatically by `/skill-test static` — no fixture needed.
-
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: RELEASE READY, RELEASE BLOCKED, CONCERNS
-- [ ] Contains "May I write" collaborative protocol language before writing the report
-- [ ] Has a next-step handoff (e.g., `/launch-checklist` for external or `/gate-check` for phase)
+清单写入 `production/releases/release-checklist-[日期].md`。
+存在 BLOCKING 项目时判决为 RELEASE BLOCKED，
+存在 NEEDS ATTENTION 项目时为 CONCERNS，
+所有项目通过时为 RELEASE READY。
+不适用 director 门控。
 
 ---
 
-## Director Gate Checks
+## 静态断言（结构性）
 
-None. `/release-checklist` is an internal audit utility. Formal phase advancement
-is managed by `/gate-check`.
+由 `/skill-test static` 自动验证——无需夹具。
 
----
-
-## Test Cases
-
-### Case 1: Happy Path — All Sprint Stories Complete, QA Passed, RELEASE READY
-
-**Fixture:**
-- `production/sprints/sprint-008.md` — all stories are `Status: Done`
-- No open bugs with severity HIGH or CRITICAL in `production/bugs/`
-- `production/qa/qa-plan-sprint-008.md` has QA sign-off annotation
-- Changelog entry for this version exists
-- `production/stage.txt` contains `Polish`
-
-**Input:** `/release-checklist`
-
-**Expected behavior:**
-1. Skill reads sprint-008: all stories Done
-2. Skill reads bugs: no HIGH or CRITICAL open bugs
-3. Skill confirms QA plan has sign-off
-4. Skill confirms changelog entry exists
-5. All checks pass; skill asks "May I write to
-   `production/releases/release-checklist-2026-04-06.md`?"
-6. Report written; verdict is RELEASE READY
-
-**Assertions:**
-- [ ] All 4 check categories are evaluated (stories, bugs, QA, changelog)
-- [ ] All items appear with PASS markers
-- [ ] Verdict is RELEASE READY
-- [ ] "May I write" is asked before writing
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含至少 2 个阶段标题
+- [ ] 包含判决关键词：RELEASE READY、RELEASE BLOCKED、CONCERNS
+- [ ] 在写入清单前包含"May I write"协作协议语言
+- [ ] 包含下一步交接（例如 `/launch-checklist` 用于外部发布或 `/gate-check` 用于阶段推进）
 
 ---
 
-### Case 2: Open HIGH Severity Bugs — RELEASE BLOCKED
+## Director 门控检查
 
-**Fixture:**
-- All sprint stories are Done
-- `production/bugs/` contains 2 open bugs with severity HIGH
-
-**Input:** `/release-checklist`
-
-**Expected behavior:**
-1. Skill reads sprint — stories complete
-2. Skill reads bugs — 2 HIGH severity bugs open
-3. Skill reports: "RELEASE BLOCKED — 2 open HIGH severity bugs must be resolved"
-4. Both bug filenames are listed in the report
-5. Verdict is RELEASE BLOCKED
-
-**Assertions:**
-- [ ] Verdict is RELEASE BLOCKED (not CONCERNS)
-- [ ] Both bug filenames are listed explicitly
-- [ ] Skill makes clear HIGH severity bugs are blocking (not advisory)
+无。`/release-checklist` 是内部发布运营工具。不适用 director 门控。
+（正式阶段推进由 `/gate-check` 管理。）
 
 ---
 
-### Case 3: Changelog Not Generated — CONCERNS
+## 测试用例
 
-**Fixture:**
-- All stories Done, no HIGH/CRITICAL bugs
-- No changelog entry found for the current version/sprint
+### 用例 1：正常路径——所有故事完成，无高危缺陷，RELEASE READY
 
-**Input:** `/release-checklist`
+**夹具：**
+- `production/sprints/sprint-018.md` 中所有故事状态为 `Done`
+- `production/bugs/` 中无 HIGH 或 CRITICAL 严重程度的未关闭缺陷
+- `production/qa/qa-plan-sprint-018.md` 包含"QA APPROVED"签核
+- 最近一次 smoke 检查通过
+- `production/releases/changelog-v1.2.0.md` 存在
 
-**Expected behavior:**
-1. Skill checks all items
-2. Changelog check fails: no changelog entry found
-3. Skill reports: "CONCERNS — Changelog not generated for this release"
-4. Skill suggests running `/changelog` to generate it
-5. Verdict is CONCERNS (advisory — not a hard block)
+**输入：** `/release-checklist`
 
-**Assertions:**
-- [ ] Verdict is CONCERNS (not RELEASE BLOCKED — changelog is advisory)
-- [ ] `/changelog` is suggested as the remediation
-- [ ] Other passing checks are shown in the report
-- [ ] Missing changelog is described as advisory, not blocking
+**预期行为：**
+1. 技能读取冲刺故事——所有状态均为 Done
+2. 技能读取开放缺陷——无 HIGH/CRITICAL
+3. 技能读取 QA 签核——APPROVED
+4. 技能确认 smoke 检查通过
+5. 技能确认更新日志存在
+6. 所有项目标记为 ✅ VERIFIED
+7. 技能询问"May I write to `production/releases/release-checklist-[日期].md`?"
+8. 清单写入；判决为 RELEASE READY
 
----
-
-### Case 4: Previous Release Checklist Exists — Delta From Last Release
-
-**Fixture:**
-- `production/releases/release-checklist-2026-03-20.md` exists
-- Previous: 1 story was incomplete, 1 HIGH bug open
-- Current: all stories Done, HIGH bug resolved, but now 1 MEDIUM bug appeared
-
-**Input:** `/release-checklist`
-
-**Expected behavior:**
-1. Skill finds the previous checklist and loads it
-2. New checklist is generated and compared:
-   - Newly resolved: "Story [X] — was open, now Done"
-   - Newly resolved: "HIGH bug [filename] — was open, now closed"
-   - New item: "1 MEDIUM bug appeared (advisory)"
-3. Delta section shows all changes prominently
-4. Verdict is CONCERNS (MEDIUM bug is advisory, not blocking)
-
-**Assertions:**
-- [ ] Delta section appears in the report with resolved and new items
-- [ ] Newly resolved items from the previous checklist are noted
-- [ ] New items not present in the previous checklist are highlighted
-- [ ] Verdict reflects current state (not previous state)
+**断言：**
+- [ ] 所有 5 个内部类别均出现在输出中
+- [ ] 所有项目标记为 ✅ VERIFIED
+- [ ] 判决为 RELEASE READY
+- [ ] 写入前询问"May I write"
 
 ---
 
-### Case 5: Director Gate Check — No gate; release-checklist is an internal audit
+### 用例 2：存在 HIGH 严重程度未关闭缺陷——RELEASE BLOCKED
 
-**Fixture:**
-- Active sprint with stories and bug reports
+**夹具：**
+- 冲刺故事均已完成
+- `production/bugs/` 中有 1 个 HIGH 严重程度的未关闭缺陷
 
-**Input:** `/release-checklist`
+**输入：** `/release-checklist`
 
-**Expected behavior:**
-1. Skill runs the full checklist and writes the report
-2. No director agents are spawned
-3. No gate IDs appear in output
+**预期行为：**
+1. 技能读取开放缺陷，发现 1 个 HIGH 严重程度的缺陷
+2. 技能将缺陷标记为 ❌ BLOCKING
+3. 其他项目正常通过
+4. 总体判决为 RELEASE BLOCKED
+5. HIGH 缺陷明确识别（文件名或标题）
 
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No gate skip messages appear
-- [ ] Verdict is RELEASE READY, RELEASE BLOCKED, or CONCERNS — no gate verdict
-
----
-
-## Protocol Compliance
-
-- [ ] Checks sprint story completion status
-- [ ] Checks open bug severity (CRITICAL/HIGH = BLOCKED; MEDIUM/LOW = CONCERNS)
-- [ ] Checks QA plan sign-off status
-- [ ] Checks changelog existence
-- [ ] Compares against previous checklist when one exists
-- [ ] Asks "May I write" before writing the report
-- [ ] Verdict is RELEASE READY, RELEASE BLOCKED, or CONCERNS
+**断言：**
+- [ ] HIGH 缺陷标记为 ❌ BLOCKING
+- [ ] 判决为 RELEASE BLOCKED
+- [ ] 阻断缺陷明确识别（不仅说"某个缺陷"）
+- [ ] 即使为 RELEASE BLOCKED，清单仍写入（供参考）
 
 ---
 
-## Coverage Notes
+### 用例 3：更新日志未生成——CONCERNS，不阻断发布
 
-- Build stability verification (no failed CI runs) is listed as a check category
-  but relies on external CI system state; the skill notes this as a MANUAL CHECK
-  if CI integration is not configured.
-- CRITICAL bugs always result in RELEASE BLOCKED regardless of other items;
-  this is equivalent to the HIGH severity case in Case 2.
-- Stories with `Status: In Review` (not Done) are treated as incomplete
-  and result in RELEASE BLOCKED; this edge case follows the same pattern
-  as the HIGH bug case.
+**夹具：**
+- 所有故事完成，无高危缺陷，QA 已签核
+- 不存在 `production/releases/changelog-v1.3.0.md`
+
+**输入：** `/release-checklist`
+
+**预期行为：**
+1. 技能读取更新日志状态——未找到
+2. 技能将更新日志项目标记为 ⚠️ NEEDS ATTENTION
+3. 其他项目正常通过
+4. 总体判决为 CONCERNS（不是 RELEASE BLOCKED）
+5. 技能建议运行 `/changelog` 生成更新日志
+
+**断言：**
+- [ ] 更新日志项目标记为 ⚠️ NEEDS ATTENTION
+- [ ] 判决为 CONCERNS（不是 RELEASE BLOCKED）
+- [ ] 建议运行 `/changelog`
+- [ ] 仅因更新日志缺失，技能不阻断发布
+
+---
+
+### 用例 4：与之前清单对比——显示变更差异
+
+**夹具：**
+- `production/releases/release-checklist-2026-03-25.md` 已存在（上次运行）
+- 上次清单：QA 签核为 ⚠️ NEEDS ATTENTION
+- 本次运行：QA 签核现为 ✅ VERIFIED
+
+**输入：** `/release-checklist`
+
+**预期行为：**
+1. 技能读取上次清单以进行对比
+2. 技能在输出中注明状态变更：
+   "QA Sign-off: NEEDS ATTENTION → VERIFIED"
+3. 新清单写入带新日期的新文件
+
+**断言：**
+- [ ] 输出中包含"上次与本次"的差异
+- [ ] 新清单写入带新日期的新文件（不覆盖旧文件）
+- [ ] 差异摘要准确反映状态变更
+
+---
+
+### 用例 5：Director 门控检查——无门控；release-checklist 为运营工具
+
+**夹具：**
+- 标准项目设置
+
+**输入：** `/release-checklist`
+
+**预期行为：**
+1. 技能生成并写入清单
+2. 未调用任何 director agent
+3. 输出中无门控 ID
+
+**断言：**
+- [ ] 未调用 director 门控
+- [ ] 输出中无门控跳过消息
+- [ ] 技能在不经过任何门控检查的情况下达到 RELEASE READY / RELEASE BLOCKED / CONCERNS
+
+---
+
+## 协议合规
+
+- [ ] 覆盖 5 个内部发布类别：故事完成度、开放缺陷严重程度、QA 签核、Smoke 状态、更新日志
+- [ ] 每项检查使用 ✅ / ⚠️ / ❌ 前缀
+- [ ] 存在 ❌ BLOCKING 项目（HIGH/CRITICAL 缺陷）时判决为 RELEASE BLOCKED
+- [ ] 无 BLOCKING 但有 ⚠️ NEEDS ATTENTION 时判决为 CONCERNS
+- [ ] 所有项目通过时判决为 RELEASE READY
+- [ ] 写入前询问"May I write to `production/releases/release-checklist-[日期].md`?"
+
+---
+
+## 覆盖说明
+
+- 此技能（内部里程碑）与 `/launch-checklist`（平台发布）不同；
+  两者使用不同的类别，在不同时间运行。
+- Smoke 检查状态读取方式在技能主体中定义（读取最近的 smoke-check 输出或状态文件）；
+  此规范仅要求 smoke 状态包含在清单中。
+- 存在多个 BLOCKING 缺陷的情况与用例 2 相同处理——所有 BLOCKING 缺陷均列出。

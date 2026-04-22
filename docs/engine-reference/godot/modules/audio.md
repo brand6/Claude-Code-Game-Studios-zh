@@ -1,21 +1,20 @@
-# Godot Audio — Quick Reference
+# Godot 音频 — 快速参考
 
 Last verified: 2026-02-12 | Engine: Godot 4.6
 
-## What Changed Since ~4.3 (LLM Cutoff)
+## 自 ~4.3（LLM 截止版本）以来的变更
 
-No major breaking changes to the audio API in 4.4–4.6. The core audio system
-remains stable. Key updates are workflow improvements:
+4.4–4.6 中音频 API 没有重大破坏性变更。核心音频系统保持稳定。主要更新为工作流改善：
 
-### 4.6 Changes
-- **No audio-specific breaking changes** in this release
+### 4.6 变更
+- **本版本无音频特定破坏性变更**
 
-### 4.5 Changes
-- **No audio-specific breaking changes** in this release
+### 4.5 变更
+- **本版本无音频特定破坏性变更**
 
-## Current API Patterns
+## 当前 API 模式
 
-### Playing Audio
+### 播放音频
 ```gdscript
 @onready var sfx_player: AudioStreamPlayer = %SFXPlayer
 @onready var music_player: AudioStreamPlayer = %MusicPlayer
@@ -33,7 +32,7 @@ func play_music(stream: AudioStream, fade_time: float = 1.0) -> void:
     music_player.play()
 ```
 
-### 3D Spatial Audio
+### 3D 空间音频
 ```gdscript
 @onready var audio_3d: AudioStreamPlayer3D = %AudioPlayer3D
 
@@ -43,19 +42,19 @@ func _ready() -> void:
     audio_3d.unit_size = 10.0
 ```
 
-### Audio Buses
+### 音频总线
 ```gdscript
-# Set bus volumes
+# 设置总线音量
 AudioServer.set_bus_volume_db(AudioServer.get_bus_index(&"Music"), volume_db)
 AudioServer.set_bus_volume_db(AudioServer.get_bus_index(&"SFX"), volume_db)
 
-# Mute a bus
+# 静音总线
 AudioServer.set_bus_mute(AudioServer.get_bus_index(&"Music"), true)
 ```
 
-### Object Pooling for SFX
+### 音效对象池
 ```gdscript
-# Pre-create multiple AudioStreamPlayer nodes for concurrent sounds
+# 预先创建多个 AudioStreamPlayer 节点以支持并发播放
 var _sfx_pool: Array[AudioStreamPlayer] = []
 
 func _ready() -> void:
@@ -73,7 +72,7 @@ func play_pooled(stream: AudioStream) -> void:
             return
 ```
 
-## Common Mistakes
-- Creating new AudioStreamPlayer nodes at runtime instead of pooling
-- Not using audio buses for volume categories (Music, SFX, UI, Voice)
-- Using `_process()` for audio timing instead of signals (`finished`)
+## 常见错误
+- 运行时新建 AudioStreamPlayer 节点而非使用对象池
+- 未使用音频总线对音量分类（Music、SFX、UI、Voice）
+- 在 `_process()` 中处理音频计时，而非使用信号（`finished`）

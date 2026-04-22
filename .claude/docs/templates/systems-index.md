@@ -1,146 +1,133 @@
-# Systems Index: [Game Title]
+# 系统索引：[Game Title]
 
-> **Status**: [Draft / Under Review / Approved]
-> **Created**: [Date]
-> **Last Updated**: [Date]
-> **Source Concept**: design/gdd/game-concept.md
-
----
-
-## Overview
-
-[One paragraph explaining the game's mechanical scope. What kind of systems does
-this game need? Reference the core loop and game pillars. This should help any
-team member understand the "big picture" of what needs to be designed and built.]
+> **状态**：[Draft / Under Review / Approved]
+> **创建日期**：[Date]
+> **最后更新**：[Date]
+> **来源概念文档**：design/gdd/game-concept.md
 
 ---
 
-## Systems Enumeration
+## 概述
 
-| # | System Name | Category | Priority | Status | Design Doc | Depends On |
-|---|-------------|----------|----------|--------|------------|------------|
-| 1 | [e.g., Player Controller] | Core | MVP | [Not Started / In Design / In Review / Approved / Implemented] | [design/gdd/player-controller.md or "—"] | [e.g., Input System, Physics] |
-| 2 | [e.g., Camera System] | Core | MVP | Not Started | — | Player Controller |
-
-[Add a row for every identified system. Use the categories and priority tiers
-defined below. Mark systems that were inferred (not explicitly in the concept doc)
-with "(inferred)" in the system name.]
+[用一段话说明本游戏的机制范围。这款游戏需要哪些类型的系统？请参照核心循环和游戏支柱进行说明。这段话应帮助任何团队成员理解需要设计和构建的"全局蓝图"。]
 
 ---
 
-## Categories
+## 系统枚举
 
-| Category | Description | Typical Systems |
-|----------|-------------|-----------------|
-| **Core** | Foundation systems everything depends on | Player controller, input, physics, camera, scene management, state machine |
-| **Gameplay** | The systems that make the game fun | Combat, AI, stealth, movement abilities, interaction |
-| **Progression** | How the player grows over time | XP/leveling, skill trees, unlocks, achievements, reputation |
-| **Economy** | Resource creation and consumption | Currency, loot, crafting, shops, item database, drop tables |
-| **Persistence** | Save state and continuity | Save/load, settings, cloud sync, profile management |
-| **UI** | Player-facing information displays | HUD, menus, inventory screen, dialogue UI, map, notifications |
-| **Audio** | Sound and music systems | Music manager, SFX bus, ambient audio, adaptive music, voice |
-| **Narrative** | Story and dialogue delivery | Dialogue system, quest tracking, cutscenes, journal, lore entries |
-| **Meta** | Systems outside the core game loop | Analytics, tutorials/onboarding, accessibility options, photo mode |
+| # | 系统名称 | 类别 | 优先级 | 状态 | 设计文档 | 依赖项 |
+|---|---------|------|--------|------|---------|--------|
+| 1 | [例：玩家控制器] | 核心 | MVP | [Not Started / In Design / In Review / Approved / Implemented] | [design/gdd/player-controller.md 或"—"] | [例：输入系统、物理] |
+| 2 | [例：摄像机系统] | 核心 | MVP | Not Started | — | 玩家控制器 |
 
-[Not every game needs every category. Remove categories that don't apply.
-Add custom categories if needed.]
+[为每个已识别的系统添加一行。使用下方定义的类别和优先级层级。对于推断出的（非概念文档中明确列出的）系统，在系统名称后加"（推断）"标注。]
 
 ---
 
-## Priority Tiers
+## 类别说明
 
-| Tier | Definition | Target Milestone | Design Urgency |
-|------|------------|------------------|----------------|
-| **MVP** | Required for the core loop to function. Without these, you can't test "is this fun?" | First playable prototype | Design FIRST |
-| **Vertical Slice** | Required for one complete, polished area. Demonstrates the full experience. | Vertical slice / demo | Design SECOND |
-| **Alpha** | All features present in rough form. Complete mechanical scope, placeholder content OK. | Alpha milestone | Design THIRD |
-| **Full Vision** | Polish, edge cases, nice-to-haves, and content-complete features. | Beta / Release | Design as needed |
+| 类别 | 说明 | 典型系统 |
+|------|------|---------|
+| **核心（Core）** | 一切依赖的基础系统 | 玩家控制器、输入、物理、摄像机、场景管理、状态机 |
+| **玩法（Gameplay）** | 让游戏好玩的系统 | 战斗、AI、潜行、移动技能、交互 |
+| **成长（Progression）** | 玩家随时间成长的方式 | 经验/升级、技能树、解锁、成就、声望 |
+| **经济（Economy）** | 资源的生产与消耗 | 货币、掉落、合成、商店、物品数据库、掉落表 |
+| **持久化（Persistence）** | 存档状态与连续性 | 存读档、设置、云同步、角色数据管理 |
+| **UI** | 玩家可见的信息展示 | HUD、菜单、背包界面、对话 UI、地图、通知 |
+| **音频（Audio）** | 声音与音乐系统 | 音乐管理器、音效总线、环境音、自适应音乐、语音 |
+| **叙事（Narrative）** | 故事与对话呈现 | 对话系统、任务追踪、过场动画、日志、世界观条目 |
+| **元系统（Meta）** | 核心游戏循环之外的系统 | 数据分析、新手引导/教程、无障碍选项、照片模式 |
 
----
-
-## Dependency Map
-
-[Systems sorted by dependency order — design and build from top to bottom.
-Systems at the top are foundations; systems at the bottom are wrappers.]
-
-### Foundation Layer (no dependencies)
-
-1. [System] — [one-line rationale for why this is foundational]
-
-### Core Layer (depends on foundation)
-
-1. [System] — depends on: [list]
-
-### Feature Layer (depends on core)
-
-1. [System] — depends on: [list]
-
-### Presentation Layer (depends on features)
-
-1. [System] — depends on: [list]
-
-### Polish Layer (depends on everything)
-
-1. [System] — depends on: [list]
+[并非每款游戏都需要所有类别。删除不适用的类别，如有需要可新增自定义类别。]
 
 ---
 
-## Recommended Design Order
+## 优先级层级
 
-[Combining dependency sort and priority tiers. Design these systems in this
-order. Each system's GDD should be completed and reviewed before starting the
-next, though independent systems at the same layer can be designed in parallel.]
-
-| Order | System | Priority | Layer | Agent(s) | Est. Effort |
-|-------|--------|----------|-------|----------|-------------|
-| 1 | [First system to design] | MVP | Foundation | game-designer | [S/M/L] |
-| 2 | [Second system] | MVP | Foundation | game-designer | [S/M/L] |
-
-[Effort estimates: S = 1 session, M = 2-3 sessions, L = 4+ sessions.
-A "session" is one focused design conversation producing a complete GDD.]
+| 层级 | 定义 | 目标里程碑 | 设计紧迫性 |
+|------|------|-----------|-----------|
+| **MVP** | 核心循环运转所必需的内容。没有这些，就无法测试"这是否好玩？" | 首个可玩原型 | **优先设计** |
+| **纵切面（Vertical Slice）** | 完成一个完整且精打细磨区域所必需的内容，用于展示完整体验。 | 纵切面 / 演示版本 | 第二优先设计 |
+| **Alpha** | 所有功能以粗糙形式存在。机制范围完整，占位内容可接受。 | Alpha 里程碑 | 第三优先设计 |
+| **完整愿景（Full Vision）** | 润色、边界处理、锦上添花的内容，以及内容完整性功能。 | Beta / 发布 | 按需设计 |
 
 ---
 
-## Circular Dependencies
+## 依赖关系图
 
-[List any circular dependency chains found during analysis. These require
-special architectural attention — either break the cycle with an interface,
-or design the systems simultaneously.]
+[系统按依赖顺序排列——从上到下地设计和构建。顶部的系统是基础；底部的系统是封装层。]
 
-- [None found] OR
-- [System A <-> System B: Description of the circular relationship and
-  proposed resolution]
+### 基础层（无依赖）
 
----
+1. [系统] — [一句话说明为何为基础]
 
-## High-Risk Systems
+### 核心层（依赖基础层）
 
-[Systems that are technically unproven, design-uncertain, or scope-dangerous.
-These should be prototyped early regardless of priority tier.]
+1. [系统] — 依赖：[列表]
 
-| System | Risk Type | Risk Description | Mitigation |
-|--------|-----------|-----------------|------------|
-| [System] | [Technical / Design / Scope] | [What could go wrong] | [Prototype, research, or scope fallback] |
+### 功能层（依赖核心层）
 
----
+1. [系统] — 依赖：[列表]
 
-## Progress Tracker
+### 呈现层（依赖功能层）
 
-| Metric | Count |
-|--------|-------|
-| Total systems identified | [N] |
-| Design docs started | [N] |
-| Design docs reviewed | [N] |
-| Design docs approved | [N] |
-| MVP systems designed | [N/total MVP] |
-| Vertical Slice systems designed | [N/total VS] |
+1. [系统] — 依赖：[列表]
+
+### 润色层（依赖所有层）
+
+1. [系统] — 依赖：[列表]
 
 ---
 
-## Next Steps
+## 推荐设计顺序
 
-- [ ] Review and approve this systems enumeration
-- [ ] Design MVP-tier systems first (use `/design-system [system-name]`)
-- [ ] Run `/design-review` on each completed GDD
-- [ ] Run `/gate-check pre-production` when MVP systems are designed
-- [ ] Prototype the highest-risk system early (`/prototype [system]`)
+[综合依赖排序与优先级层级。按此顺序设计各系统。在开始下一个系统前，每个系统的 GDD 应完成并通过审查。同一层级中相互独立的系统可以并行设计。]
+
+| 顺序 | 系统 | 优先级 | 层级 | 负责 Agent | 预估工作量 |
+|------|------|--------|------|-----------|-----------|
+| 1 | [首个设计的系统] | MVP | 基础层 | game-designer | [S/M/L] |
+| 2 | [第二个系统] | MVP | 基础层 | game-designer | [S/M/L] |
+
+[工作量估算：S = 1 次会话，M = 2–3 次会话，L = 4+ 次会话。"一次会话"指一次专注的设计对话，产出完整 GDD。]
+
+---
+
+## 循环依赖
+
+[列出分析中发现的所有循环依赖链。这些需要特别关注架构设计——要么通过接口打破循环，要么同时设计这些系统。]
+
+- [未发现] 或
+- [系统 A <-> 系统 B：描述循环关系及建议的解决方案]
+
+---
+
+## 高风险系统
+
+[技术上未经验证、设计上不确定，或存在范围风险的系统。无论优先级如何，这些系统都应尽早进行原型验证。]
+
+| 系统 | 风险类型 | 风险描述 | 缓解措施 |
+|------|---------|---------|---------|
+| [系统] | [技术 / 设计 / 范围] | [可能出什么问题] | [原型验证、调研或范围回退方案] |
+
+---
+
+## 进度追踪
+
+| 指标 | 数量 |
+|------|------|
+| 已识别的系统总数 | [N] |
+| 已开始设计文档 | [N] |
+| 已完成审查的设计文档 | [N] |
+| 已批准的设计文档 | [N] |
+| 已完成设计的 MVP 系统 | [N/MVP 总数] |
+| 已完成设计的纵切面系统 | [N/VS 总数] |
+
+---
+
+## 后续步骤
+
+- [ ] 审查并批准本系统枚举
+- [ ] 优先设计 MVP 层系统（使用 `/design-system [system-name]`）
+- [ ] 每完成一个 GDD 后运行 `/design-review`
+- [ ] MVP 系统设计完成后运行 `/gate-check pre-production`
+- [ ] 尽早对风险最高的系统进行原型验证（`/prototype [system]`）

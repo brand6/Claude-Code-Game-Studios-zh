@@ -1,78 +1,74 @@
-# Hook: post-sprint-retrospective
+# Hook：post-sprint-retrospective
 
-## Trigger
+## 触发条件
 
-Manual trigger at the end of each sprint (typically invoked by the producer
-agent or the human developer).
+每个 Sprint 结束时手动触发（通常由 producer agent 或开发者本人调用）。
 
-## Purpose
+## 用途
 
-Automatically generates a retrospective starting point by analyzing the sprint
-data: what was planned vs completed, velocity changes, bug trends, and common
-blockers. This is not a git hook but a workflow hook invoked through the
-`producer` agent.
+通过分析 Sprint 数据（计划完成情况、速度变化、Bug 趋势、常见阻塞项）自动生成回顾的起始草稿。这不是 git hook，而是通过 `producer` agent 调用的工作流 Hook。
 
-## Implementation
+## 实现
 
-This is a workflow hook, not a git hook. It is invoked by running:
+这是一个工作流 Hook，不是 git hook。通过以下方式调用：
 
 ```
 @producer Generate sprint retrospective for Sprint [N]
 ```
 
-The producer agent should:
+producer agent 应执行以下操作：
 
-1. **Read the sprint plan** from `production/sprints/sprint-[N].md`
-2. **Calculate metrics**:
-   - Tasks planned vs completed
-   - Story points planned vs completed (if used)
-   - Carryover items from previous sprint
-   - New tasks added mid-sprint
-   - Average task completion time
-3. **Analyze patterns**:
-   - Most common blockers
-   - Which agent/area had the most incomplete work
-   - Which estimates were most inaccurate
-4. **Generate the retrospective**:
+1. **读取 Sprint 计划**，来源：`production/sprints/sprint-[N].md`
+2. **计算指标**：
+   - 计划任务数 vs 完成任务数
+   - 计划故事点数 vs 完成故事点数（如使用）
+   - 来自上一 Sprint 的遗留项
+   - Sprint 中途新增的任务
+   - 平均任务完成时间
+3. **分析规律**：
+   - 最常见的阻塞原因
+   - 哪个 Agent/领域的未完成工作最多
+   - 哪些估算误差最大
+4. **生成回顾报告**：
 
 ```markdown
-# Sprint [N] Retrospective
+# Sprint [N] 回顾
 
-## Metrics
-| Metric | Value |
-|--------|-------|
-| Tasks Planned | [N] |
-| Tasks Completed | [N] |
-| Completion Rate | [X%] |
-| Carryover from Previous | [N] |
-| New Tasks Added | [N] |
-| Bugs Found | [N] |
-| Bugs Fixed | [N] |
+## 指标
+| 指标 | 数值 |
+|------|------|
+| 计划任务数 | [N] |
+| 完成任务数 | [N] |
+| 完成率 | [X%] |
+| 上一 Sprint 遗留项 | [N] |
+| 新增任务 | [N] |
+| 发现 Bug 数 | [N] |
+| 修复 Bug 数 | [N] |
 
-## Velocity Trend
+## 速度趋势
 [Sprint N-2]: [X] | [Sprint N-1]: [Y] | [Sprint N]: [Z]
-Trend: [Improving / Stable / Declining]
+趋势：[提升 / 稳定 / 下降]
 
-## What Went Well
-- [Automatically detected: tasks completed ahead of estimate]
-- [Facilitator adds team observations]
+## 做得好的地方
+- [自动检测：提前完成估算的任务]
+- [主持人补充：团队观察]
 
-## What Went Poorly
-- [Automatically detected: tasks that were carried over or cut]
-- [Automatically detected: areas with significant estimate overruns]
-- [Facilitator adds team observations]
+## 做得不好的地方
+- [自动检测：被遗留或削减的任务]
+- [自动检测：估算严重超时的领域]
+- [主持人补充：团队观察]
 
-## Blockers
-| Blocker | Frequency | Resolution Time | Prevention |
-|---------|-----------|----------------|-----------|
+## 阻塞项
+| 阻塞原因 | 频次 | 解决用时 | 预防措施 |
+|---------|------|---------|---------|
 
-## Action Items for Next Sprint
-| # | Action | Owner | Priority |
-|---|--------|-------|----------|
+## 下一 Sprint 行动项
+| # | 行动 | 负责人 | 优先级 |
+|---|------|-------|--------|
 
-## Estimation Accuracy
-| Area | Avg Planned | Avg Actual | Accuracy |
-|------|------------|-----------|----------|
+## 估算准确性
+| 领域 | 平均计划时长 | 平均实际时长 | 准确率 |
+|------|-----------|-----------|--------|
 ```
 
-5. **Save** to `production/sprints/sprint-[N]-retro.md`
+5. **保存**至 `production/sprints/sprint-[N]-retro.md`

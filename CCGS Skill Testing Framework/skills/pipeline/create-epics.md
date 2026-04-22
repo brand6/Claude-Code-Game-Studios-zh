@@ -1,190 +1,179 @@
-# Skill Test Spec: /create-epics
+# Skill 测试规范：/create-epics
 
-## Skill Summary
+## Skill 摘要
 
-`/create-epics` reads all approved GDDs and translates them into EPIC.md files,
-one per system. Epics are organized by layer (Foundation → Core → Feature →
-Presentation) and processed in priority order within each layer. Each EPIC.md
-includes scope, governing ADRs, GDD requirements, engine risk level, and a
-Definition of Done. The skill asks "May I write" before creating each EPIC file.
+`/create-epics` 读取所有已批准的 GDD 并将其转化为 EPIC.md 文件，每个系统对应一个。Epic 按层级（Foundation → Core → Feature → Presentation）组织，并在各层级内按优先级顺序处理。每个 EPIC.md 包含范围、管理 ADR、GDD 要求、引擎风险等级和 Definition of Done。Skill 在创建每个 EPIC 文件前询问"May I write"。
 
-In `full` review mode, a PR-EPIC gate (producer) runs after drafting epics and
-before writing any files. In `lean` or `solo` mode, PR-EPIC is skipped and noted.
-Epics are written to `production/epics/[layer]/EPIC-[name].md`.
+在 `full` 审核模式下，PR-EPIC 门控（Producer）在起草 Epic 后、写入任何文件前运行。在 `lean` 或 `solo` 模式下，PR-EPIC 被跳过并注明。Epic 写入 `production/epics/[layer]/EPIC-[name].md`。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构性）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需 Fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: CREATED, BLOCKED
-- [ ] Contains "May I write" collaborative protocol language (per-epic approval)
-- [ ] Has a next-step handoff at the end (`/create-stories`)
-- [ ] Documents PR-EPIC gate behavior: runs in full mode; skipped in lean/solo
-
----
-
-## Director Gate Checks
-
-In `full` mode: PR-EPIC (producer) gate runs after epics are drafted and before
-any epic file is written. If PR-EPIC returns CONCERNS, epics are revised before
-the "May I write" ask.
-
-In `lean` mode: PR-EPIC is skipped. Output notes: "PR-EPIC skipped — lean mode".
-
-In `solo` mode: PR-EPIC is skipped. Output notes: "PR-EPIC skipped — solo mode".
+- [ ] 包含必填 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含 ≥2 个阶段标题
+- [ ] 包含 verdict 关键词：CREATED、BLOCKED
+- [ ] 包含"May I write"协作协议语言（按 Epic 逐一批准）
+- [ ] 末尾包含下一步交接（`/create-stories`）
+- [ ] 说明 PR-EPIC 门控行为：full 模式运行，lean/solo 跳过
 
 ---
 
-## Test Cases
+## Director 门控检查
 
-### Case 1: Happy Path — Two approved GDDs create two EPIC files
+`full` 模式下：PR-EPIC（Producer）门控在 Epic 起草完成后、任何 Epic 文件写入前运行。若 PR-EPIC 返回 CONCERNS，Epic 在"May I write"询问前先修订。
 
-**Fixture:**
-- `design/gdd/systems-index.md` exists with 2 systems listed
-- Both systems have approved GDDs in `design/gdd/`
-- `docs/architecture/architecture.md` exists with matching modules
-- At least one Accepted ADR exists for each system
-- `production/session-state/review-mode.txt` contains `lean`
+`lean` 模式下：PR-EPIC 被跳过。输出注明："PR-EPIC skipped — lean mode"。
 
-**Input:** `/create-epics`
-
-**Expected behavior:**
-1. Skill reads systems index and both GDDs
-2. Drafts 2 EPIC definitions (layer, GDD path, ADRs, requirements, engine risk)
-3. PR-EPIC gate is skipped (lean mode) — noted in output
-4. For each epic: asks "May I write `production/epics/[layer]/EPIC-[name].md`?"
-5. After approval: writes both EPIC files
-6. Creates or updates `production/epics/index.md`
-
-**Assertions:**
-- [ ] Epic summary is shown before any write ask
-- [ ] "May I write" is asked per-epic (not once for all epics together)
-- [ ] Each EPIC.md contains: layer, GDD path, governing ADRs, requirements table, Definition of Done
-- [ ] PR-EPIC skip is noted in output
-- [ ] `production/epics/index.md` is updated after writing
-- [ ] Skill does NOT write EPIC files without per-epic approval
+`solo` 模式下：PR-EPIC 被跳过，注明方式相同。
 
 ---
 
-### Case 2: Failure Path — No approved GDDs found
+## 测试用例
 
-**Fixture:**
-- `design/gdd/systems-index.md` exists
-- No GDDs in `design/gdd/` have approved status (all are Draft or In Progress)
+### 用例 1：正常路径——两个已批准 GDD 创建两个 EPIC 文件
 
-**Input:** `/create-epics`
+**Fixture：**
+- `design/gdd/systems-index.md` 存在，列出 2 个系统
+- 两个系统均在 `design/gdd/` 中有已批准的 GDD
+- `docs/architecture/architecture.md` 存在，包含匹配的模块
+- 每个系统至少有一个 Accepted ADR
+- `production/session-state/review-mode.txt` 内容为 `lean`
 
-**Expected behavior:**
-1. Skill reads systems index and attempts to find approved GDDs
-2. No approved GDDs found
-3. Skill outputs: "No approved GDDs to convert. GDDs must be Approved before creating epics."
-4. Skill suggests running `/design-system` and completing GDD approval first
-5. Skill exits without creating any EPIC files
+**输入：** `/create-epics`
 
-**Assertions:**
-- [ ] Skill stops cleanly with a clear message when no approved GDDs exist
-- [ ] No EPIC files are written
-- [ ] Skill recommends the correct next action
-- [ ] Verdict is BLOCKED
+**预期行为：**
+1. Skill 读取系统索引和两个 GDD
+2. 起草 2 个 EPIC 定义（层级、GDD 路径、ADR、要求、引擎风险）
+3. PR-EPIC 门控被跳过（lean 模式）——在输出中注明
+4. 对每个 Epic：询问"May I write `production/epics/[layer]/EPIC-[name].md`?"
+5. 批准后写入两个 EPIC 文件
+6. 创建或更新 `production/epics/index.md`
 
----
-
-### Case 3: Director Gate — Full mode spawns PR-EPIC before writing
-
-**Fixture:**
-- 2 approved GDDs exist
-- `production/session-state/review-mode.txt` contains `full`
-
-**Full mode expected behavior:**
-1. Skill drafts both epics
-2. PR-EPIC gate spawns and reviews the epic drafts
-3. If PR-EPIC returns APPROVED: "May I write" ask proceeds normally
-4. Epic files are written after approval
-
-**Assertions (full mode):**
-- [ ] PR-EPIC gate appears in output as an active gate
-- [ ] PR-EPIC runs before any "May I write" ask
-- [ ] Epic files are NOT written before PR-EPIC completes
-
-**Fixture (lean mode):**
-- Same GDDs
-- `production/session-state/review-mode.txt` contains `lean`
-
-**Lean mode expected behavior:**
-1. Epics are drafted
-2. PR-EPIC is skipped — noted in output
-3. "May I write" ask proceeds directly
-
-**Assertions (lean mode):**
-- [ ] "PR-EPIC skipped — lean mode" appears in output
-- [ ] Skill proceeds to "May I write" without waiting for PR-EPIC
+**断言：**
+- [ ] 任何写入询问前先展示 Epic 摘要
+- [ ] 逐 Epic 询问"May I write"（不是一次性批准所有 Epic）
+- [ ] 每个 EPIC.md 包含：层级、GDD 路径、管理 ADR、要求表、Definition of Done
+- [ ] 输出中注明 PR-EPIC 跳过
+- [ ] 写入后更新 `production/epics/index.md`
+- [ ] 未经逐 Epic 批准 Skill 不写入 EPIC 文件
 
 ---
 
-### Case 4: Edge Case — Epic already exists for a GDD
+### 用例 2：失败路径——未找到已批准的 GDD
 
-**Fixture:**
-- `production/epics/[layer]/EPIC-[name].md` already exists for one of the approved GDDs
-- The other GDD has no existing EPIC file
+**Fixture：**
+- `design/gdd/systems-index.md` 存在
+- `design/gdd/` 中没有已批准状态的 GDD（全部为 Draft 或 In Progress）
 
-**Input:** `/create-epics`
+**输入：** `/create-epics`
 
-**Expected behavior:**
-1. Skill detects the existing EPIC file for the first system
-2. Skill offers to update rather than overwrite: "EPIC-[name].md already exists. Update it, or skip?"
-3. For the second system (no existing file): proceeds normally with "May I write"
+**预期行为：**
+1. Skill 读取系统索引并尝试查找已批准的 GDD
+2. 未找到已批准的 GDD
+3. Skill 输出："No approved GDDs to convert. GDDs must be Approved before creating epics."
+4. Skill 建议先运行 `/design-system` 完成 GDD 批准
+5. Skill 退出，不创建任何 EPIC 文件
 
-**Assertions:**
-- [ ] Skill detects existing EPIC files before writing
-- [ ] User is offered "update" or "skip" options — not auto-overwritten
-- [ ] The new system's EPIC is created normally without conflict
-
----
-
-### Case 5: Director Gate — PR-EPIC returns CONCERNS
-
-**Fixture:**
-- 2 approved GDDs exist
-- `production/session-state/review-mode.txt` contains `full`
-- PR-EPIC gate returns CONCERNS (e.g., scope of one epic is too large)
-
-**Input:** `/create-epics`
-
-**Expected behavior:**
-1. PR-EPIC gate spawns and returns CONCERNS with specific feedback
-2. Skill surfaces the concerns to the user before any write ask
-3. User is given options: revise epics, accept concerns and proceed, or stop
-4. If user revises: updated epic drafts are shown before the "May I write" ask
-5. Skill does NOT write epics while CONCERNS are unaddressed
-
-**Assertions:**
-- [ ] CONCERNS from PR-EPIC are shown to the user before writing
-- [ ] Skill does NOT auto-write epics when CONCERNS are returned
-- [ ] User is given a clear choice to revise, proceed, or stop
-- [ ] Revised epic drafts are re-shown after revision before final approval
+**断言：**
+- [ ] 不存在已批准 GDD 时 Skill 以明确消息干净退出
+- [ ] 不写入 EPIC 文件
+- [ ] Skill 推荐正确的下一步操作
+- [ ] Verdict 为 BLOCKED
 
 ---
 
-## Protocol Compliance
+### 用例 3：Director 门控——Full 模式在写入前生成 PR-EPIC
 
-- [ ] Epic drafts shown to user before any "May I write" ask
-- [ ] "May I write" asked per-epic, not once for the entire batch
-- [ ] PR-EPIC gate (if active) runs before write asks — not after
-- [ ] Skipped gates noted by name and mode in output
-- [ ] EPIC.md content sourced only from GDDs, ADRs, and architecture docs — nothing invented
-- [ ] Ends with next-step handoff: `/create-stories [epic-slug]` per created epic
+**Fixture：**
+- 2 个已批准的 GDD 存在
+- `production/session-state/review-mode.txt` 内容为 `full`
+
+**Full 模式预期行为：**
+1. Skill 起草两个 Epic
+2. PR-EPIC 门控生成并审核 Epic 草稿
+3. PR-EPIC 返回 APPROVED：正常进行"May I write"询问
+4. 批准后写入 Epic 文件
+
+**断言（full 模式）：**
+- [ ] 输出中 PR-EPIC 门控作为活跃门控显示
+- [ ] PR-EPIC 在任何"May I write"询问前运行
+- [ ] PR-EPIC 完成前不写入 Epic 文件
+
+**Fixture（lean 模式）：**
+- 相同 GDD
+- `production/session-state/review-mode.txt` 内容为 `lean`
+
+**Lean 模式预期行为：**
+1. Epic 起草完成
+2. PR-EPIC 被跳过——在输出中注明
+3. 直接进行"May I write"询问
+
+**断言（lean 模式）：**
+- [ ] 输出中出现"PR-EPIC skipped — lean mode"
+- [ ] Skill 无需等待 PR-EPIC 直接进行"May I write"
 
 ---
 
-## Coverage Notes
+### 用例 4：边缘情况——某个 GDD 对应的 Epic 已存在
 
-- Processing of Core, Feature, and Presentation layers follows the same per-epic
-  pattern as Foundation — layer-specific ordering is not independently tested.
-- Engine risk level assignment (LOW/MEDIUM/HIGH) from governing ADRs is
-  validated implicitly via Case 1's fixture structure.
-- The `layer: [name]` and `[system-name]` argument modes follow the same approval
-  pattern as the default (all systems) mode.
+**Fixture：**
+- `production/epics/[layer]/EPIC-[name].md` 已为其中一个已批准 GDD 存在
+- 另一个 GDD 没有对应的 EPIC 文件
+
+**输入：** `/create-epics`
+
+**预期行为：**
+1. Skill 检测到第一个系统的 EPIC 文件已存在
+2. Skill 提供更新而非覆盖选项："EPIC-[name].md already exists. Update it, or skip?"
+3. 第二个系统（无现有文件）：正常进行"May I write"
+
+**断言：**
+- [ ] Skill 写入前检测是否存在 EPIC 文件
+- [ ] 向用户提供"更新"或"跳过"选项——不自动覆盖
+- [ ] 新系统的 EPIC 正常创建，无冲突
+
+---
+
+### 用例 5：Director 门控——PR-EPIC 返回 CONCERNS
+
+**Fixture：**
+- 2 个已批准的 GDD 存在
+- `production/session-state/review-mode.txt` 内容为 `full`
+- PR-EPIC 门控返回 CONCERNS（例如某个 Epic 范围过大）
+
+**输入：** `/create-epics`
+
+**预期行为：**
+1. PR-EPIC 门控生成并返回带具体反馈的 CONCERNS
+2. Skill 在任何写入询问前将 CONCERNS 呈现给用户
+3. 向用户提供选项：修订 Epic、接受 CONCERNS 后继续或停止
+4. 用户修订后：更新后的 Epic 草稿在"May I write"询问前重新展示
+5. CONCERNS 未解决时 Skill 不写入 Epic
+
+**断言：**
+- [ ] PR-EPIC 的 CONCERNS 在写入前展示给用户
+- [ ] 返回 CONCERNS 时 Skill 不自动写入 Epic
+- [ ] 向用户提供清晰的修订、继续或停止选择
+- [ ] 修订后最终批准前重新展示修订后的 Epic 草稿
+
+---
+
+## 协议合规
+
+- [ ] 任何"May I write"询问前先向用户展示 Epic 草稿
+- [ ] 逐 Epic 询问"May I write"，不是一次性批准整批
+- [ ] PR-EPIC 门控（如活跃）在写入询问前运行——不是之后
+- [ ] 跳过的门控在输出中按名称和模式注明
+- [ ] EPIC.md 内容仅来源于 GDD、ADR 和架构文档——不凭空捏造
+- [ ] 末尾包含下一步交接：每个已创建 Epic 对应 `/create-stories [epic-slug]`
+
+---
+
+## 覆盖范围说明
+
+- Core、Feature 和 Presentation 层的处理遵循与 Foundation 相同的逐 Epic 模式——不单独测试层级特定的排序。
+- 从管理 ADR 推导引擎风险等级（LOW/MEDIUM/HIGH）通过用例 1 的 Fixture 结构隐式验证。
+- `layer: [name]` 和 `[system-name]` 参数模式遵循与默认（所有系统）模式相同的批准流程。

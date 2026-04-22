@@ -1,172 +1,170 @@
-# Skill Test Spec: /regression-suite
+# 技能测试规范：/regression-suite
 
-## Skill Summary
+## 技能概要
 
-`/regression-suite` maps test coverage to GDD requirements: it reads the
-acceptance criteria from story files in the current sprint (or a specified epic),
-then scans `tests/` for corresponding test files and checks whether each AC has
-a matching assertion. It produces a coverage report identifying which ACs are
-fully covered, partially covered, or untested, and which test files have no
-matching AC (orphan tests).
+`/regression-suite` 将测试覆盖率映射到 GDD 需求上。
+它读取故事文件中的验收标准（AC），扫描 `tests/` 目录，
+并生成覆盖率报告，分为：
+- **已覆盖**（每条 AC 都有对应的测试）
+- **部分覆盖**（部分但非全部 AC 有测试）
+- **未测试**（AC 存在但无对应测试）
 
-The skill may write a coverage report to `production/qa/` after a "May I write"
-ask. No director gates apply. Verdicts: FULL COVERAGE (all ACs have tests),
-GAPS FOUND (some ACs are untested), or CRITICAL GAPS (a critical-priority AC
-has no test).
-
----
-
-## Static Assertions (Structural)
-
-Verified automatically by `/skill-test static` — no fixture needed.
-
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: FULL COVERAGE, GAPS FOUND, CRITICAL GAPS
-- [ ] Contains "May I write" language (skill may write coverage report)
-- [ ] Has a next-step handoff (e.g., `/test-setup` if framework missing, `/qa-plan` if plan missing)
+技能同时标记孤儿测试文件（存在于 `tests/` 目录但无对应 AC 的测试）。
+判决为 FULL COVERAGE（全部覆盖）、GAPS FOUND（存在缺口）
+或 CRITICAL GAPS（高优先级 AC 无测试）。
+不适用 director 门控。
 
 ---
 
-## Director Gate Checks
+## 静态断言（结构性）
 
-None. `/regression-suite` is a QA analysis utility. No director gates apply.
+由 `/skill-test static` 自动验证——无需夹具。
 
----
-
-## Test Cases
-
-### Case 1: Full Coverage — All ACs in sprint have corresponding tests
-
-**Fixture:**
-- `production/sprints/sprint-004.md` lists 3 stories with 2 ACs each (6 total)
-- `tests/unit/` and `tests/integration/` contain test files that match all 6 ACs
-  (by system name and scenario description)
-
-**Input:** `/regression-suite sprint-004`
-
-**Expected behavior:**
-1. Skill reads all 6 ACs from sprint-004 stories
-2. Skill scans test files and matches each AC to at least one test assertion
-3. All 6 ACs have coverage
-4. Skill produces coverage report: "6/6 ACs covered"
-5. Skill asks "May I write to `production/qa/regression-sprint-004.md`?"
-6. File is written on approval; verdict is FULL COVERAGE
-
-**Assertions:**
-- [ ] All 6 ACs appear in the coverage report
-- [ ] Each AC is marked as covered with the matching test file referenced
-- [ ] Verdict is FULL COVERAGE
-- [ ] "May I write" is asked before writing the report
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含至少 2 个阶段标题
+- [ ] 包含判决关键词：FULL COVERAGE、GAPS FOUND、CRITICAL GAPS
+- [ ] 定义覆盖率状态：已覆盖、部分覆盖、未测试
+- [ ] 定义孤儿测试检测
+- [ ] 包含下一步交接（例如 `/test-setup` 若框架缺失，`/qa-plan` 若测试计划缺失）
 
 ---
 
-### Case 2: Gaps Found — 3 ACs have no tests
+## Director 门控检查
 
-**Fixture:**
-- Sprint has 5 stories with 8 total ACs
-- Tests exist for 5 of the 8 ACs; 3 ACs have no corresponding test file or assertion
-
-**Input:** `/regression-suite`
-
-**Expected behavior:**
-1. Skill reads all 8 ACs
-2. Skill scans tests — 5 matched, 3 unmatched
-3. Coverage report lists the 3 untested ACs by story and AC text
-4. Skill asks "May I write to `production/qa/regression-[sprint]-[date].md`?"
-5. Report is written; verdict is GAPS FOUND
-
-**Assertions:**
-- [ ] The 3 untested ACs are listed by name in the report
-- [ ] Matched ACs are also shown (not only the gaps)
-- [ ] Verdict is GAPS FOUND (not FULL COVERAGE)
-- [ ] Report is written after "May I write" approval
+无。`/regression-suite` 是 QA 覆盖率工具。不适用 director 门控。
 
 ---
 
-### Case 3: Critical AC Untested — CRITICAL GAPS verdict, flagged prominently
+## 测试用例
 
-**Fixture:**
-- Sprint has 4 stories; one story is Priority: Critical with 2 ACs
-- One of the critical-priority ACs has no test
+### 用例 1：正常路径——所有 AC 都有对应测试，FULL COVERAGE
 
-**Input:** `/regression-suite`
+**夹具：**
+- `production/stories/` 中的 3 个故事，每个故事含 2 条 AC（共 6 条 AC）
+- `tests/` 目录中有 6 个测试文件，各测试文件通过命名约定明确对应一条 AC
 
-**Expected behavior:**
-1. Skill reads all stories and ACs, noting which stories are critical priority
-2. Skill scans tests — the critical AC has no match
-3. Report prominently flags: "CRITICAL GAP: [AC text] — no test found (Critical priority story)"
-4. Skill recommends blocking story completion until test is added
-5. Verdict is CRITICAL GAPS
+**输入：** `/regression-suite`
 
-**Assertions:**
-- [ ] Verdict is CRITICAL GAPS (not GAPS FOUND)
-- [ ] Critical priority AC is flagged more prominently than normal gaps
-- [ ] Recommendation to block story completion is included
-- [ ] Non-critical gaps (if any) are also listed
+**预期行为：**
+1. 技能读取故事文件，提取 6 条 AC
+2. 技能扫描 `tests/` 目录，找到 6 个测试文件
+3. 技能将测试文件映射到 AC——全部 6 条均有覆盖
+4. 技能生成覆盖率报告，所有 6 条 AC 均标记为"已覆盖"
+5. 判决为 FULL COVERAGE
 
----
-
-### Case 4: Orphan Tests — Test file has no matching AC
-
-**Fixture:**
-- `tests/unit/save_system_test.gd` exists with assertions for scenarios
-  not present in any current story's AC list
-- Current sprint stories do not reference save system
-
-**Input:** `/regression-suite`
-
-**Expected behavior:**
-1. Skill scans tests and cross-references ACs
-2. `save_system_test.gd` assertions do not match any current AC
-3. Test file is flagged as ORPHAN TEST in the coverage report
-4. Report notes: "Orphan tests may belong to a past or future sprint, or AC was renamed"
-5. Verdict is FULL COVERAGE or GAPS FOUND depending on overall AC coverage
-   (orphan tests do not affect verdict, they are advisory)
-
-**Assertions:**
-- [ ] Orphan test is flagged in the report
-- [ ] Orphan flag includes the filename and suggestion (past sprint / renamed AC)
-- [ ] Orphan tests do not cause a GAPS FOUND verdict on their own
-- [ ] Overall verdict reflects AC coverage only
+**断言：**
+- [ ] 报告中所有 6 条 AC 均标记为"已覆盖"
+- [ ] 判决为 FULL COVERAGE
+- [ ] 无孤儿测试消息（所有测试均对应 AC）
+- [ ] 未写入任何文件（覆盖率报告为对话形式输出）
 
 ---
 
-### Case 5: Director Gate Check — No gate; regression-suite is a QA utility
+### 用例 2：3 条 AC 无测试——GAPS FOUND
 
-**Fixture:**
-- Sprint with stories and test files
+**夹具：**
+- 5 个故事，共 8 条 AC
+- `tests/` 目录中有 5 个测试文件（覆盖其中 5 条 AC）
+- 3 条 AC 无对应测试
 
-**Input:** `/regression-suite`
+**输入：** `/regression-suite`
 
-**Expected behavior:**
-1. Skill produces coverage report and writes it
-2. No director agents are spawned
-3. No gate IDs appear in output
+**预期行为：**
+1. 技能读取故事文件，提取 8 条 AC
+2. 技能扫描 `tests/` 目录
+3. 技能识别出 3 条 AC 无对应测试
+4. 覆盖率报告中，未覆盖的 3 条 AC 按故事标识列出
+5. 判决为 GAPS FOUND
 
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No gate skip messages appear
-- [ ] Verdict is FULL COVERAGE, GAPS FOUND, or CRITICAL GAPS — no gate verdict
-
----
-
-## Protocol Compliance
-
-- [ ] Reads story ACs from sprint files before scanning tests
-- [ ] Matches ACs to tests by system name and scenario (not file name alone)
-- [ ] Flags critical-priority untested ACs as CRITICAL GAPS
-- [ ] Flags orphan tests (exist in tests/ but no AC matches)
-- [ ] Asks "May I write" before persisting the coverage report
-- [ ] Verdict is FULL COVERAGE, GAPS FOUND, or CRITICAL GAPS
+**断言：**
+- [ ] 3 条无测试的 AC 按名称明确列出
+- [ ] 判决为 GAPS FOUND
+- [ ] 有测试的 5 条 AC 标记为"已覆盖"
 
 ---
 
-## Coverage Notes
+### 用例 3：关键优先级 AC 无测试——CRITICAL GAPS
 
-- The heuristic for matching an AC to a test (by system name + scenario keywords)
-  is approximate; exact matching logic is defined in the skill body.
-- Integration test coverage is mapped the same way as unit test coverage; no
-  distinction in verdicts is made between the two.
-- This skill does not run the tests — it maps AC text to test assertions. Test
-  execution is handled by the CI pipeline.
+**夹具：**
+- 4 个故事，其中一个标记优先级为 CRITICAL（存档系统功能）
+- CRITICAL 故事的 AC 无对应测试
+
+**输入：** `/regression-suite`
+
+**预期行为：**
+1. 技能读取故事文件，识别出 CRITICAL 优先级标记
+2. 技能扫描 `tests/` 目录——CRITICAL 故事的 AC 无测试
+3. 技能将该缺口升级为 CRITICAL GAPS（高于普通 GAPS FOUND）
+4. 覆盖率报告中，CRITICAL AC 醒目标注
+5. 建议立即为 CRITICAL AC 添加测试后再继续
+6. 判决为 CRITICAL GAPS
+
+**断言：**
+- [ ] CRITICAL 优先级 AC 的缺口单独报告（区别于普通缺口）
+- [ ] 判决为 CRITICAL GAPS（不是 GAPS FOUND）
+- [ ] 建议中明确要求在继续前添加测试
+
+---
+
+### 用例 4：孤儿测试——无对应 AC 的测试文件
+
+**夹具：**
+- 3 个故事，共 6 条 AC，均有对应测试
+- `tests/` 目录中额外有 2 个测试文件无法映射到任何已知 AC
+
+**输入：** `/regression-suite`
+
+**预期行为：**
+1. 技能读取故事文件，提取 6 条 AC
+2. 技能扫描 `tests/` 目录，发现 8 个测试文件（6 个映射正常 + 2 个孤儿）
+3. 技能标记 2 个孤儿测试文件，注明"无对应 AC"
+4. 孤儿测试单独列出（文件名已知）
+5. 因 6 条 AC 均有覆盖，判决为 FULL COVERAGE（附孤儿测试说明）
+
+**断言：**
+- [ ] 2 个孤儿测试文件按文件名列出
+- [ ] 孤儿测试标记为"no matching AC"
+- [ ] 因所有 AC 均有覆盖，判决为 FULL COVERAGE（孤儿测试不降低判决等级）
+
+---
+
+### 用例 5：Director 门控检查——无门控；regression-suite 为覆盖率工具
+
+**夹具：**
+- 标准项目设置
+
+**输入：** `/regression-suite`
+
+**预期行为：**
+1. 技能生成覆盖率报告
+2. 未调用任何 director agent
+3. 未写入任何文件
+
+**断言：**
+- [ ] 未调用 director 门控
+- [ ] 未写入任何文件
+- [ ] 输出中无门控跳过消息
+- [ ] 判决为 FULL COVERAGE / GAPS FOUND / CRITICAL GAPS
+
+---
+
+## 协议合规
+
+- [ ] 读取故事文件中的 AC
+- [ ] 扫描 `tests/` 目录并将测试映射到 AC
+- [ ] 识别孤儿测试文件（存在于 tests/ 但无对应 AC）
+- [ ] 报告分为：已覆盖/部分覆盖/未测试
+- [ ] 所有 AC 均有覆盖时判决为 FULL COVERAGE
+- [ ] 存在缺口时判决为 GAPS FOUND
+- [ ] 高优先级 AC 无测试时判决为 CRITICAL GAPS
+- [ ] 不写入任何文件（报告为对话形式输出）
+
+---
+
+## 覆盖说明
+
+- AC 与测试文件的映射逻辑（命名约定或内容分析）在技能主体中定义；
+  此规范仅要求能正确识别覆盖与否。
+- "部分覆盖"判决（非全部 AC 有测试）不在此规范中单独测试；
+  用例 2 和 3 涵盖了 GAPS FOUND 和 CRITICAL GAPS 的核心路径。
+- 此技能为只读，不修改测试文件或故事文件。

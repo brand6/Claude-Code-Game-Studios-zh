@@ -1,193 +1,174 @@
-# Skill Test Spec: /smoke-check
+# 技能测试规范：/smoke-check
 
-## Skill Summary
+## 技能概要
 
-`/smoke-check` is the gate between implementation and QA hand-off. It detects the
-test environment, runs the automated test suite (via Bash), scans test coverage
-against sprint stories, and uses `AskUserQuestion` to batch-verify manual smoke
-checks with the developer. It writes a report to `production/qa/smoke-[date].md`
-after explicit user approval.
+`/smoke-check` 在冲刺故事实施后、手动 QA 移交前执行关键路径冒烟测试门控。
+技能读取当前冲刺计划中的故事文件，确定哪些故事类型需要自动测试，
+运行（或模拟）自动测试套件，并生成带有判定的冒烟测试报告。
 
-Verdicts: PASS (tests pass, all smoke checks pass, no missing test evidence),
-PASS WITH WARNINGS (tests pass or NOT RUN, all critical checks pass, but advisory
-gaps exist such as missing test coverage), or FAIL (any automated test failure or
-any Batch 1/Batch 2 smoke check returns FAIL).
-
-No director gates apply. The skill does NOT invoke any director agents.
+判定结果：PASS（所有关键路径测试通过）或 FAIL（任何关键路径测试失败，
+禁止移交 QA）。失败的冒烟测试意味着构建尚未准备好进行 QA——技能在报告中
+明确说明这一点。生成 `production/qa/smoke-check-[日期].md`，
+询问"May I write the smoke check report to [path]?"后写入。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构性）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需夹具。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: PASS, PASS WITH WARNINGS, FAIL
-- [ ] Contains "May I write" collaborative protocol language before writing the report
-- [ ] Has a next-step handoff (e.g., `/bug-report` on FAIL, QA hand-off guidance on PASS)
-
----
-
-## Director Gate Checks
-
-None. `/smoke-check` is a pre-QA utility skill. No director gates apply.
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含至少 2 个阶段标题
+- [ ] 包含判定关键词：PASS、FAIL
+- [ ] 在写入冒烟测试报告前包含"May I write"协作协议语言
+- [ ] 包含下一步交接（PASS→手动 QA 开始；FAIL→建议运行 `/bug-report` 并修复后重新运行 `/smoke-check`）
 
 ---
 
-## Test Cases
+## Director 门控检查
 
-### Case 1: Happy Path — Automated tests pass, manual items confirmed, PASS
-
-**Fixture:**
-- `tests/` directory exists with a GDUnit4 runner script
-- Engine detected as Godot from `technical-preferences.md`
-- `production/qa/qa-plan-sprint-005.md` exists
-- Automated test runner reports 12 tests, 12 passing, 0 failing
-- Developer confirms all Batch 1 and Batch 2 smoke checks as PASS
-- All sprint stories have matching test files (no MISSING coverage)
-
-**Input:** `/smoke-check`
-
-**Expected behavior:**
-1. Skill detects test directory and engine, notes QA plan found
-2. Runs `godot --headless --script tests/gdunit4_runner.gd` via Bash
-3. Parses output: 12/12 passing
-4. Scans test coverage — all stories COVERED or EXPECTED
-5. Uses `AskUserQuestion` for Batch 1 (core stability) and Batch 2 (sprint mechanics)
-6. Developer selects PASS for all items
-7. Report assembled: automated tests PASS, all smoke checks PASS, no MISSING coverage
-8. Asks "May I write this smoke check report to `production/qa/smoke-[date].md`?"
-9. Writes report after approval
-10. Delivers verdict: PASS
-
-**Assertions:**
-- [ ] Automated test runner is invoked via Bash
-- [ ] `AskUserQuestion` is used for manual smoke check batches
-- [ ] "May I write" is asked before writing the report file
-- [ ] Report is written to `production/qa/smoke-[date].md`
-- [ ] Verdict is PASS
+无。`/smoke-check` 是 QA 流水线门控，不适用 director 门控。
 
 ---
 
-### Case 2: Failure Path — Automated test fails, FAIL verdict
+## 测试用例
 
-**Fixture:**
-- `tests/` directory exists, engine is Godot
-- Automated test runner reports 10 tests run: 8 passing, 2 failing
-  - Failing tests: `test_health_clamp_at_zero`, `test_damage_calculation_negative`
-- QA plan exists
+### 用例 1：正常路径——所有冒烟测试通过，PASS
 
-**Input:** `/smoke-check`
+**夹具：**
+- `production/sprints/sprint-03/` 包含 4 个故事文件，所有故事均已实施
+- 故事 1–2 为逻辑测试类型（有测试文件）；故事 3–4 为集成测试类型
+- 所有引用的测试文件存在且通过（模拟测试运行器：0 个失败）
 
-**Expected behavior:**
-1. Skill runs automated tests via Bash
-2. Parses output — 2 failures detected
-3. Records failing test names
-4. Proceeds through manual smoke check batches
-5. Report shows automated tests as FAIL with failing test names listed
-6. Asks to write report; writes after approval
-7. Delivers FAIL verdict with message: "The smoke check failed. Do not hand off to
-   QA until these failures are resolved." Lists failing tests and suggests fixing
-   then re-running `/smoke-check`
+**输入：** `/smoke-check`
 
-**Assertions:**
-- [ ] Failing test names are listed in the report
-- [ ] Verdict is FAIL
-- [ ] Post-verdict message directs developer to fix failures before QA hand-off
-- [ ] `/smoke-check` re-run is suggested after fixing
+**预期行为：**
+1. 技能读取当前冲刺计划并识别 4 个已实施故事
+2. 技能分类故事测试类型（故事 1–2 为逻辑，故事 3–4 为集成）
+3. 技能运行（或模拟）逻辑和集成测试——0 个失败
+4. 技能生成 PASS 判定的冒烟测试报告
+5. 技能询问"May I write the smoke check report to production/qa/smoke-check-[date].md?"
+6. 用户批准；文件写入
+7. 输出："BUILD IS READY FOR QA HAND-OFF"
 
----
-
-### Case 3: Manual Confirmation — AskUserQuestion used, PASS WITH WARNINGS
-
-**Fixture:**
-- `tests/` directory exists, engine is Godot
-- Automated test runner reports all tests passing (8/8)
-- One Logic story has no matching test file (MISSING coverage)
-- Developer confirms all Batch 1 and Batch 2 smoke checks as PASS
-
-**Input:** `/smoke-check`
-
-**Expected behavior:**
-1. Automated tests PASS
-2. Coverage scan finds 1 MISSING entry for a Logic story
-3. `AskUserQuestion` is used for Batch 1 and Batch 2 — developer confirms all PASS
-4. Report shows: automated tests PASS, manual checks all PASS, 1 MISSING coverage entry
-5. Verdict is PASS WITH WARNINGS — build ready for QA, but MISSING entry must be
-   resolved before `/story-done` closes the affected story
-6. Asks to write report; writes after approval
-
-**Assertions:**
-- [ ] `AskUserQuestion` is used for manual smoke check batches (not inline text prompts)
-- [ ] MISSING test coverage entry appears in the report
-- [ ] Verdict is PASS WITH WARNINGS (not PASS, not FAIL)
-- [ ] Advisory note explains MISSING entry must be resolved before `/story-done`
-- [ ] Report file is written to `production/qa/smoke-[date].md`
+**断言：**
+- [ ] 从冲刺计划识别所有 4 个故事
+- [ ] 逻辑和集成测试类型均已执行
+- [ ] 0 个测试失败 → 判定结果为 PASS
+- [ ] 写入报告前询问"May I write"
+- [ ] 报告摘要表明已准备好进行 QA 移交
 
 ---
 
-### Case 4: No Test Directory — Skill stops with guidance
+### 用例 2：失败路径——2 个测试失败，FAIL，禁止 QA 移交
 
-**Fixture:**
-- `tests/` directory does not exist
-- Engine is configured as Godot
+**夹具：**
+- `production/sprints/sprint-04/` 包含 5 个故事文件，故事 3 有 2 个测试失败
+- 测试运行器模拟：故事 3 中 5 个测试有 2 个失败，具体错误信息可用
 
-**Input:** `/smoke-check`
+**输入：** `/smoke-check`
 
-**Expected behavior:**
-1. Phase 1 checks for `tests/` directory — not found
-2. Skill outputs: "No test directory found at `tests/`. Run `/test-setup` to
-   scaffold the testing infrastructure, or create the directory manually if
-   tests live elsewhere."
-3. Skill stops — no automated tests run, no manual smoke checks, no report written
+**预期行为：**
+1. 技能运行所有故事的测试套件
+2. 故事 3 报告 2 个失败（含错误信息）
+3. 技能生成 FAIL 判定报告，包含：
+   - 详细失败信息（文件、测试名称、错误输出）
+   - 明确声明："BUILD IS NOT READY FOR QA HAND-OFF"
+   - 建议修复后重新运行 `/smoke-check`
+4. 技能询问"May I write the smoke check report to...?"
+5. 写入报告（即使 FAIL，报告也需记录在案）
 
-**Assertions:**
-- [ ] Error message references the missing `tests/` directory
-- [ ] `/test-setup` is suggested as the remediation step
-- [ ] Skill stops after this message (no further phases run)
-- [ ] No report file is written
-
----
-
-### Case 5: Director Gate Check — No gate; smoke-check is a QA pre-check utility
-
-**Fixture:**
-- Valid test setup, automated tests pass, manual smoke checks confirmed
-
-**Input:** `/smoke-check`
-
-**Expected behavior:**
-1. Skill runs all phases and produces a PASS or PASS WITH WARNINGS verdict
-2. No director agents are spawned at any point
-3. No gate IDs (CD-*, TD-*, AD-*, PR-*) appear in output
-4. No `/gate-check` is invoked
-
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No gate skip messages appear
-- [ ] Verdict is PASS, PASS WITH WARNINGS, or FAIL — no gate verdict involved
+**断言：**
+- [ ] 故事 3 的 2 个失败均在报告中列出，附错误信息
+- [ ] 判定结果明确为 FAIL
+- [ ] 报告包含"BUILD IS NOT READY FOR QA HAND-OFF"
+- [ ] 建议修复失败后重新运行 `/smoke-check`
+- [ ] 即使失败也写入报告
 
 ---
 
-## Protocol Compliance
+### 用例 3：混合故事类型——视觉/UI 故事被标记为需要手动 QA
 
-- [ ] Uses `AskUserQuestion` for all manual smoke check batches (Batch 1, Batch 2, Batch 3)
-- [ ] Runs automated tests via Bash before asking any manual questions
-- [ ] Asks "May I write" before creating the report file — never writes without approval
-- [ ] Verdict vocabulary is strictly PASS / PASS WITH WARNINGS / FAIL — no other verdicts
-- [ ] FAIL is triggered by automated test failures or Batch 1/Batch 2 FAIL responses
-- [ ] PASS WITH WARNINGS is triggered when MISSING test coverage exists but no critical failures
-- [ ] NOT RUN (engine binary unavailable) is recorded as a warning, not a FAIL
-- [ ] Does not invoke director gates at any point
+**夹具：**
+- `production/sprints/sprint-05/` 包含 3 个故事：
+  - 故事 1：逻辑（自动测试）
+  - 故事 2：视觉（手动检查，无自动测试）
+  - 故事 3：UI（需要手动 QA 验证）
+
+**输入：** `/smoke-check`
+
+**预期行为：**
+1. 技能对故事 1 运行自动测试——通过
+2. 技能将故事 2 和 3 标记为"需要手动 QA"——不自动失败
+3. 报告区分自动测试的故事（通过）与需手动验证的故事
+4. 判定结果为 PASS，但附说明视觉/UI 故事等待手动验证
+
+**断言：**
+- [ ] 视觉/UI 故事不会因缺少自动测试而自动失败
+- [ ] 报告在自动测试部分（PASS）与手动验证部分（PENDING）之间进行区分
+- [ ] 判定结果为 PASS（自动化部分），但标注视觉/UI 故事为待验证
+- [ ] 报告结构清晰区分"通过"与"待处理"
+- [ ] 报告中注明：视觉/UI 故事的手动 QA 结果需在 `/story-done` 执行前确认
 
 ---
 
-## Coverage Notes
+### 用例 4：无已实施故事——空冲刺
 
-- The `quick` argument (skips Phase 3 coverage scan and Batch 3) is not separately
-  fixture-tested; it follows the same pattern as Case 1 with a coverage-skip note in output.
-- The `--platform` argument adds platform-specific AskUserQuestion batches and a
-  per-platform verdict table; not separately tested here.
-- The case where the engine binary is not on PATH (NOT RUN) follows the PASS WITH
-  WARNINGS pattern and is covered by the protocol compliance assertions above.
+**夹具：**
+- 当前冲刺计划存在但所有故事均为"In Progress"状态（未完成实施）
+
+**输入：** `/smoke-check`
+
+**预期行为：**
+1. 技能读取冲刺计划
+2. 0 个故事已实施
+3. 技能输出："No implemented stories found in current sprint — smoke check skipped"
+4. 不写入报告文件
+5. 技能建议在故事实施完成后重新运行；若测试目录不存在，可先运行 `/test-setup` 搭建测试框架
+
+**断言：**
+- [ ] 当无已实施故事时技能不强行进行
+- [ ] 输出清晰解释为何跳过
+- [ ] 不写入报告文件（无内容可报告）
+- [ ] 建议在有故事后重新运行
+
+---
+
+### 用例 5：Director 门控检查——无门控；smoke-check 是 QA 门控
+
+**夹具：**
+- 冲刺有测试通过的已实施故事
+
+**输入：** `/smoke-check`
+
+**预期行为：**
+1. 技能完成完整的冒烟测试流程
+2. 任何时候都不会生成 director agent
+3. 输出中不出现门控 ID
+4. 不调用 `/gate-check`
+
+**断言：**
+- [ ] 未调用任何 director 门控
+- [ ] 不出现门控跳过消息
+- [ ] 判定结果为 PASS 或 FAIL——无门控判定
+
+---
+
+## 协议合规性
+
+- [ ] 从冲刺计划读取故事以确定测试范围（非手动指定文件）
+- [ ] 区分自动可测试故事类型与需要手动 QA 的类型
+- [ ] 写入报告前询问"May I write"
+- [ ] PASS 或 FAIL 判定伴随明确的 QA 移交状态声明
+- [ ] FAIL 报告包含失败详情和修复指导
+
+---
+
+## 覆盖说明
+
+- 冒烟测试对实际引擎测试运行器（GDScript、C# 或蓝图测试套件）的集成未经单独测试；
+  用例假定有测试结果可用。
+- 跨冲刺（多个活跃冲刺文件夹）的冒烟测试行为未经测试；
+  技能应使用最近的/当前的冲刺计划。
+- 由于前次 FAIL 报告已写入文件，同一冲刺中重新运行的覆盖行为
+  （追加 vs. 覆盖）此处未进行断言。

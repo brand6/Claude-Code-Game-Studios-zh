@@ -1,80 +1,99 @@
-# Hook: pre-push-test-gate
+# Hook：pre-push-test-gate
 
-## Trigger
+## 触发条件
 
-Runs before any push to a remote branch. Mandatory for pushes to `develop`
-and `main`.
+在向远程仓库推送代码之前运行。对 `develop` 和 `main` 分支强制执行，其他分支仅作警告。
 
-## Purpose
+## 用途
 
-Ensures the build compiles, unit tests pass, and critical smoke tests pass
-before code reaches shared branches. This is the last automated quality gate
-before code affects other developers.
+确保在代码合并到集成分支之前，所有测试均已通过。防止损坏的代码进入团队共享分支。
 
-## Implementation
+## 实现
 
 ```bash
 #!/bin/bash
-# Pre-push hook: Build and test gate
+# Pre-push hook：测试门禁
+# 在推送到受保护分支之前运行完整测试套件
 
 REMOTE="$1"
 URL="$2"
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+EXIT_CODE=0
 
-# Only enforce full gate for develop and main
-PROTECTED_BRANCHES="develop main"
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-
-FULL_GATE=false
-for branch in $PROTECTED_BRANCHES; do
-    if [ "$CURRENT_BRANCH" = "$branch" ]; then
-        FULL_GATE=true
+PROTECTED_BRANCHES="main develop"
+IS_PROTECTED=false
+for b in $PROTECTED_BRANCHES; do
+    if [ "$BRANCH" = "$b" ]; then
+        IS_PROTECTED=true
         break
     fi
 done
 
-echo "=== Pre-Push Quality Gate ==="
+echo "=== Pre-push Test Gate ==="
+echo "Branch: $BRANCH | Protected: $IS_PROTECTED"
 
-# Step 1: Build
-echo "Building..."
-# Adapt to your build system:
-# make build || exit 1
-# dotnet build || exit 1
-# cargo build || exit 1
-echo "Build: PASS"
+# ── 步骤 1：构建检查 ────────────────────────────
+echo "Step 1/4: Build check..."
+# 请取消注释并根据你的引擎调整
+# godot --headless --check-only --quit || EXIT_CODE=1
+# dotnet build --no-restore -q || EXIT_CODE=1
+if [ $EXIT_CODE -ne 0 ]; then
+    echo "FAIL: Build failed. Aborting push."
+    exit 1
+fi
+echo "PASS: Build OK"
 
-# Step 2: Unit tests
-echo "Running unit tests..."
-# Adapt to your test framework:
-# python -m pytest tests/unit/ -x || exit 1
-# dotnet test tests/unit/ || exit 1
-# cargo test || exit 1
-echo "Unit tests: PASS"
+# ── 步骤 2：单元测试 ────────────────────────────
+echo "Step 2/4: Unit tests..."
+# 请取消注释并根据你的测试框架调整
+# python -m pytest tests/unit/ --quiet --tb=no || EXIT_CODE=1
+# dotnet test --filter Category=Unit --quiet || EXIT_CODE=1
+if [ $EXIT_CODE -ne 0 ]; then
+    echo "FAIL: Unit tests failed."
+    exit 1
+fi
+echo "PASS: Unit tests OK"
 
-if [ "$FULL_GATE" = true ]; then
-    # Step 3: Integration tests (only for protected branches)
-    echo "Running integration tests..."
-    # python -m pytest tests/integration/ -x || exit 1
-    echo "Integration tests: PASS"
-
-    # Step 4: Smoke tests
-    echo "Running smoke tests..."
-    # python -m pytest tests/playtest/smoke/ -x || exit 1
-    echo "Smoke tests: PASS"
-
-    # Step 5: Performance regression check
-    echo "Checking performance baselines..."
-    # python tools/ci/perf_check.py || exit 1
-    echo "Performance: PASS"
+# ── 步骤 3：集成测试（仅受保护分支）────────────
+if $IS_PROTECTED; then
+    echo "Step 3/4: Integration tests (protected branch)..."
+    # 请取消注释并根据你的测试框架调整
+    # python -m pytest tests/integration/ --quiet --tb=short || EXIT_CODE=1
+    if [ $EXIT_CODE -ne 0 ]; then
+        echo "FAIL: Integration tests failed."
+        exit 1
+    fi
+    echo "PASS: Integration tests OK"
+else
+    echo "Step 3/4: Integration tests -- SKIPPED (feature branch)"
 fi
 
-echo "=== All gates passed ==="
-exit 0
+# ── 步骤 4：冒烟测试与性能 ──────────────────────
+if $IS_PROTECTED; then
+    echo "Step 4/4: Smoke + performance..."
+    # 启动无头游戏并运行冒烟测试
+    # godot --headless --script tests/smoke/run_smoke.gd --quit || EXIT_CODE=1
+    # 检查性能基线
+    # python tools/perf_baseline_check.py || EXIT_CODE=1
+    echo "PASS: Smoke/perf OK (checks not yet configured)"
+else
+    echo "Step 4/4: Smoke tests -- SKIPPED (feature branch)"
+fi
+
+echo "=========================="
+if [ $EXIT_CODE -ne 0 ]; then
+    echo "GATE FAILED. Fix issues before pushing."
+else
+    echo "GATE PASSED."
+fi
+
+exit $EXIT_CODE
 ```
 
-## Agent Integration
+## Agent 集成
 
-When this hook fails:
-1. Build failure: invoke `lead-programmer` to diagnose
-2. Unit test failure: invoke `qa-tester` to identify the failing test and
-   `gameplay-programmer` or relevant programmer to fix
-3. Performance regression: invoke `performance-analyst` to analyze
+当此 Hook 失败时：
+1. 构建失败：调用 `lead-programmer`
+2. 单元测试失败：调用 `qa-tester` 分类，调用相应程序员修复
+3. 集成测试失败：调用 `lead-programmer` 判断影响范围
+4. 性能回归：调用 `performance-analyst`

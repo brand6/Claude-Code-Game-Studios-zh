@@ -1,79 +1,81 @@
-# Agent Test Spec: tools-programmer
+# Agent 测试规格：tools-programmer
 
-## Agent Summary
-Domain: Editor extensions, content authoring tools, debug utilities, and pipeline automation scripts.
-Does NOT own: game code (gameplay-programmer, ui-programmer, etc.), engine core systems (engine-programmer).
-Model tier: Sonnet (default).
-No gate IDs assigned.
-
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references editor tools / pipeline / debug utilities)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Bash, Glob, Grep
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over game source code or engine internals
+## Agent 概述
+职责领域：编辑器扩展、内容创作工具、调试工具与流水线自动化脚本。
+不负责：游戏运行时代码（gameplay-programmer）、引擎核心代码（engine-programmer）。
+模型层级：Sonnet（默认）。
+未分配关卡 ID。
 
 ---
 
-## Test Cases
+## 静态断言（结构检查）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Create a custom editor tool for placing enemy patrol waypoints in the level."
-**Expected behavior:**
-- Produces an editor extension spec and code scaffold for the configured engine (e.g., Godot EditorPlugin, Unity Editor window, Unreal Detail Customization)
-- Tool allows designer to click-place waypoints in the scene/viewport
-- Waypoints are serialized as engine-native resource (not hardcoded) so level-designer can edit without code
-- Includes undo/redo support per editor plugin best practices
-- Does NOT modify the AI pathfinding runtime code (that belongs to ai-programmer)
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Implement the enemy melee combo system in code."
-**Expected behavior:**
-- Does NOT produce gameplay mechanic code
-- Explicitly states that combat system implementation belongs to `gameplay-programmer`
-- Redirects the request to `gameplay-programmer`
-- May note it can build a debug overlay tool to visualize combo state if useful during development
-
-### Case 3: Runtime data access — coordination required
-**Input:** "The waypoint editor tool needs to read game data at runtime to validate patrol routes against the AI budget."
-**Expected behavior:**
-- Identifies that runtime data access from an editor plugin requires a defined, safe interface to the game's runtime systems
-- Coordinates with `engine-programmer` to establish a read-only data access pattern (e.g., a resource validation API)
-- Does NOT directly read internal engine or game memory structures without an agreed interface
-- Documents the required interface before implementing the tool
-
-### Case 4: Engine version breakage
-**Input:** "After the engine upgrade, the waypoint editor tool crashes on startup."
-**Expected behavior:**
-- Checks the engine version reference (`docs/engine-reference/`) for breaking changes in editor plugin APIs
-- Identifies the specific API or signal that changed in the new version
-- Produces a targeted fix for the breaking change
-- Notes any other tools that may be affected by the same API change
-
-### Case 5: Context pass — art pipeline requirements
-**Input:** Art pipeline requirements provided in context: "All texture imports must set compression to VRAM Compressed, generate mipmaps, and tag with a LOD group." Request: "Build an asset import tool that enforces these settings."
-**Expected behavior:**
-- References all three requirements from the context: VRAM compression, mipmap generation, LOD group tagging
-- Produces an import tool that validates and applies all three settings on import
-- Adds a warning or error report for assets that fail to meet the specified settings
-- Does NOT change the art pipeline requirements themselves (those belong to art-director / technical-artist)
+- [ ] `description:` 字段存在且领域明确（引用编辑器工具 / 流水线 / 调试工具）
+- [ ] `allowed-tools:` 列表包含 Read、Write、Edit、Bash、Glob、Grep
+- [ ] 模型层级为 Sonnet（专员的默认层级）
+- [ ] Agent 定义未主张对游戏运行时代码或引擎内部代码拥有权
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (editor tools, pipeline scripts, debug utilities)
-- [ ] Redirects game code requests to appropriate programmer agents
-- [ ] Returns structured findings (tool specs, editor extension code, pipeline scripts)
-- [ ] Coordinates with engine-programmer before accessing runtime data from editor context
-- [ ] Checks engine version reference before using editor plugin APIs
-- [ ] Builds tools to enforce requirements, does not author the requirements themselves
+### 用例 1：领域内请求——合适的输出
+**输入**："构建一个编辑器工具，让关卡设计师能在场景中直接点击放置敌人巡逻路点，并序列化保存。"
+**预期行为**：
+- 产出编辑器插件的规格和代码骨架
+  - Godot：实现 `EditorPlugin`，覆盖 `_forward_3d_gui_input` 等方法
+  - Unity：`Editor` 窗口 + `SceneView` 回调
+  - Unreal：编辑器子系统或 Blueprint 工具模式
+- 路点作为引擎原生资源序列化（如 Godot Resource / Unity ScriptableObject / UE DataAsset）
+- 支持 Undo/Redo 操作
+- 不包含运行时 AI 寻路逻辑——仅处理路点数据的放置与存储
+
+### 用例 2：领域外请求——正确重定向
+**输入**："实现敌人近战连击的运行时逻辑。"
+**预期行为**：
+- 不产出运行时游戏逻辑
+- 明确声明游戏运行时代码属于 `gameplay-programmer` 的职责范围
+- 将请求重定向给 `gameplay-programmer`
+- 可注明：可以构建一个调试叠加层，在游戏运行时将连击状态可视化
+
+### 用例 3：运行时数据访问
+**输入**："构建一个工具，可以读取运行时游戏状态来验证关卡生成是否正确。"
+**预期行为**：
+- 不直接读取引擎内部内存
+- 与 `engine-programmer` 协调，设计只读数据访问模式（如资源验证 API / 调试序列化端点）
+- 在产出工具实现之前，先记录所需接口的文档
+- 标记对内部数据的直接访问为未来可能破坏兼容性的技术债
+
+### 用例 4：引擎版本变更——编辑器工具升级
+**输入**："引擎从 Godot 4.3 升级到 Godot 4.6 后，资源导入工具出现了报错。"
+**预期行为**：
+- 查阅引擎版本参考，找出 4.3 到 4.6 之间与编辑器插件相关的重大变更
+- 识别具体发生变更的 API 或信号（而非泛泛说"可能有变"）
+- 产出针对目标 API 的定向修复
+- 检查项目中其他可能受同一版本变更影响的工具
+
+### 用例 5：上下文传递——美术流水线要求
+**上下文输入**：美术流水线规格要求：所有纹理必须使用 VRAM 压缩格式、包含 Mipmap、导入时自动应用 LOD 分组。
+**输入**："构建一个批量纹理导入工具。"
+**预期行为**：
+- 引用上下文中的全部三项要求（VRAM 压缩 / Mipmap / LOD 分组）
+- 导入工具验证所有三项并自动应用
+- 对不符合规格的纹理产出警告或错误，而非静默导入
+- 不修改流水线规格本身——工具执行规格，而非制定规格
 
 ---
 
-## Coverage Notes
-- Waypoint editor tool (Case 1) should have a smoke test verifying it loads without errors in the editor
-- Runtime data access (Case 3) confirms the agent respects the engine-programmer's ownership of core APIs
-- Art pipeline context (Case 5) verifies the agent builds to match provided specs rather than inventing requirements
+## 协议合规
+
+- [ ] 保持在声明领域内（工具、流水线、编辑器、调试工具）
+- [ ] 将游戏运行时代码请求重定向给 gameplay-programmer
+- [ ] 访问运行时数据前，先与 engine-programmer 协调接口
+- [ ] 产出工具前检查 VERSION.md
+- [ ] 工具执行流水线规格，而非修改规格
+
+---
+
+## 覆盖说明
+- 编辑器插件（用例 1）应在 `tests/` 中包含手动测试检查清单
+- 引擎版本升级（用例 4）确认 Agent 使用 VERSION.md 而非依赖训练数据的版本知识
+- 流水线合规（用例 5）验证 Agent 将全部三项要求作为约束，而非仅选择部分执行

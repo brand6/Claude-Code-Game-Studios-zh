@@ -1,44 +1,44 @@
-# Godot Physics — Quick Reference
+# Godot 物理 — 快速参考
 
 Last verified: 2026-02-12 | Engine: Godot 4.6
 
-## What Changed Since ~4.3 (LLM Cutoff)
+## 自 ~4.3（LLM 截止版本）以来的变更
 
-### 4.6 Changes
-- **Jolt Physics is the DEFAULT 3D engine** for new projects
-  - Existing projects keep their current physics engine setting
-  - Better determinism, stability, and performance than GodotPhysics3D
-  - Some HingeJoint3D properties (`damp`) only work with GodotPhysics3D
-  - 2D physics UNCHANGED (still Godot Physics 2D)
+### 4.6 变更
+- **Jolt Physics 是新项目的默认 3D 引擎**
+  - 已有项目保留当前物理引擎设置
+  - 比 GodotPhysics3D 具有更好的确定性、稳定性和性能
+  - 部分 HingeJoint3D 属性（`damp`）仅在 GodotPhysics3D 下有效
+  - 2D 物理**不变**（仍使用 Godot Physics 2D）
 
-### 4.5 Changes
-- **3D physics interpolation rearchitected**: Moved from RenderingServer to SceneTree
-  - User-facing API unchanged, but internal behavior may differ in edge cases
+### 4.5 变更
+- **3D 物理插值架构重写**：从 RenderingServer 迁移到 SceneTree
+  - 用户侧 API 不变，但内部行为在边缘情况下可能有所不同
 
-## Physics Engine Selection (4.6)
+## 物理引擎选择（4.6）
 
 ```
-Project Settings → Physics → 3D → Physics Engine:
-- Jolt Physics (DEFAULT for new projects)
-- GodotPhysics3D (legacy, still available)
+项目设置 → 物理 → 3D → 物理引擎：
+- Jolt Physics（新项目默认）
+- GodotPhysics3D（旧版，仍可用）
 ```
 
-### Jolt vs GodotPhysics3D
+### Jolt 与 GodotPhysics3D 对比
 
-| Feature | Jolt (default) | GodotPhysics3D |
-|---------|---------------|----------------|
-| Determinism | Better | Inconsistent |
-| Stability | Better | Adequate |
-| Performance | Better for complex scenes | Adequate |
-| HingeJoint3D `damp` | NOT supported | Supported |
-| Runtime warnings | Yes, for unsupported properties | No |
-| Collision margins | May behave differently | Original behavior |
+| 特性 | Jolt（默认） | GodotPhysics3D |
+|------|-------------|---------------|
+| 确定性 | 更好 | 不稳定 |
+| 稳定性 | 更好 | 尚可 |
+| 复杂场景性能 | 更好 | 尚可 |
+| HingeJoint3D `damp` | **不支持** | 支持 |
+| 运行时警告 | 不支持的属性会有警告 | 无 |
+| 碰撞边距 | 行为可能不同 | 原始行为 |
 
-## Current API Patterns
+## 当前 API 模式
 
-### Basic Physics Setup (unchanged)
+### 基础物理配置（不变）
 ```gdscript
-# CharacterBody3D movement — API unchanged across engines
+# CharacterBody3D 移动 — API 在各引擎中保持不变
 extends CharacterBody3D
 
 @export var speed: float = 5.0
@@ -59,7 +59,7 @@ func _physics_process(delta: float) -> void:
     move_and_slide()
 ```
 
-### Raycasting (unchanged)
+### 射线检测（不变）
 ```gdscript
 var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
 var query := PhysicsRayQueryParameters3D.create(from, to)
@@ -70,7 +70,7 @@ if result:
     var hit_normal: Vector3 = result.normal
 ```
 
-## Common Mistakes
-- Assuming GodotPhysics3D is the default (Jolt since 4.6)
-- Using HingeJoint3D `damp` property without checking physics engine (Jolt ignores it)
-- Not testing collision edge cases when switching between physics engines
+## 常见错误
+- 假设 GodotPhysics3D 是默认引擎（4.6 起已改为 Jolt）
+- 未检查物理引擎就使用 HingeJoint3D `damp` 属性（Jolt 会忽略此属性）
+- 在切换物理引擎时未测试碰撞边缘情况

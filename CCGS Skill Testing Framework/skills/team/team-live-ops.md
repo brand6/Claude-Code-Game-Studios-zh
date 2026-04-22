@@ -1,178 +1,182 @@
 # Skill Test Spec: /team-live-ops
 
-## Skill Summary
+## Skill 概述
 
-Orchestrates the live-ops team through a 7-phase planning pipeline to produce a
-season or event plan. Coordinates live-ops-designer, economy-designer,
-analytics-engineer, community-manager, narrative-director, and writer. Phases 3
-and 4 (economy design and analytics) run simultaneously. Ends with a consolidated
-season plan requiring user approval before handoff to production.
-
----
-
-## Static Assertions (Structural)
-
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: COMPLETE, BLOCKED
-- [ ] Contains "May I write" language in the File Write Protocol section (delegated to sub-agents)
-- [ ] Has a File Write Protocol section stating that the orchestrator does not write files directly
-- [ ] Has a next-step handoff at the end referencing `/design-review`, `/sprint-plan`, and `/team-release`
-- [ ] Uses `AskUserQuestion` at phase transitions to capture user approval before proceeding
-- [ ] States explicitly that Phases 3 and 4 can run simultaneously (parallel spawning)
-- [ ] Error recovery section present (or implied through BLOCKED handling)
-- [ ] Output documents section specifies paths under `design/live-ops/seasons/`
+编排七阶段赛季/活动规划流水线：1. 赛季概念（live-ops-designer）→
+2. 叙事主题（narrative-director + writer）→ 3. 经济设计（economy-designer）和
+4. 分析规格（analytics-engineer）并行 → 5. 社区策略（community-manager）→
+6. 实现规划（live-ops-designer + gameplay-programmer）→ 7. 伦理审查（live-ops-designer）。
+阶段 7 参考 `design/live-ops/ethics-policy.md`（若存在）。
+输出保存至 `design/live-ops/seasons/`。
+下一步：`/design-review`、`/sprint-plan`、`/team-release`。
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: Happy Path — All 7 phases complete, season plan produced
-
-**Fixture:**
-- `design/live-ops/economy-rules.md` exists with current economy configuration
-- `design/live-ops/ethics-policy.md` exists with the project ethics policy
-- Game concept document exists at its standard path
-- No existing season documents for the new season name being planned
-
-**Input:** `/team-live-ops "Season 2: The Frozen Wastes"`
-
-**Expected behavior:**
-1. Phase 1: Spawns `live-ops-designer` via Task; receives season brief with scope, content list, and retention mechanic; presents to user
-2. AskUserQuestion: user approves Phase 1 output before Phase 2 begins
-3. Phase 2: Spawns `narrative-director` via Task; reads the Phase 1 season brief; produces narrative framing document (theme, story hook, lore connections); presents to user
-4. Phase 3 and 4 (parallel): Spawns `economy-designer` and `analytics-engineer` simultaneously via two Task calls before waiting for either result; economy-designer reads `design/live-ops/economy-rules.md`
-5. Phase 5: Spawns `narrative-director` and `writer` in parallel to produce in-game narrative text and player-facing copy; both read Phase 2 narrative framing doc
-6. Phase 6: Spawns `community-manager` via Task; reads season brief, economy design, and narrative framing; produces communication calendar with draft copy
-7. Phase 7: Collects all phase outputs; presents consolidated season plan summary including economy health check, analytics readiness, ethics review, and open questions
-8. AskUserQuestion: user approves the full season plan
-9. Sub-agents ask "May I write to `design/live-ops/seasons/S2_The_Frozen_Wastes.md`?", `...analytics.md`, and `...comms.md` before writing
-10. Verdict: COMPLETE — season plan produced and handed off for production
-
-**Assertions:**
-- [ ] All 7 phases execute in order; Phase 3 and 4 are issued as parallel Task calls
-- [ ] Phase 7 consolidated summary includes all six sections (season brief, narrative framing, economy design, analytics plan, content inventory, communication calendar)
-- [ ] Ethics review section in Phase 7 explicitly references `design/live-ops/ethics-policy.md`
-- [ ] Three output documents written to `design/live-ops/seasons/` with correct naming convention
-- [ ] File writes are delegated to sub-agents — orchestrator does not write directly
-- [ ] Verdict: COMPLETE appears in final output
-- [ ] Next steps reference `/design-review`, `/sprint-plan`, and `/team-release`
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 明确包含七个阶段
+- [ ] 阶段 3 和阶段 4 明确并行派生
+- [ ] 阶段 7 包含伦理审查并引用 `design/live-ops/ethics-policy.md`
+- [ ] 包含裁决关键字：COMPLETE、BLOCKED
+- [ ] 存在文件写入协议；编排者不直接写入文件
+- [ ] 子 agent 在任何写入之前强制执行"May I write to [path]?"
+- [ ] 存在错误恢复协议
+- [ ] 步骤过渡前使用 `AskUserQuestion`
+- [ ] 输出路径使用 `design/live-ops/seasons/` 目录
+- [ ] 末尾包含下一步交接：`/design-review`、`/sprint-plan`、`/team-release`
 
 ---
 
-### Case 2: Ethics Violation Found — Reward element violates ethics policy
+## 测试用例
 
-**Fixture:**
-- All standard live-ops fixtures present (economy-rules.md, ethics-policy.md)
-- `design/live-ops/ethics-policy.md` explicitly prohibits loot boxes targeting players under 18
-- economy-designer (Phase 3) proposes a "Mystery Chest" mechanic with randomized premium rewards and no pity timer
+### 用例 1：正常路径——七个阶段全部完成，裁决 COMPLETE
 
-**Input:** `/team-live-ops "Season 3: Shadow Tournament"`
+**测试夹具：**
+- 现有赛季数据位于 `design/live-ops/`
+- 伦理政策位于 `design/live-ops/ethics-policy.md`
+- 赛季主题：`winter-festival`
+- 所有 agent 成功完成任务
 
-**Expected behavior:**
-1. Phases 1–4 proceed normally; economy-designer proposes Mystery Chest mechanic
-2. Phase 7: Orchestrator reviews Phase 3 output against ethics policy; identifies Mystery Chest as a violation of the "no untransparent random premium rewards" rule in the ethics policy
-3. Ethics review section of the Phase 7 summary flags the violation explicitly: "ETHICS FLAG: Mystery Chest mechanic in Phase 3 economy design violates [policy rule]. Approval is blocked until this is resolved."
-4. AskUserQuestion presented with resolution options before season plan approval is offered
-5. Skill does NOT issue a COMPLETE verdict or write output documents until the ethics violation is resolved or explicitly waived by the user
+**输入：** `/team-live-ops winter-festival`
 
-**Assertions:**
-- [ ] Phase 7 ethics review section explicitly names the violating element and the policy rule it breaks
-- [ ] Skill does not auto-approve the season plan when an ethics violation is present
-- [ ] AskUserQuestion is used to surface the violation and offer resolution options (revise economy design, override with documented rationale, cancel)
-- [ ] Output documents are NOT written while the violation is unresolved
-- [ ] If user chooses to revise: skill re-spawns economy-designer to produce a corrected design before returning to Phase 7 review
-- [ ] Verdict: COMPLETE is only issued after the ethics flag is cleared
+**预期行为：**
+1. 上下文收集：读取现有赛季数据、伦理政策、游戏经济数据
+2. 阶段 1：派生 live-ops-designer 定义赛季概念（主题、持续时间、核心活动循环、参与目标）
+3. `AskUserQuestion` 批准赛季概念后进行阶段 2
+4. 阶段 2：并行派生 narrative-director（叙事弧线、赛季传说）和 writer（活动描述文本、公告草稿）
+5. `AskUserQuestion` 批准叙事主题后进行阶段 3+4
+6. 阶段 3+4：同时派生 economy-designer（奖励结构、进度曲线、货币收支）和 analytics-engineer（KPI 定义、漏斗分析计划、A/B 测试框架）
+7. `AskUserQuestion` 批准经济和分析规格后进行阶段 5
+8. 阶段 5：派生 community-manager（公告计划、社区活动、反馈收集策略）
+9. `AskUserQuestion` 批准社区策略后进行阶段 6
+10. 阶段 6：派生 live-ops-designer 和 gameplay-programmer 制定实现计划
+11. `AskUserQuestion` 批准实现计划后进行阶段 7
+12. 阶段 7：live-ops-designer 参考 ethics-policy.md 进行伦理审查（掠夺性机制检查、公平性评估、玩家福祉考量）
+13. 伦理审查通过；子 agent 询问写入权限后输出保存至 `design/live-ops/seasons/winter-festival.md`
+14. 裁决：COMPLETE；下一步：`/design-review`、`/sprint-plan`、`/team-release`
 
----
-
-### Case 3: No Argument — Usage guidance shown
-
-**Fixture:**
-- Any project state
-
-**Input:** `/team-live-ops` (no argument)
-
-**Expected behavior:**
-1. Phase 1: No argument detected
-2. Outputs: "Usage: `/team-live-ops [season name or event description]` — Provide the name or description of the season or live event to plan."
-3. Skill exits immediately without spawning any subagents
-
-**Assertions:**
-- [ ] Skill does NOT guess a season name or fabricate a scope
-- [ ] Error message includes the correct usage format with the argument-hint
-- [ ] No Task calls are issued before the argument check fails
-- [ ] No files are read or written
+**断言：**
+- [ ] 阶段 3 和阶段 4 的 Task 调用同时发出（并行）
+- [ ] 每次阶段过渡前使用 `AskUserQuestion`
+- [ ] 阶段 7 明确引用 `design/live-ops/ethics-policy.md`
+- [ ] 输出保存至 `design/live-ops/seasons/winter-festival.md`
+- [ ] 编排者不直接写入任何文件
+- [ ] 裁决为 COMPLETE
+- [ ] 下一步引用 `/design-review`、`/sprint-plan`、`/team-release`
 
 ---
 
-### Case 4: Parallel Phase Validation — Phases 3 and 4 run simultaneously
+### 用例 2：伦理违规——阶段 7 发现问题，阻塞完成
 
-**Fixture:**
-- All standard live-ops fixtures present
-- Phase 1 (season brief) and Phase 2 (narrative framing) already approved
-- Phase 3 (economy-designer) and Phase 4 (analytics-engineer) inputs are independent of each other
+**测试夹具：**
+- 阶段 1–6 已成功完成
+- 阶段 7 伦理审查：economy-designer 设计的经济结构包含限时稀有道具（每天只可购买一次，24 小时后消失），ethics-policy.md 明确禁止"创造虚假稀缺性的限时购买压力机制"
 
-**Input:** `/team-live-ops "Season 1: The First Thaw"` (observed at Phase 3/4 transition)
+**输入：** `/team-live-ops winter-festival`（阶段 7 场景）
 
-**Expected behavior:**
-1. After Phase 2 is approved by the user, the orchestrator issues both Task calls (economy-designer and analytics-engineer) before awaiting either result
-2. Both agents receive the season brief as context; analytics-engineer does NOT wait for economy-designer output to begin
-3. Economy-designer output and analytics-engineer output are collected together before Phase 5 begins
-4. If one of the two parallel agents blocks, the other continues; a partial result is reported
+**预期行为：**
+1. 阶段 7 中 live-ops-designer 读取 ethics-policy.md
+2. 发现冲突：限时道具机制违反伦理政策中的"禁止虚假稀缺压力机制"条款
+3. 编排者立即报告伦理违规："`winter-festival` 的限时稀有道具设计违反了 ethics-policy.md 第 3.2 条——这是一个阻塞赛季发布的 BLOCKING 伦理问题。"
+4. `AskUserQuestion` 呈现选项：
+   - 将限时稀有道具改为持久可获取物品并继续
+   - 完全移除该机制并继续
+   - 在此停止，重新设计经济结构（推荐）
+5. 在用户解决伦理问题之前，输出文档不被写入
 
-**Assertions:**
-- [ ] Both Task calls for Phase 3 and Phase 4 are issued before either result is awaited — they are not sequential
-- [ ] Analytics-engineer prompt does NOT include economy-designer output as a required input (the inputs are independent)
-- [ ] If economy-designer blocks but analytics-engineer succeeds, analytics output is preserved and the block is surfaced via AskUserQuestion
-- [ ] Phase 5 does not begin until BOTH Phase 3 and Phase 4 results are collected
-- [ ] Skill documentation explicitly states "Phases 3 and 4 can run simultaneously"
-
----
-
-### Case 5: Missing Ethics Policy — `design/live-ops/ethics-policy.md` does not exist
-
-**Fixture:**
-- `design/live-ops/economy-rules.md` exists
-- `design/live-ops/ethics-policy.md` does NOT exist
-- All other fixtures are present
-
-**Input:** `/team-live-ops "Season 4: Desert Heat"`
-
-**Expected behavior:**
-1. Phases 1–4 proceed; economy-designer and analytics-engineer are given the ethics policy path but it is absent
-2. Phase 7: Orchestrator attempts to run ethics review; detects that `design/live-ops/ethics-policy.md` is missing
-3. Phase 7 summary includes a gap flag: "ETHICS REVIEW SKIPPED: `design/live-ops/ethics-policy.md` not found. Economy design was not reviewed against an ethics policy. Recommend creating one before production begins."
-4. Skill still completes the season plan and reaches COMPLETE verdict, but the gap is prominently flagged in the output and in the season design document
-5. Next steps include a recommendation to create the ethics policy document
-
-**Assertions:**
-- [ ] Skill does NOT error out when the ethics policy file is missing
-- [ ] Skill does NOT fabricate ethics policy rules in the absence of the file
-- [ ] Phase 7 summary explicitly notes that ethics review was skipped and why
-- [ ] Verdict: COMPLETE is still reachable despite the missing file
-- [ ] Gap flag appears in the season design output document (not just in conversation)
-- [ ] Next steps recommend creating `design/live-ops/ethics-policy.md`
+**断言：**
+- [ ] 伦理违规在报告中标记为 BLOCKING
+- [ ] 具体违规条款（ethics-policy.md 的具体内容）被明确引用
+- [ ] 输出文档在伦理问题解决之前不被写入
+- [ ] `AskUserQuestion` 提供至少一个解决路径
+- [ ] 裁决为 BLOCKED（非 COMPLETE）
 
 ---
 
-## Protocol Compliance
+### 用例 3：无参数——使用指导
 
-- [ ] `AskUserQuestion` used at every phase transition — user approves before the next phase begins
-- [ ] Phases 3 and 4 are always spawned in parallel, not sequentially
-- [ ] File Write Protocol: orchestrator never calls Write/Edit directly — all writes are delegated to sub-agents
-- [ ] Each output document gets its own "May I write to [path]?" ask from the relevant sub-agent
-- [ ] Ethics review in Phase 7 always references the ethics policy file path explicitly
-- [ ] Error recovery: any BLOCKED agent is surfaced immediately with AskUserQuestion options (skip / retry / stop)
-- [ ] Partial reports are produced if any phase blocks — work is never discarded
-- [ ] Verdict: COMPLETE only after user approves the consolidated season plan; BLOCKED if any unresolved ethics violation exists
-- [ ] Next steps always include `/design-review`, `/sprint-plan`, and `/team-release`
+**测试夹具：**
+- 任何项目状态
+
+**输入：** `/team-live-ops`（无参数）
+
+**预期行为：**
+1. Skill 检测到未提供赛季/活动名称
+2. 输出使用指导，包含正确调用格式和示例（例如 `winter-festival`、`summer-event`、`season-3`）
+3. 不派生任何 agent
+
+**断言：**
+- [ ] 无参数时不派生任何 agent
+- [ ] 使用信息包含带参数示例的正确格式
+- [ ] 不使用 `AskUserQuestion`
 
 ---
 
-## Coverage Notes
+### 用例 4：阶段 3+4 并行验证——经济和分析 agent 确实同时发出
 
-- Phase 5 parallel spawning (narrative-director + writer) follows the same pattern as Phases 3/4 but is not separately tested here — it uses the same parallel Task protocol validated in Case 4.
-- The "economy-rules.md absent" edge case is not separately tested — it would surface as a BLOCKED result from economy-designer and follow the standard error recovery path tested implicitly in Case 4.
-- The full content writing pipeline (Phase 5 output validation) is validated implicitly by the Case 1 happy path consolidated summary check.
-- Community manager communication calendar format (pre-launch, launch day, mid-season, final week) is validated implicitly by Case 1; no separate edge case is needed.
+**测试夹具：**
+- 阶段 1 和阶段 2 已完成批准
+- 等待阶段 3+4 执行
+- economy-designer 和 analytics-engineer 均可用
+
+**输入：** `/team-live-ops spring-event`（阶段 3+4 焦点）
+
+**预期行为：**
+1. 阶段 3+4 启动时：编排者同时发出 economy-designer 和 analytics-engineer 的 Task 调用
+2. 不等待任何一个 agent 的结果才派生另一个
+3. 两个 agent 的结果都收集后，`AskUserQuestion` 呈现合并输出
+
+**断言：**
+- [ ] economy-designer 和 analytics-engineer 的 Task 调用同时发出
+- [ ] 两个 agent 的输出均包含在阶段 3+4 摘要中
+- [ ] 没有顺序执行（一个 agent 不等待另一个的结果）
+
+---
+
+### 用例 5：缺少伦理政策——注明但继续
+
+**测试夹具：**
+- `design/live-ops/ethics-policy.md` 不存在
+- 所有其他上下文文件存在
+- 赛季设计不包含明显违规内容
+
+**输入：** `/team-live-ops anniversary-event`
+
+**预期行为：**
+1. 上下文收集：检查 `design/live-ops/ethics-policy.md`——未找到
+2. 编排者在对话中注明："注意：未找到 `design/live-ops/ethics-policy.md`——阶段 7 伦理审查将基于通用直播运营最佳实践进行，而非项目特定政策。强烈建议创建伦理政策文档。"
+3. 阶段 7 仍进行，但 live-ops-designer 基于行业通用标准（而非项目特定政策）进行审查
+4. 最终文档中记录伦理政策缺失并推荐创建
+5. 裁决：COMPLETE（政策缺失是可注明的缺口，不是阻塞器）
+
+**断言：**
+- [ ] 缺少伦理政策在对话中明确注明——不被静默忽略
+- [ ] 因缺少伦理政策，流水线不会停止
+- [ ] 阶段 7 仍进行，基于通用最佳实践
+- [ ] 最终文档推荐创建伦理政策
+- [ ] 裁决为 COMPLETE
+
+---
+
+## 协议合规性
+
+- [ ] 上下文收集（现有赛季数据、伦理政策、经济数据）在派生任何 agent 之前运行
+- [ ] 每次阶段过渡前使用 `AskUserQuestion`
+- [ ] 阶段 3 和阶段 4 并行：Task 调用同时发出
+- [ ] 编排者不直接写入任何文件
+- [ ] 子 agent 在任何写入之前强制执行"May I write to [path]?"
+- [ ] 伦理违规会阻塞发布并明确引用政策条款
+- [ ] 缺少伦理政策被注明但不会停止流水线
+- [ ] 输出路径为 `design/live-ops/seasons/[name].md`
+- [ ] 裁决为 COMPLETE 或 BLOCKED
+- [ ] 末尾包含下一步交接：`/design-review`、`/sprint-plan`、`/team-release`
+
+---
+
+## 覆盖率说明
+
+- 阶段 3+4 中可能出现 economy-designer 的经济结构与 analytics-engineer 的
+  KPI 目标冲突的情况——此类跨 agent 冲突的仲裁协议未独立测试。
+- 伦理政策的版本控制（不同版本赛季可能适用不同政策版本）超出当前
+  spec 范围。

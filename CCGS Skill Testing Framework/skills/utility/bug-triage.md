@@ -1,174 +1,170 @@
-# Skill Test Spec: /bug-triage
+# 技能测试规范：/bug-triage
 
-## Skill Summary
+## 技能概要
 
-`/bug-triage` reads all open bug reports in `production/bugs/` and produces a
-prioritized triage table sorted by severity (CRITICAL → HIGH → MEDIUM → LOW).
-It runs on the Haiku model (read-only, formatting/sorting task) and produces no
-file writes — the triage output is conversational. The skill flags bugs missing
-reproduction steps and identifies possible duplicates by comparing titles and
-affected systems.
+`/bug-triage` 读取 `production/bugs/` 中所有未关闭的缺陷报告，
+并生成按严重程度（CRITICAL → HIGH → MEDIUM → LOW）排序的分类优先级表。
+它运行于 Haiku 模型（只读，格式化/排序任务），不产生任何文件写入——
+分类结果以对话形式输出。技能标记缺少复现步骤的缺陷，
+并通过对比标题和受影响系统来识别可能重复的报告。
 
-The verdict is always TRIAGED — the skill is advisory and informational. No
-director gates apply. The output is intended to help a producer or QA lead
-prioritize which bugs to address next.
+判决始终为 TRIAGED——本技能仅提供建议和信息。不适用 director 门控。
+输出旨在帮助制作人或 QA 负责人优先处理下一步要解决的缺陷。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构性）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需夹具。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keyword: TRIAGED
-- [ ] Does NOT contain "May I write" language (skill is read-only)
-- [ ] Has a next-step handoff (e.g., `/bug-report` to create new reports, `/hotfix` for critical bugs)
-
----
-
-## Director Gate Checks
-
-None. `/bug-triage` is a read-only advisory skill. No director gates apply.
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含至少 2 个阶段标题
+- [ ] 包含判决关键词：TRIAGED
+- [ ] 不包含"May I write"语言（技能为只读）
+- [ ] 包含下一步交接（例如，`/bug-report` 创建新报告，`/hotfix` 处理严重缺陷）
 
 ---
 
-## Test Cases
+## Director 门控检查
 
-### Case 1: Happy Path — 5 bugs of varying severity, sorted table produced
-
-**Fixture:**
-- `production/bugs/` contains 5 bug report files:
-  - bug-2026-03-10-audio-crash.md (CRITICAL)
-  - bug-2026-03-12-score-overflow.md (HIGH)
-  - bug-2026-03-14-ui-overlap.md (MEDIUM)
-  - bug-2026-03-15-typo-tutorial.md (LOW)
-  - bug-2026-03-16-vfx-flicker.md (HIGH)
-
-**Input:** `/bug-triage`
-
-**Expected behavior:**
-1. Skill reads all 5 bug report files
-2. Skill extracts severity, title, system, and repro status from each
-3. Skill produces a triage table sorted: CRITICAL first, then HIGH, MEDIUM, LOW
-4. Within the same severity, bugs are ordered by date (oldest first)
-5. Verdict is TRIAGED
-
-**Assertions:**
-- [ ] Triage table has exactly 5 rows
-- [ ] CRITICAL bug appears before both HIGH bugs
-- [ ] HIGH bugs appear before MEDIUM and LOW bugs
-- [ ] Verdict is TRIAGED
-- [ ] No files are written
+无。`/bug-triage` 是只读建议技能。不适用 director 门控。
 
 ---
 
-### Case 2: No Bug Reports Found — Guidance to run /bug-report
+## 测试用例
 
-**Fixture:**
-- `production/bugs/` directory exists but is empty (or does not exist)
+### 用例 1：正常路径——5 个不同严重程度的缺陷，生成排序表
 
-**Input:** `/bug-triage`
+**夹具：**
+- `production/bugs/` 包含 5 个缺陷报告文件：
+  - bug-2026-03-10-audio-crash.md（CRITICAL）
+  - bug-2026-03-12-score-overflow.md（HIGH）
+  - bug-2026-03-14-ui-overlap.md（MEDIUM）
+  - bug-2026-03-15-typo-tutorial.md（LOW）
+  - bug-2026-03-16-vfx-flicker.md（HIGH）
 
-**Expected behavior:**
-1. Skill scans `production/bugs/` and finds no reports
-2. Skill outputs: "No open bug reports found in production/bugs/"
-3. Skill suggests running `/bug-report` to create a bug report
-4. No triage table is produced
+**输入：** `/bug-triage`
 
-**Assertions:**
-- [ ] Output explicitly states no bugs were found
-- [ ] `/bug-report` is suggested as the next step
-- [ ] Skill does not error out — it handles empty directory gracefully
-- [ ] Verdict is TRIAGED (with "no bugs found" context)
+**预期行为：**
+1. 技能读取全部 5 个缺陷报告文件
+2. 从每个文件中提取严重程度、标题、系统和复现状态
+3. 技能生成分类表，排序为：CRITICAL 优先，然后 HIGH、MEDIUM、LOW
+4. 相同严重程度内，缺陷按日期排序（最早的在前）
+5. 判决为 TRIAGED
 
----
-
-### Case 3: Bug Missing Reproduction Steps — Flagged as NEEDS REPRO INFO
-
-**Fixture:**
-- `production/bugs/` contains 3 bug reports; one has an empty "Repro Steps" section
-
-**Input:** `/bug-triage`
-
-**Expected behavior:**
-1. Skill reads all 3 reports
-2. Skill detects the report with no repro steps
-3. That bug appears in the triage table with a `NEEDS REPRO INFO` tag
-4. Other bugs are triaged normally
-5. Verdict is TRIAGED
-
-**Assertions:**
-- [ ] `NEEDS REPRO INFO` tag appears next to the bug missing repro steps
-- [ ] The flagged bug is still included in the table (not excluded)
-- [ ] Other bugs are unaffected
-- [ ] Verdict is TRIAGED
+**断言：**
+- [ ] 分类表恰好有 5 行
+- [ ] CRITICAL 缺陷出现在两个 HIGH 缺陷之前
+- [ ] HIGH 缺陷出现在 MEDIUM 和 LOW 缺陷之前
+- [ ] 判决为 TRIAGED
+- [ ] 未写入任何文件
 
 ---
 
-### Case 4: Possible Duplicate Bugs — Flagged in triage output
+### 用例 2：未找到缺陷报告——提示运行 /bug-report
 
-**Fixture:**
-- `production/bugs/` contains 2 bug reports with similar titles:
+**夹具：**
+- `production/bugs/` 目录存在但为空（或不存在）
+
+**输入：** `/bug-triage`
+
+**预期行为：**
+1. 技能扫描 `production/bugs/` 未找到报告
+2. 技能输出："No open bug reports found in production/bugs/"
+3. 技能建议运行 `/bug-report` 创建缺陷报告
+4. 不生成分类表
+
+**断言：**
+- [ ] 输出明确说明未找到缺陷
+- [ ] 建议运行 `/bug-report` 作为下一步
+- [ ] 技能不报错——能优雅处理空目录
+- [ ] 判决为 TRIAGED（附"未找到缺陷"说明）
+
+---
+
+### 用例 3：缺陷缺少复现步骤——标记为 NEEDS REPRO INFO
+
+**夹具：**
+- `production/bugs/` 包含 3 个缺陷报告；其中一个"复现步骤"章节为空
+
+**输入：** `/bug-triage`
+
+**预期行为：**
+1. 技能读取全部 3 个报告
+2. 技能检测到缺少复现步骤的报告
+3. 该缺陷在分类表中附 `NEEDS REPRO INFO` 标签
+4. 其他缺陷正常分类
+5. 判决为 TRIAGED
+
+**断言：**
+- [ ] `NEEDS REPRO INFO` 标签出现在缺少复现步骤的缺陷旁
+- [ ] 被标记的缺陷仍包含在表中（不被排除）
+- [ ] 其他缺陷不受影响
+- [ ] 判决为 TRIAGED
+
+---
+
+### 用例 4：可能重复的缺陷——在分类输出中标记
+
+**夹具：**
+- `production/bugs/` 包含 2 个标题相似的缺陷报告：
   - bug-2026-03-18-player-fall-through-floor.md
   - bug-2026-03-20-player-clips-through-floor.md
-  - Both affect the "Physics" system with identical severity
+  - 两者均影响"Physics"系统，严重程度相同
 
-**Input:** `/bug-triage`
+**输入：** `/bug-triage`
 
-**Expected behavior:**
-1. Skill reads both reports and detects similar title + same system + same severity
-2. Both bugs are included in the triage table
-3. Each is tagged with `POSSIBLE DUPLICATE` and cross-references the other report
-4. No bugs are merged or deleted — flagging is advisory
-5. Verdict is TRIAGED
+**预期行为：**
+1. 技能读取两个报告，检测到标题相似 + 相同系统 + 相同严重程度
+2. 两个缺陷均包含在分类表中
+3. 每个均附 `POSSIBLE DUPLICATE` 标签并交叉引用另一个报告
+4. 不合并或删除任何缺陷——标记为建议性质
+5. 判决为 TRIAGED
 
-**Assertions:**
-- [ ] Both bugs appear in the table (not merged)
-- [ ] Both are tagged `POSSIBLE DUPLICATE`
-- [ ] Each cross-references the other (by filename or title)
-- [ ] Verdict is TRIAGED
-
----
-
-### Case 5: Director Gate Check — No gate; triage is advisory
-
-**Fixture:**
-- `production/bugs/` contains any number of reports
-
-**Input:** `/bug-triage`
-
-**Expected behavior:**
-1. Skill produces the triage table
-2. No director agents are spawned
-3. No gate IDs appear in output
-4. No write tool is called
-
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No write tool is called
-- [ ] No gate skip messages appear
-- [ ] Verdict is TRIAGED without any gate check
+**断言：**
+- [ ] 两个缺陷均出现在表中（不合并）
+- [ ] 两个均标记 `POSSIBLE DUPLICATE`
+- [ ] 每个交叉引用另一个（通过文件名或标题）
+- [ ] 判决为 TRIAGED
 
 ---
 
-## Protocol Compliance
+### 用例 5：Director 门控检查——无门控；分类为建议性工具
 
-- [ ] Reads all files in `production/bugs/` before generating the table
-- [ ] Sorts by severity (CRITICAL → HIGH → MEDIUM → LOW)
-- [ ] Flags bugs missing repro steps
-- [ ] Flags possible duplicates by title/system similarity
-- [ ] Does not write any files
-- [ ] Verdict is TRIAGED in all cases (even empty)
+**夹具：**
+- `production/bugs/` 包含任意数量的报告
+
+**输入：** `/bug-triage`
+
+**预期行为：**
+1. 技能生成分类表
+2. 未调用任何 director agent
+3. 输出中无门控 ID
+4. 未调用写入工具
+
+**断言：**
+- [ ] 未调用 director 门控
+- [ ] 未调用写入工具
+- [ ] 输出中无门控跳过消息
+- [ ] 判决为 TRIAGED，不经过任何门控检查
 
 ---
 
-## Coverage Notes
+## 协议合规
 
-- The case where a bug report is malformed (missing severity field entirely)
-  is not fixture-tested; skill would flag it as `UNKNOWN SEVERITY` and sort it
-  last in the table.
-- Status transitions (marking bugs as resolved) are outside this skill's scope —
-  bug-triage is read-only.
-- The duplicate detection heuristic (title similarity + same system) is
-  approximate; exact matching logic is defined in the skill body.
+- [ ] 在生成分类表前读取 `production/bugs/` 中的所有文件
+- [ ] 按严重程度排序（CRITICAL → HIGH → MEDIUM → LOW）
+- [ ] 标记缺少复现步骤的缺陷
+- [ ] 通过标题/系统相似性标记可能重复的缺陷
+- [ ] 不写入任何文件
+- [ ] 所有情况下判决均为 TRIAGED（即使为空）
+
+---
+
+## 覆盖说明
+
+- 缺陷报告格式异常（完全缺少严重程度字段）的情况不作夹具测试；
+  技能会将其标记为 `UNKNOWN SEVERITY` 并排在表格末尾。
+- 状态转换（将缺陷标记为已解决）超出本技能范围——bug-triage 为只读。
+- 重复检测启发式方法（标题相似度 + 相同系统）为近似匹配；
+  精确匹配逻辑在技能主体中定义。

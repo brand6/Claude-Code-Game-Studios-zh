@@ -1,81 +1,81 @@
-# Agent Test Spec: network-programmer
+# Agent 测试规格：network-programmer
 
-## Agent Summary
-Domain: Multiplayer networking, state replication, lag compensation, matchmaking protocol design, and network message schemas.
-Does NOT own: gameplay logic (only the networking of it), server infrastructure and deployment (devops-engineer).
-Model tier: Sonnet (default).
-No gate IDs assigned.
-
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references multiplayer / replication / networking)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Bash, Glob, Grep
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over gameplay logic or server deployment infrastructure
+## Agent 概述
+职责领域：多人联网、状态同步、延迟补偿、匹配协议设计与网络消息 schema。
+不负责：游戏逻辑本身（只负责其联网部分）、服务器基础设施与部署（devops-engineer）。
+模型层级：Sonnet（默认）。
+未分配关卡 ID。
 
 ---
 
-## Test Cases
+## 静态断言（结构检查）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Design state replication for player position in a 4-player co-op game."
-**Expected behavior:**
-- Produces a sync strategy document covering:
-  - Replication frequency (e.g., 20Hz with delta compression)
-  - Priority tier (e.g., own-player high priority, other players medium)
-  - Interpolation approach for remote players (e.g., linear interpolation with 100ms buffer)
-  - Bandwidth estimate per player per second
-- Does NOT implement the player movement logic itself (defers to gameplay-programmer)
-- Proposes dead-reckoning or prediction strategy to reduce visible lag
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Deploy our game server to AWS EC2 and set up auto-scaling."
-**Expected behavior:**
-- Does NOT produce server deployment configuration, Terraform, or AWS setup scripts
-- Explicitly states that server infrastructure belongs to `devops-engineer`
-- Redirects the request to `devops-engineer`
-- May note it can provide the network protocol spec the server needs to implement once infrastructure is set up
-
-### Case 3: State divergence — rollback/reconciliation
-**Input:** "Under high latency, clients are diverging from the authoritative server state for physics objects."
-**Expected behavior:**
-- Proposes a rollback-and-reconciliation approach (client-side prediction + server authoritative correction)
-- Specifies the state snapshot format, reconciliation trigger threshold (e.g., >5 units position error), and correction interpolation speed
-- Notes the input buffer pattern for deterministic replay
-- Does NOT change the physics simulation itself — documents the interface contract for engine-programmer
-
-### Case 4: Anti-cheat conflict
-**Input:** "We want client-authoritative position for smooth movement, but anti-cheat requires server validation."
-**Expected behavior:**
-- Surfaces the direct conflict: client-authority is fast but exploitable; server-authority is secure but requires latency compensation
-- Coordinates with `security-engineer` to agree on the validation boundary
-- Proposes a compromise (server validates position within a tolerance band, flags outliers) rather than unilaterally deciding
-- Documents the trade-off and escalates the final decision to `technical-director` if security-engineer and network-programmer cannot agree
-
-### Case 5: Context pass — latency budget
-**Input:** Technical preferences provided in context: target latency 80ms RTT for 95th percentile players. Request: "Design the input replication scheme for a fighting game."
-**Expected behavior:**
-- References the 80ms RTT budget explicitly in the design
-- Selects replication approach calibrated to that budget (e.g., rollback netcode is preferred for fighting games at this latency)
-- Specifies input delay frames calculated from the 80ms budget (e.g., 2 frames at 60fps = 33ms buffer)
-- Flags that rollback netcode requires gameplay-programmer to implement deterministic simulation
+- [ ] `description:` 字段存在且领域明确（引用多人游戏 / 状态同步 / 联网）
+- [ ] `allowed-tools:` 列表包含 Read、Write、Edit、Bash、Glob、Grep
+- [ ] 模型层级为 Sonnet（专员的默认层级）
+- [ ] Agent 定义未主张对游戏逻辑或服务器部署基础设施拥有权
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (replication, lag compensation, protocol design, matchmaking)
-- [ ] Redirects server deployment to devops-engineer
-- [ ] Returns structured findings (sync strategies, protocol specs, bandwidth estimates)
-- [ ] Does not implement gameplay logic — only specifies the network contract for it
-- [ ] Coordinates with security-engineer on anti-cheat boundaries
-- [ ] Designs to explicit latency targets from provided context
+### 用例 1：领域内请求——合适的输出
+**输入**："为4人合作游戏设计玩家位置的状态同步方案。"
+**预期行为**：
+- 产出同步策略文档，涵盖：
+  - 同步频率（如 20Hz，带增量压缩）
+  - 优先级层级（如本地玩家高优先级，其他玩家中等优先级）
+  - 远程玩家的插值方案（如带100ms缓冲的线性插值）
+  - 每个玩家每秒的带宽估算
+- 不实现玩家移动逻辑本身（交由 gameplay-programmer 处理）
+- 提出航位推算或预测策略，以减少可见延迟
+
+### 用例 2：领域外请求——正确重定向
+**输入**："将我们的游戏服务器部署到 AWS EC2 并设置自动伸缩。"
+**预期行为**：
+- 不产出服务器部署配置、Terraform 或 AWS 设置脚本
+- 明确声明服务器基础设施属于 `devops-engineer` 的职责范围
+- 将请求重定向给 `devops-engineer`
+- 可注明：基础设施搭建完成后，可提供服务器需要实现的网络协议规格
+
+### 用例 3：状态分歧——回滚/协调
+**输入**："在高延迟条件下，物理对象的客户端状态与服务器权威状态发生分歧。"
+**预期行为**：
+- 提出回滚与协调方案（客户端预测 + 服务器权威纠错）
+- 指定状态快照格式、协调触发阈值（如位置误差 > 5单位）和纠错插值速度
+- 注明输入缓冲模式以实现确定性回放
+- 不修改物理模拟本身——记录与 engine-programmer 的接口契约
+
+### 用例 4：反作弊冲突
+**输入**："我们希望客户端权威位置以实现流畅移动，但反作弊要求服务器验证。"
+**预期行为**：
+- 提出直接冲突：客户端权威响应快但易被利用；服务器权威安全但需要延迟补偿
+- 与 `security-engineer` 协调，就验证边界达成一致
+- 提出折中方案（服务器在容差范围内验证位置，标记异常值），而非单方面决策
+- 记录权衡并上报 `technical-director`，若 security-engineer 与 network-programmer 无法达成一致
+
+### 用例 5：上下文传递——延迟预算
+**上下文输入**：技术偏好配置中提供：目标延迟 80ms RTT（第95百分位玩家）。请求："为格斗游戏设计输入同步方案。"
+**预期行为**：
+- 在设计中明确引用 80ms RTT 预算
+- 选择针对该延迟预算优化的同步方案（在此延迟下，格斗游戏首选回滚 netcode）
+- 根据 80ms 预算计算输入延迟帧数（如 60fps 时，2帧 = 33ms 缓冲）
+- 标记回滚 netcode 需要 gameplay-programmer 实现确定性模拟
 
 ---
 
-## Coverage Notes
-- Replication strategy (Case 1) should include a bandwidth calculation reviewable by technical-director
-- Rollback/reconciliation (Case 3) must document the engine-programmer interface contract clearly
-- Anti-cheat conflict (Case 4) confirms the agent escalates rather than unilaterally deciding security trade-offs
+## 协议合规
+
+- [ ] 保持在声明领域内（状态同步、延迟补偿、协议设计、匹配）
+- [ ] 将服务器部署重定向给 devops-engineer
+- [ ] 返回结构化产出（同步策略、协议规格、带宽估算）
+- [ ] 不实现游戏逻辑——只为游戏逻辑指定网络契约
+- [ ] 在反作弊边界上与 security-engineer 协调
+- [ ] 根据上下文中的明确延迟目标进行设计
+
+---
+
+## 覆盖说明
+- 状态同步策略（用例 1）应包含可供 technical-director 审查的带宽计算
+- 回滚/协调（用例 3）必须清楚记录与 engine-programmer 的接口契约
+- 反作弊冲突（用例 4）确认 Agent 上报而非单方面决定安全权衡

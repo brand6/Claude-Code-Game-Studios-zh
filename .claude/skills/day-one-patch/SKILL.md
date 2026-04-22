@@ -1,218 +1,215 @@
 ---
 name: day-one-patch
-description: "Prepare a day-one patch for a game launch. Scopes, prioritises, implements, and QA-gates a focused patch addressing known issues discovered after gold master but before or immediately after public launch. Treats the patch as a mini-sprint with its own QA gate and rollback plan."
+description: "为游戏发布准备首日补丁。对金主版本确认后至公开发布前后发现的已知问题进行范围界定、优先级排序、实现和 QA 关卡验证。将补丁作为一次微型迭代处理，具有独立的 QA 关卡和回滚方案。"
 argument-hint: "[scope: known-bugs | cert-feedback | all]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task, AskUserQuestion
 ---
 
-# Day-One Patch
+# 首日补丁
 
-Every shipped game has a day-one patch. Planning it before launch day prevents
-chaos. This skill scopes the patch to only what is safe and necessary, gates it
-through a lightweight QA pass, and ensures a rollback plan exists before anything
-ships. It is a mini-sprint — not a hotfix, not a full sprint.
+每个发布的游戏都有首日补丁。在发布日之前做好规划，可以避免混乱。本技能将补丁范围控制在安全且必要的内容范围内，通过轻量级 QA 流程进行把关，并确保在任何内容发布之前都有回滚方案。这是一次微型迭代——不是热修复，也不是完整迭代。
 
-**When to run:**
-- After the gold master build is locked (cert approved or launch candidate tagged)
-- When known bugs exist that are too risky to address in the gold master
-- When cert feedback requires minor fixes post-submission
-- When a pre-launch playtest surfaces must-fix issues after the release gate passed
+**运行时机：**
+- 金主版本已锁定后（认证通过或发布候选版本已打标签）
+- 存在已知 Bug，但在金主版本中修复风险过高
+- 认证反馈要求提交后进行少量修复
+- 发布前试玩测试在发布关卡通过后发现必须修复的问题
 
-**Day-one patch scope rules:**
-- Only P1/P2 bugs that are SAFE to fix quickly
-- No new features — this is fix-only
-- No refactoring — minimum viable change
-- Any fix that requires more than 4 hours of dev time belongs in patch 1.1, not day-one
+**首日补丁范围规则：**
+- 仅限可安全快速修复的 P1/P2 Bug
+- 不添加新功能——仅修复
+- 不做重构——最小可行更改
+- 任何需要超过 4 小时开发时间的修复应放入补丁 1.1，而非首日补丁
 
-**Output:** `production/releases/day-one-patch-[version].md`
+**输出：** `production/releases/day-one-patch-[version].md`
 
 ---
 
-## Phase 1: Load Release Context
+## 阶段 1：加载发布上下文
 
-Read:
-- `production/stage.txt` — confirm project is in Release stage
-- The most recent file in `production/gate-checks/` — read the release gate verdict
-- `production/qa/bugs/*.md` — load all bugs with Status: Open or Fixed — Pending Verification
-- `production/sprints/` most recent — understand what shipped
-- `production/security/security-audit-*.md` most recent — check for any open security items
+读取：
+- `production/stage.txt` — 确认项目处于发布阶段
+- `production/gate-checks/` 中最近的文件 — 读取发布关卡结论
+- `production/qa/bugs/*.md` — 加载所有状态为 Open 或 Fixed — Pending Verification 的 Bug
+- `production/sprints/` 最近的迭代 — 了解已发布的内容
+- `production/security/security-audit-*.md` 最近的文件 — 检查是否有未解决的安全问题
 
-If `production/stage.txt` is not `Release` or `Polish`:
-> "Day-one patch prep is for Release-stage projects. Current stage: [stage]. This skill is not appropriate until you are approaching launch."
-
----
-
-## Phase 2: Scope the Patch
-
-### Step 2a — Classify open bugs for patch inclusion
-
-For each open bug, evaluate:
-
-| Criterion | Include in day-one? |
-|-----------|-------------------|
-| S1 or S2 severity | Yes — must include if safe to fix |
-| P1 priority | Yes |
-| Fix estimated < 4 hours | Yes |
-| Fix requires architecture change | No — defer to 1.1 |
-| Fix introduces new code paths | No — too risky |
-| Fix is data/config only (no code change) | Yes — very low risk |
-| Cert feedback requirement | Yes — required for platform approval |
-| S3/S4 severity | Only if trivial config fix; otherwise defer |
-
-### Step 2b — Present patch scope to user
-
-Use `AskUserQuestion`:
-- Prompt: "Based on open bugs and cert feedback, here is the proposed day-one patch scope. Does this look right?"
-- Show: table of included bugs (ID, severity, description, estimated effort)
-- Show: table of deferred bugs (ID, severity, reason deferred)
-- Options: `[A] Approve this scope` / `[B] Adjust — I want to add or remove items` / `[C] No day-one patch needed`
-
-If [C]: output "No day-one patch required. Proceed to `/launch-checklist`." Stop.
-
-### Step 2c — Check total scope
-
-Sum estimated effort. If total exceeds 1 day of work:
-> "⚠️ Patch scope is [N hours] — this exceeds a safe day-one window. Consider deferring lower-priority items to patch 1.1. A bloated day-one patch introduces more risk than it removes."
-
-Use `AskUserQuestion` to confirm proceeding or reduce scope.
+如果 `production/stage.txt` 不是 `Release` 或 `Polish`：
+> "首日补丁准备适用于发布阶段的项目。当前阶段：[阶段]。在接近发布之前，本技能不适用。"
 
 ---
 
-## Phase 3: Rollback Plan
+## 阶段 2：界定补丁范围
 
-Before any code is written, define the rollback procedure. This is non-negotiable.
+### 步骤 2a — 对未解决的 Bug 进行补丁纳入分类
 
-Spawn `release-manager` via Task. Ask them to produce a rollback plan covering:
-- How to revert to the gold master build on each target platform
-- Platform-specific rollback constraints (some platforms cannot roll back cert builds)
-- Who is responsible for triggering the rollback
-- What player communication is required if a rollback occurs
+对每个未解决的 Bug，评估：
 
-Present the rollback plan. Ask: "May I write this rollback plan to `production/releases/rollback-plan-[version].md`?"
+| 标准 | 纳入首日补丁？ |
+|------|--------------|
+| S1 或 S2 严重级别 | 是——如果安全可修复则必须纳入 |
+| P1 优先级 | 是 |
+| 修复估算 < 4 小时 | 是 |
+| 修复需要架构变更 | 否——推迟到 1.1 |
+| 修复引入新的代码路径 | 否——风险过高 |
+| 修复仅涉及数据/配置（无代码变更） | 是——风险极低 |
+| 认证反馈要求 | 是——平台审批必要 |
+| S3/S4 严重级别 | 仅限微小的配置修复；否则推迟 |
 
-Do not proceed to Phase 4 until the rollback plan is written.
+### 步骤 2b — 向用户展示补丁范围
 
----
+使用 `AskUserQuestion`：
+- 提示："根据未解决的 Bug 和认证反馈，以下是建议的首日补丁范围。这看起来合理吗？"
+- 展示：已纳入 Bug 表格（ID、严重级别、描述、估算工作量）
+- 展示：已推迟 Bug 表格（ID、严重级别、推迟原因）
+- 选项：`[A] 批准此范围` / `[B] 调整——我想添加或移除某些项目` / `[C] 不需要首日补丁`
 
-## Phase 4: Implement Fixes
+如果选 [C]：输出"不需要首日补丁。继续运行 `/launch-checklist`。"停止。
 
-For each bug in the approved scope, spawn a focused implementation loop:
+### 步骤 2c — 检查总体范围
 
-1. Spawn `lead-programmer` via Task with:
-   - The bug report (exact reproduction steps and root cause if known)
-   - The constraint: minimum viable fix only, no cleanup
-   - The affected files (from bug report Technical Context section)
+计算估算工作量总和。如果超过 1 天的工作量：
+> "⚠️ 补丁范围为 [N] 小时——超过了安全的首日窗口。考虑将较低优先级的内容推迟到补丁 1.1。臃肿的首日补丁引入的风险可能超过其消除的风险。"
 
-2. The lead-programmer implements and runs targeted tests.
-
-3. Spawn `qa-tester` via Task to verify: does the bug reproduce after the fix?
-
-For config/data-only fixes: make the change directly (no programmer agent needed). Confirm the value changed and re-run any relevant smoke test.
-
----
-
-## Phase 5: Patch QA Gate
-
-This is a lightweight QA pass — not a full `/team-qa`. The patch is already QA-approved from the release gate; we are only re-verifying the changed areas.
-
-Spawn `qa-lead` via Task with:
-- List of all changed files
-- List of bugs fixed (with verification status from Phase 4)
-- The smoke check scope for the affected systems
-
-Ask qa-lead to determine: **Is a targeted smoke check sufficient, or do any fixes touch systems that require a broader regression?**
-
-Run the required QA scope:
-- **Targeted smoke check** — run `/smoke-check [affected-systems]`
-- **Broader regression** — run targeted tests in `tests/unit/` and `tests/integration/` for affected systems
-
-QA verdict must be PASS or PASS WITH WARNINGS before proceeding. If FAIL: scope the failing fix out of the day-one patch and defer to 1.1.
+使用 `AskUserQuestion` 确认继续或缩减范围。
 
 ---
 
-## Phase 6: Generate Patch Record
+## 阶段 3：回滚方案
+
+在编写任何代码之前，先定义回滚程序。这是不可妥协的。
+
+通过 Task 工具生成 `release-manager` 子智能体。请其制定覆盖以下内容的回滚方案：
+- 如何在每个目标平台上回退到金主版本
+- 平台特定的回滚限制（某些平台无法回滚认证版本）
+- 谁负责触发回滚
+- 如果发生回滚，需要进行哪些玩家沟通
+
+展示回滚方案。询问："是否允许我将此回滚方案写入 `production/releases/rollback-plan-[version].md`？"
+
+在写入回滚方案之前，不得继续进行阶段 4。
+
+---
+
+## 阶段 4：实现修复
+
+对已批准范围内的每个 Bug，启动专注的实现循环：
+
+1. 通过 Task 工具生成 `lead-programmer` 子智能体，传入：
+   - Bug 报告（精确的复现步骤及已知的根本原因）
+   - 约束：仅做最小可行修复，不做清理
+   - 受影响的文件（来自 Bug 报告技术上下文章节）
+
+2. 主程序员完成实现并运行针对性测试。
+
+3. 通过 Task 工具生成 `qa-tester` 子智能体验证：修复后 Bug 是否还能复现？
+
+对于仅涉及配置/数据的修复：直接进行更改（无需程序员智能体）。确认值已更改，并重新运行相关冒烟测试。
+
+---
+
+## 阶段 5：补丁 QA 关卡
+
+这是一次轻量级 QA 流程——不是完整的 `/team-qa`。补丁已在发布关卡通过 QA 审批；我们只需重新验证变更的区域。
+
+通过 Task 工具生成 `qa-lead` 子智能体，传入：
+- 所有变更文件列表
+- 已修复的 Bug 列表（含阶段 4 的验证状态）
+- 受影响系统的冒烟测试范围
+
+请 qa-lead 判断：**针对性冒烟测试是否足够，还是某些修复涉及需要更大范围回归测试的系统？**
+
+执行所需的 QA 范围：
+- **针对性冒烟测试** — 运行 `/smoke-check [affected-systems]`
+- **更大范围回归** — 针对受影响系统运行 `tests/unit/` 和 `tests/integration/` 中的针对性测试
+
+在继续之前，QA 结论必须为 PASS 或 PASS WITH WARNINGS。如果 FAIL：将未通过的修复从首日补丁中剔除并推迟到 1.1。
+
+---
+
+## 阶段 6：生成补丁记录
 
 ```markdown
-# Day-One Patch: [Game Name] v[version]
+# 首日补丁：[游戏名称] v[版本]
 
-**Date prepared**: [date]
-**Target release**: [launch date or "day of launch"]
-**Base build**: [gold master tag or commit]
-**Patch build**: [patch tag or commit]
-
----
-
-## Patch Notes (Internal)
-
-### Bugs Fixed
-| BUG-ID | Severity | Description | Fix summary |
-|--------|----------|-------------|-------------|
-| BUG-NNN | S[1-4] | [description] | [one-line fix] |
-
-### Deferred to 1.1
-| BUG-ID | Severity | Description | Reason deferred |
-|--------|----------|-------------|-----------------|
-| BUG-NNN | S[1-4] | [description] | [reason] |
+**准备日期**：[日期]
+**目标发布**：[发布日期或"发布当天"]
+**基础版本**：[金主标签或提交]
+**补丁版本**：[补丁标签或提交]
 
 ---
 
-## QA Sign-Off
+## 补丁说明（内部）
 
-**QA scope**: [Targeted smoke / Broader regression]
-**Verdict**: [PASS / PASS WITH WARNINGS]
-**QA lead**: qa-lead agent
-**Date**: [date]
-**Warnings (if any)**: [list or "None"]
+### 已修复的 Bug
+| BUG-ID | 严重级别 | 描述 | 修复摘要 |
+|--------|---------|------|---------|
+| BUG-NNN | S[1-4] | [描述] | [一行修复说明] |
 
----
-
-## Rollback Plan
-
-See: `production/releases/rollback-plan-[version].md`
-
-**Trigger condition**: If [N] or more S1 bugs are reported within [X] hours of launch, execute rollback.
-**Rollback owner**: [user / producer]
+### 推迟到 1.1
+| BUG-ID | 严重级别 | 描述 | 推迟原因 |
+|--------|---------|------|---------|
+| BUG-NNN | S[1-4] | [描述] | [原因] |
 
 ---
 
-## Approvals Required Before Deploy
+## QA 签字
 
-- [ ] lead-programmer: all fixes reviewed
-- [ ] qa-lead: QA gate PASS confirmed
-- [ ] producer: deployment timing approved
-- [ ] release-manager: platform submission confirmed
+**QA 范围**：[针对性冒烟测试 / 更大范围回归]
+**结论**：[PASS / PASS WITH WARNINGS]
+**QA 负责人**：qa-lead 智能体
+**日期**：[日期]
+**警告（如有）**：[列表或"无"]
 
 ---
 
-## Player-Facing Patch Notes
+## 回滚方案
 
-[Draft for community-manager to review before publishing]
+参见：`production/releases/rollback-plan-[version].md`
 
-[list player-facing changes in plain language]
+**触发条件**：如果发布后 [X] 小时内收到 [N] 个或以上 S1 Bug 报告，执行回滚。
+**回滚负责人**：[用户 / producer]
+
+---
+
+## 部署前必须完成的审批
+
+- [ ] lead-programmer：所有修复已评审
+- [ ] qa-lead：QA 关卡 PASS 已确认
+- [ ] producer：部署时间已批准
+- [ ] release-manager：平台提交已确认
+
+---
+
+## 面向玩家的补丁说明
+
+[社区经理在发布前审阅的草稿]
+
+[用通俗语言列出面向玩家的变更]
 ```
 
-Ask: "May I write this patch record to `production/releases/day-one-patch-[version].md`?"
+询问："是否允许我将此补丁记录写入 `production/releases/day-one-patch-[version].md`？"
 
 ---
 
-## Phase 7: Next Steps
+## 阶段 7：后续步骤
 
-After the patch record is written:
+补丁记录写入后：
 
-1. Run `/patch-notes` to generate the player-facing version of the patch notes
-2. Run `/bug-report verify [BUG-ID]` for each fixed bug after the patch is live
-3. Run `/bug-report close [BUG-ID]` for each verified fix
-4. Schedule a post-launch review 48–72 hours after launch using `/retrospective launch`
+1. 运行 `/patch-notes` 生成面向玩家的补丁说明
+2. 补丁上线后，对每个已修复的 Bug 运行 `/bug-report verify [BUG-ID]`
+3. 对每个已验证的修复运行 `/bug-report close [BUG-ID]`
+4. 使用 `/retrospective launch` 安排发布后 48–72 小时的复盘
 
-**If any S1 bugs remain open after the patch:**
-> "⚠️ S1 bugs remain open and were not patched. These are accepted risks. Document them in the rollback plan trigger conditions — if they occur at scale, rollback may be preferable to a follow-up patch."
+**如果补丁后仍有 S1 Bug 未解决：**
+> "⚠️ 仍有 S1 Bug 未修复。这些是已接受的风险。将其记录在回滚方案的触发条件中——如果大规模出现，回滚可能比后续补丁更合适。"
 
 ---
 
-## Collaborative Protocol
+## 协作协议
 
-- **Scope discipline is everything** — resist scope creep; every addition increases risk
-- **Rollback plan first, always** — a patch without a rollback plan is irresponsible
-- **Deferred is not forgotten** — every deferred bug gets a 1.1 ticket automatically
-- **Player communication is part of the patch** — `/patch-notes` is a required output, not optional
+- **范围纪律决定一切** — 抵制范围蔓延；每一项新增都会增加风险
+- **永远先制定回滚方案** — 没有回滚方案的补丁是不负责任的
+- **推迟不等于遗忘** — 每个推迟的 Bug 自动获得 1.1 工单
+- **玩家沟通是补丁的组成部分** — `/patch-notes` 是必须的输出，不是可选项

@@ -1,104 +1,104 @@
-# Reverse Documentation Workflow Example
+# 逆向文档工作流示例
 
-## Scenario
-Developer built a working skill tree system but never wrote a design doc.
-Code exists in `src/gameplay/skills/`, but `design/gdd/` has no skill-system.md.
+## 场景
+开发者构建了一个可运行的技能树系统，但从未撰写设计文档。
+代码存在于 `src/gameplay/skills/`，但 `design/gdd/` 中没有 skill-system.md。
 
 ---
 
-## Session Transcript
+## 会话记录
 
-**User:**
+**用户：**
 ```
-I have a working skill tree system in src/gameplay/skills/ with about 1200 lines
-of code. I never wrote a design doc. Can we create one from the implementation?
-```
-
-**Game-Designer (reads code, analyzes):**
-```
-I've analyzed your skill tree implementation. Here's what I found:
-
-STRUCTURE:
-- 3 skill trees: Combat, Survival, Tech
-- 5 tiers per tree (unlock via level + prerequisites)
-- Total 45 skills (15 per tree)
-- Cost: skill points (1 per level, can respec for gold)
-
-MECHANICS:
-- Passive skills (stat bonuses)
-- Active skills (abilities with cooldowns)
-- Synergy bonuses (cross-tree unlocks at tier 4+)
-
-IMPLEMENTATION DETAILS:
-- Data-driven (JSON files in assets/data/skills/)
-- Save-compatible (skill state serialized)
-- UI shows locked/unlocked/available states
-
-QUESTIONS before I draft the design doc:
-
-1. **Design Intent:** Was the 3-tree structure meant to represent player archetypes
-   (fighter/survivor/engineer) or playstyle flexibility?
-
-2. **Respec Cost:** Respec costs gold - is this meant to:
-   - Discourage frequent respecs (commitment to builds)?
-   - Create a gold sink (economy balance)?
-   - Or should it be free (experimentation encouraged)?
-
-3. **Synergy System:** Cross-tree synergies appear at tier 4. Was this:
-   - Intentional (reward hybrid builds late-game)?
-   - Or emergent (accidentally creates hybrid meta)?
-
-4. **Balance Philosophy:** I see some skills are clearly better (tier-5 passive
-   is +50% damage). Is this:
-   - Power fantasy (late-game should feel OP)?
-   - Or unbalanced (needs tuning)?
+我在 src/gameplay/skills/ 中有一个约 1200 行代码的可运行技能树系统。
+我从未撰写设计文档。我们能从实现中创建一份吗？
 ```
 
-**User:**
+**Game-Designer（读取代码，分析后）：**
 ```
-Good questions! Here's the intent:
+我已分析你的技能树实现。以下是我的发现：
 
-1. Yes, the 3 trees are archetypes but I want flexibility
-2. Respec should be cheap - I want experimentation
-3. Synergies were intentional - hybrid builds are a feature
-4. Yeah, tier 5 is meant to be powerful, but +50% might be too much
+结构：
+- 3 棵技能树：战斗、生存、科技
+- 每棵树 5 个层级（通过等级 + 前置条件解锁）
+- 共 45 个技能（每棵树 15 个）
+- 花费：技能点（每级 1 点，可用金币洗点）
+
+机制：
+- 被动技能（属性加成）
+- 主动技能（带冷却的能力）
+- 协同加成（在第 4+ 层解锁跨树效果）
+
+实现细节：
+- 数据驱动（JSON 文件位于 assets/data/skills/）
+- 存档兼容（技能状态可序列化）
+- UI 显示已锁定/已解锁/可用状态
+
+在我起草设计文档之前，有几个问题：
+
+1. **设计意图：** 3 棵树的结构是否旨在代表玩家原型
+   （战士/幸存者/工程师），还是游戏风格灵活性？
+
+2. **洗点费用：** 洗点需要金币——这是为了：
+   - 阻止频繁洗点（对流派的承诺）？
+   - 创造金币消耗（经济平衡）？
+   - 还是应该免费（鼓励实验）？
+
+3. **协同系统：** 跨树协同在第 4 层出现。这是：
+   - 有意为之（奖励后期混合流派）？
+   - 还是自然涌现（意外创造了混合 Meta）？
+
+4. **平衡理念：** 我看到一些技能明显更强（第 5 层被动
+   +50% 伤害）。这是：
+   - 强力幻想（后期应该感觉无敌）？
+   - 还是不平衡（需要调整）？
 ```
 
-**Game-Designer:**
+**用户：**
 ```
-Perfect, that clarifies the vision. Let me draft the design doc:
+好问题！以下是我的意图：
 
-[Shows draft of design/gdd/skill-system.md]
-
-SECTIONS:
-1. Overview (3-tree system, hybrid-friendly, respec-encouraged)
-2. Design Pillars:
-   - Archetype clarity (each tree has identity)
-   - Build flexibility (no lock-in, cheap respec)
-   - Synergy rewards (cross-tree combinations viable)
-3. Detailed Design (tree structure, unlock rules, respec)
-4. Balance Framework (tier power curve, synergy limits)
-5. Edge Cases (respec during combat? max skills? cap?)
-6. Dependencies (UI, save system, tutorial)
-7. Acceptance Criteria (all trees viable, 10+ hybrid builds, clear tooltips)
-8. Open Questions:
-   - Should respec cost scale with level or stay flat?
-   - Tier 5 damage bonus: tune to +30% or keep +50%?
-
-**May I write this to design/gdd/skill-system.md?**
+1. 是的，3 棵树代表原型，但我希望有灵活性
+2. 洗点应该便宜——我希望鼓励实验
+3. 协同是有意为之的——混合流派是一个特色
+4. 是的，第 5 层本应很强，但 +50% 可能太多了
 ```
 
-**User:**
+**Game-Designer：**
 ```
-Yes, write it. But let's tune tier 5 to +30% and make respec cost scale.
+完美，这澄清了愿景。让我起草设计文档：
+
+[展示 design/gdd/skill-system.md 草稿]
+
+章节：
+1. 概述（3 棵树系统，混合友好，鼓励洗点）
+2. 设计支柱：
+   - 原型清晰（每棵树有鲜明特色）
+   - 流派灵活（无锁定，洗点便宜）
+   - 协同奖励（跨树组合可行）
+3. 详细设计（树结构、解锁规则、洗点）
+4. 平衡框架（层级强度曲线、协同上限）
+5. 边缘情况（战斗中洗点？最大技能数？上限？）
+6. 依赖关系（UI、存档系统、新手引导）
+7. 验收标准（所有树均可行、10+ 混合流派可用、提示清晰）
+8. 待决问题：
+   - 洗点费用应随等级变化还是固定？
+   - 第 5 层伤害加成：调整至 +30% 还是保留 +50%？
+
+**我可以将此写入 design/gdd/skill-system.md 吗？**
 ```
 
-**Game-Designer:**
+**用户：**
 ```
-✅ Written to design/gdd/skill-system.md
-✅ Marked as [REVERSE-DOCUMENTED FROM IMPLEMENTATION]
-✅ Added TODO: Update tier-5 passive to +30% in assets/data/skills/combat-tree.json
-✅ Added TODO: Implement scaling respec cost formula
+可以，写入。但让我们把第 5 层调整为 +30%，并让洗点费用随等级变化。
+```
+
+**Game-Designer：**
+```
+✅ 已写入 design/gdd/skill-system.md
+✅ 标记为 [从实现逆向文档化]
+✅ 添加了待办事项：在 assets/data/skills/combat-tree.json 中将第 5 层被动改为 +30%
+✅ 添加了待办事项：实现洗点费用随等级变化的公式
 
 Next steps:
 - Run /balance-check to validate skill tree progression curve?
@@ -108,14 +108,14 @@ Next steps:
 
 ---
 
-## Key Observations
+## 本示例展示了什么
 
-1. **Agent asked clarifying questions** - didn't just describe code
-2. **Separated intent from implementation** - user corrected "accidental" imbalance
-3. **Design doc captures "why"** - not just "what the code does"
-4. **Identified missing pieces** - edge cases not in code
-5. **Flagged follow-up work** - balance tuning, ADRs, tutorial
+1. **智能体提出了澄清性问题** — 而不是仅仅描述代码
+2. **将意图与实现分离** — 用户纠正了"意外"的不平衡
+3. **设计文档捕获了"为何"** — 而不仅仅是"代码做了什么"
+4. **识别出遗漏的部分** — 代码中没有的边缘情况
+5. **标记了后续工作** — 平衡调整、ADR、教程
 
-## Outcome
+## 结果
 
-The design doc now exists and **matches reality** while also capturing the **intended vision**. Future changes will reference this doc, and new team members understand the *why* behind decisions.
+设计文档现已存在，**与现实匹配**，同时也捕获了**预期愿景**。未来的变更将引用此文档，新团队成员也能理解决策背后的*原因*。

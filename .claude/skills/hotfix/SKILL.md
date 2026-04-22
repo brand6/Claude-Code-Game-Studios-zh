@@ -1,154 +1,218 @@
 ---
 name: hotfix
-description: "Emergency fix workflow that bypasses normal sprint processes with a full audit trail. Creates hotfix branch, tracks approvals, and ensures the fix is backported correctly."
-argument-hint: "[bug-id or description]"
+description: "紧急修复工作流，绕过正常迭代流程并完整保留审计追踪。创建热修复分支，记录审批流程，并确保修复正确地合并回发布分支和开发分支。"
+argument-hint: "[bug: BUG-ID] [severity: S1|S2]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task
 ---
 
-> **Explicit invocation only**: This skill should only run when the user explicitly requests it with `/hotfix`. Do not auto-invoke based on context matching.
+# 热修复
 
-## Phase 1: Assess Severity
+> ⚠️ **仅限明确调用**：本技能仅在用户明确以 `/hotfix` 调用时运行。热修复绕过了正常的迭代流程——每次热修复都会产生风险。仅在以下情况下运行：（1）生产环境中出现 S1 或 S2 Bug，（2）无法等待下次常规迭代，（3）已获 producer 批准。
 
-Read the bug description or ID. Determine severity:
+热修复不是常规 Bug 修复的快捷路径。它是一种受控的紧急流程，带有完整的审计追踪、强制审批，以及将修复合并回正确分支的明确手续。
 
-- **S1 (Critical)**: Game unplayable, data loss, security vulnerability — hotfix immediately
-- **S2 (Major)**: Significant feature broken, workaround exists — hotfix within 24 hours
-- If severity is S3 or lower, recommend using the normal bug fix workflow instead and stop.
+**输出：**
+- `production/hotfixes/HOTFIX-[ID]-[slug].md`（热修复记录）
+- 合并到 `release/[version]` 和 `develop`（或等效的主干分支）
 
 ---
 
-## Phase 2: Create Hotfix Record
+## 阶段 1：评估严重性
 
-Draft the hotfix record:
+读取 Bug 报告 `production/qa/bugs/[BUG-ID].md`，如果不存在，使用 `AskUserQuestion` 收集：
+- Bug 描述
+- 复现步骤
+- 影响（受影响的玩家数量 / 平台 / 系统）
+- 是否已在生产环境出现
+
+按以下标准分类：
+
+| 等级 | 标准 | 响应 |
+|------|------|------|
+| **S1** | 数据丢失、崩溃、无法进入关键游戏流程、安全漏洞 | 立即执行——阻断发布 |
+| **S2** | 主要功能受损但有变通方案，影响大量玩家 | 优先执行——本次迭代必须修复 |
+| **S3+** | 轻微视觉问题、边缘情况、少数玩家受影响 | 不使用热修复——记入常规 Bug 待办 |
+
+如果 Bug 被评为 S3 或以下：
+> "此 Bug（严重级别 [S3/S4]）不符合热修复标准。已添加至 Bug 待办：使用 `/bug-report [BUG-ID]` 将其安排进迭代。"
+
+停止执行。
+
+---
+
+## 阶段 2：创建热修复记录
+
+询问："是否允许我在 `production/hotfixes/` 创建热修复记录？"
 
 ```markdown
-## Hotfix: [Short Description]
-Date: [Date]
-Severity: [S1/S2]
-Reporter: [Who found it]
-Status: IN PROGRESS
+# 热修复：HOTFIX-[ID]
 
-### Problem
-[Clear description of what is broken and the player impact]
-
-### Root Cause
-[To be filled during investigation]
-
-### Fix
-[To be filled during implementation]
-
-### Testing
-[What was tested and how]
-
-### Approvals
-- [ ] Fix reviewed by lead-programmer
-- [ ] Regression test passed (qa-tester)
-- [ ] Release approved (producer)
-
-### Rollback Plan
-[How to revert if the fix causes new issues]
-```
-
-Ask: "May I write this to `production/hotfixes/hotfix-[date]-[short-name].md`?"
-
-If yes, write the file, creating the directory if needed.
+**Bug ID**：[BUG-ID]
+**严重级别**：[S1 / S2]
+**创建时间**：[日期时间]
+**状态**：In Progress
 
 ---
 
-## Phase 3: Create Hotfix Branch
+## 问题
+[一段清晰的 Bug 描述——玩家实际遇到的情况]
 
-If git is initialized, create the hotfix branch:
+## 根本原因
+[已知的根本原因——如未知，注明"待调查"]
 
-```
-git checkout -b hotfix/[short-name] [release-tag-or-main]
+## 修复方案
+[计划的修复方法——在实现前保持简短]
+
+## 受影响的文件
+[实现后填写]
+
+## 测试计划
+- [ ] 复现步骤执行后 Bug 不再出现
+- [ ] 相关功能冒烟测试通过
+- [ ] 无回归（受影响系统）
+
+---
+
+## 审批
+
+| 审批人 | 角色 | 决定 | 时间 |
+|--------|------|------|------|
+| lead-programmer | 技术评审 | 待定 | |
+| qa-tester | QA 验证 | 待定 | |
+| producer | 部署授权 | 待定 | |
+
+---
+
+## 回滚方案
+[具体说明如何撤销此修复——需在实现前填写]
+
+---
+
+## 部署历史
+[部署后填写]
 ```
 
 ---
 
-## Phase 4: Investigate and Implement
+## 阶段 3：创建热修复分支
 
-Focus on the minimal change that resolves the issue. Do NOT refactor, clean up, or add features alongside the hotfix.
+确认当前的发布分支名称（读取 `docs/architecture/control-manifest.md` 中的 Git 分支策略，或询问用户）。
 
-Validate the fix by running targeted tests for the affected system. Check for regressions in adjacent systems.
-
-Update the hotfix record with root cause, fix details, and test results.
-
----
-
-## Phase 5: Collect Approvals
-
-Use the Task tool to request sign-off in parallel:
-
-- `subagent_type: lead-programmer` — Review the fix for correctness and side effects
-- `subagent_type: qa-tester` — Run targeted regression tests on the affected system
-- `subagent_type: producer` — Approve deployment timing and communication plan
-
-All three must return APPROVE before proceeding. If any returns CONCERNS or REJECT, do not deploy — surface the issue and resolve it first.
-
----
-
-## Phase 5b: QA Re-Entry Gate
-
-After approvals, determine the QA scope required before deploying the hotfix. Spawn `qa-lead` via Task with:
-- The hotfix description and affected system
-- The regression test results from Phase 5
-- A list of all systems that touch the changed files (use Grep to find callers)
-
-Ask qa-lead: **Is a full smoke check sufficient, or does this fix require a targeted team-qa pass?**
-
-Apply the verdict:
-- **Smoke check sufficient** — run `/smoke-check` against the hotfix build. If PASS, proceed to Phase 6.
-- **Targeted QA pass required** — run `/team-qa [affected-system]` scoped to the changed system only. If QA returns APPROVED or APPROVED WITH CONDITIONS, proceed to Phase 6.
-- **Full QA required** — S1 fixes that touch core systems may require a full `/team-qa sprint`. This delays deployment but prevents a bad patch.
-
-Do not skip this gate. A hotfix that breaks something else is worse than the original bug.
-
----
-
-## Phase 6: Update Bug Status and Deploy
-
-Update the original bug file if one exists:
-
-```markdown
-## Fix Record
-**Fixed in**: hotfix/[branch-name] — [commit hash or description]
-**Fixed date**: [date]
-**Status**: Fixed — Pending Verification
+执行：
+```bash
+git checkout release/[version]
+git checkout -b hotfix/[BUG-ID]-[slug]
 ```
 
-Set `**Status**: Fixed — Pending Verification` in the bug file header.
-
-Output a deployment summary:
-
-```
-## Hotfix Ready to Deploy: [short-name]
-
-**Severity**: [S1/S2]
-**Root cause**: [one line]
-**Fix**: [one line]
-**QA gate**: [Smoke check PASS / Team-QA APPROVED]
-**Approvals**: lead-programmer ✓ / qa-tester ✓ / producer ✓
-**Rollback plan**: [from Phase 2 record]
-
-Merge to: release branch AND development branch
-Next: /bug-report verify [BUG-ID] after deploy to confirm resolution
-```
-
-### Rules
-- Hotfixes must be the MINIMUM change to fix the issue — no cleanup, no refactoring
-- Every hotfix must have a rollback plan documented before deployment
-- Hotfix branches merge to BOTH the release branch AND the development branch
-- All hotfixes require a post-incident review within 48 hours
-- If the fix is complex enough to need more than 4 hours, escalate to `technical-director`
+如果 Git 不可用或分支创建失败：报告错误并使用 `AskUserQuestion` 询问是手动创建分支还是继续进行代码修改。
 
 ---
 
-## Phase 7: Post-Deploy Verification
+## 阶段 4：调查并实现
 
-After deploying, run `/bug-report verify [BUG-ID]` to confirm the fix resolved the issue in the deployed build.
+通过 Task 工具生成 `lead-programmer` 子智能体，传入：
+- Bug 报告（完整内容）
+- 热修复分支名称
+- 约束：
+  - **最小可行修复**——不做清理、不做重构、不改变无关行为
+  - 优先修改数据/配置而非代码（如适用）
+  - 每个受影响的文件记录修改内容
 
-If VERIFIED FIXED: run `/bug-report close [BUG-ID]` to formally close it.
-If STILL PRESENT: the hotfix failed — immediately re-open, assess rollback, and escalate.
+主程序员完成后：
+- 更新热修复记录中的"受影响的文件"章节
+- 更新"修复方案"章节（如有变化）
+- 更新"回滚方案"章节（具体的撤销步骤）
 
-Schedule a post-incident review within 48 hours using `/retrospective hotfix`.
+**如果修复需要超过 2 个文件或超过 50 行代码：**
+> "⚠️ 此修复范围较大（[N] 个文件，~[M] 行代码）。较大范围的热修复会引入回归风险。建议：（1）将修复范围缩减至最小核心，（2）将额外改动推迟到常规迭代，（3）请 producer 批准此扩大范围。"
+
+使用 `AskUserQuestion` 请求确认。
+
+---
+
+## 阶段 5：收集审批
+
+**并行**通过 Task 工具生成以下子智能体：
+
+- `lead-programmer`：评审代码变更——变更是否最小且正确？
+- `qa-tester`：验证修复——Bug 是否已复现后消失？冒烟测试是否通过？
+- `producer`：授权部署——时机和风险是否可接受？
+
+所有三方均须返回 **APPROVE** 才能继续。
+
+如果任一方返回 **REJECT** 或 **CONCERNS**：
+- 暂停部署
+- 展示具体关切
+- 使用 `AskUserQuestion`："请解决上述关切后重新提交审批，或取消热修复。"
+
+---
+
+## 阶段 5b：QA 重入关卡
+
+通过 Task 工具生成 `qa-lead` 子智能体，传入：
+- 热修复描述和受影响的系统
+- 阶段 5 的回归测试结果
+- 触碰已更改文件的所有系统列表（使用 Grep 查找调用方）
+
+询问 qa-lead：**完整冒烟测试是否足够，还是此修复需要针对性的 team-qa 检查？**
+
+根据裁定执行：
+- **冒烟测试足够** —— 针对热修复构建运行 `/smoke-check`。若通过，继续阶段 6。
+- **需要针对性 QA 检查** —— 运行 `/team-qa [affected-system]`，仅针对已更改的系统。若 QA 返回 APPROVED 或 APPROVED WITH CONDITIONS，继续阶段 6。
+- **需要完整 QA** —— 触碰核心系统的 S1 修复可能需要完整的 `/team-qa sprint`。这会延迟部署，但能防止错误的补丁。
+
+不要跳过此关卡。导致其他问题的热修复比原始 Bug 更糟糕。
+
+---
+
+## 阶段 6：更新 Bug 状态并部署
+
+更新 `production/qa/bugs/[BUG-ID].md`：将状态修改为 `Fixed — Pending Verification`。
+
+更新热修复记录中的审批表格（填入各方决定和时间）。
+
+**合并流程（必须合并到两个分支）：**
+```bash
+# 合并到发布分支
+git checkout release/[version]
+git merge hotfix/[BUG-ID]-[slug]
+
+# 合并到开发分支（防止回归）
+git checkout develop
+git merge hotfix/[BUG-ID]-[slug]
+
+# 打标签
+git tag hotfix/[BUG-ID]-[version]
+```
+
+输出部署摘要：
+```
+热修复部署摘要
+Bug：[BUG-ID] — [标题]
+已合并到：release/[version] ✅  develop ✅
+标签：hotfix/[BUG-ID]-[version]
+部署时间：[时间]
+授权人：lead-programmer ✅  qa-tester ✅  producer ✅
+```
+
+---
+
+## 阶段 7：部署后验证
+
+部署后 24 小时内：
+- 运行 `/bug-report verify [BUG-ID]` 确认 Bug 在生产环境已消除
+- 更新热修复记录中的"部署历史"章节（含验证状态）
+- 如果 Bug 在生产环境仍可复现：立即触发回滚方案并上报至 producer
+
+**48 小时内安排事后审查：**
+> "热修复完成。请在 48 小时内安排事后审查：Bug 为何进入生产环境？哪些流程可以改进以防止类似情况再次发生？使用 `/retrospective hotfix:[BUG-ID]` 生成审查模板。"
+
+---
+
+## 协作协议
+
+- **最小变更** — 仅修复 Bug。不借机做任何清理或优化
+- **回滚方案必须在先** — 在写下一行代码之前就要定义好回滚方案
+- **双向合并** — 热修复必须同时合并回发布分支和开发分支
+- **48 小时内事后审查** — 每次热修复都需要了解根本原因，以防止今后再次发生

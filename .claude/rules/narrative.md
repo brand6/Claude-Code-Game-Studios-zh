@@ -3,13 +3,13 @@ paths:
   - "design/narrative/**"
 ---
 
-# Narrative Rules
+# 叙事规则
 
-- All new lore must be cross-referenced against existing lore for contradictions
-- Every lore entry must specify canon level: Established / Provisional / Under Review
-- Character dialogue must match the voice profile defined for that character
-- World rules (what is possible/impossible) must be explicitly documented and consistent
-- Mysteries must have documented "true answers" even if players never learn them
-- Faction motivations, relationships, and power structures must be internally logical
-- All narrative text must be localization-ready: no idioms that don't translate, named placeholders for variables
-- No line of dialogue should exceed 120 characters for dialogue box constraints
+- 所有新世界观内容必须与现有世界观进行矛盾性交叉核对
+- 每条世界观条目必须标注正典级别：已确立（Established）/ 暂定（Provisional）/ 审议中（Under Review）
+- 角色对话必须符合该角色已定义的语音档案
+- 世界规则（可能/不可能发生的事）必须明确记录且保持一致
+- 谜题必须有已记录的"真实答案"，即使玩家永远无从得知
+- 派系的动机、关系和权力结构必须在内部逻辑上自洽
+- 所有叙事文本必须具备本地化可行性：不使用无法翻译的习语，变量使用具名占位符
+- 对话框限制：单行对话不得超过 120 个字符

@@ -1,82 +1,82 @@
-# Agent Test Spec: performance-analyst
+# Agent 测试规格：performance-analyst
 
-## Agent Summary
-Domain: Profiling, bottleneck identification, performance metrics tracking, and optimization recommendations.
-Does NOT own: implementing optimizations (belongs to the appropriate programmer for that domain).
-Model tier: Sonnet (default).
-No gate IDs assigned.
-
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references profiling / bottleneck analysis / performance metrics)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Bash, Glob, Grep
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over implementing any optimization — explicitly identifies itself as analysis/recommendation only
+## Agent 概述
+职责领域：分析游戏性能、识别瓶颈、提供优化建议并跟踪性能指标。
+不负责：实施优化（由对应程序员负责，analyst 提供规格）、特效或着色器实现（technical-artist）。
+模型层级：Sonnet（默认）。
+未分配关卡 ID。
 
 ---
 
-## Test Cases
+## 静态断言（结构检查）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Analyze this frame time data: CPU 14ms, GPU 8ms, physics 6ms, draw calls 420, scripts 3ms."
-**Expected behavior:**
-- Identifies the primary bottleneck: CPU is over a 16.67ms (60fps) budget at 14ms total
-- Breaks down contributors: physics (6ms, 43% of CPU time) is the top culprit
-- Draw calls (420) flags as a secondary concern if the budget limit is lower (e.g., 200 draw calls per technical-preferences.md)
-- Produces a prioritized bottleneck report:
-  1. Physics — 6ms, reduce simulation frequency or switch broadphase algorithm
-  2. Draw calls — 420, implement batching or LOD
-  3. Scripts — 3ms, profile hot paths
-- Does NOT implement any of these optimizations
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Implement the batching optimization to reduce draw calls from 420 to under 200."
-**Expected behavior:**
-- Does NOT produce implementation code for batching
-- Explicitly states that implementing optimizations belongs to the appropriate programmer (engine-programmer for rendering batching)
-- Redirects the implementation to `engine-programmer` with the recommendation context attached
-- May produce a requirements brief for the optimization so engine-programmer has a clear target
-
-### Case 3: Regression identification
-**Input:** "Performance dropped significantly after last week's commits. Frame time went from 10ms to 18ms."
-**Expected behavior:**
-- Proposes a bisection strategy to identify the offending commit range
-- Requests or reviews the diff of commits in the window to narrow the likely cause
-- Identifies affected systems based on what changed (e.g., if physics code was modified, points to physics as the primary suspect)
-- Produces a regression report naming the probable commit, the affected system, and the measured delta
-
-### Case 4: Recommendation vs. code quality trade-off
-**Input:** "The fastest optimization for the script bottleneck would be to inline all calls and remove abstraction layers."
-**Expected behavior:**
-- Surfaces the trade-off: inlining improves performance but reduces testability and violates the coding standard requiring unit-testable public methods
-- Does NOT recommend the optimization without noting the code quality cost
-- Escalates the trade-off to `lead-programmer` for a decision
-- May propose a middle path (e.g., profile-guided inlining of only the hottest 2–3 methods) that preserves testability
-
-### Case 5: Context pass — technical-preferences.md budget
-**Input:** Technical preferences from context: Target 60fps, frame budget 16.67ms, draw calls max 200, memory ceiling 512MB. Request: "Review the current build profile."
-**Expected behavior:**
-- References the specific values from the provided context: 16.67ms, 200 draw calls, 512MB
-- Compares current measurements against each threshold explicitly
-- Labels each metric as WITHIN BUDGET / AT RISK / OVER BUDGET based on the provided numbers
-- Does NOT use different budget numbers than those provided in the context
+- [ ] `description:` 字段存在且领域明确（引用性能分析 / 优化建议）
+- [ ] `allowed-tools:` 列表包含 Read、Bash、Glob、Grep——不含 Write 或 Edit（纯分析角色）
+- [ ] 模型层级为 Sonnet（专员的默认层级）
+- [ ] Agent 定义未主张对实现代码拥有权（提供建议，而非实施优化）
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (profiling, analysis, recommendations — not implementation)
-- [ ] Redirects optimization implementation to the correct programmer domain agent
-- [ ] Returns structured findings (bottleneck report with severity, measured values, and recommended action owner)
-- [ ] Escalates code-quality trade-offs to lead-programmer rather than deciding unilaterally
-- [ ] Applies budget thresholds from provided context rather than assumed defaults
-- [ ] Labels all findings with a specific action owner (who should implement the fix)
+### 用例 1：领域内请求——帧率分析
+**输入**："玩家区域中帧率从 60fps 降至 35fps。分析原因并给出建议。"
+**预期行为**：
+- 产出系统性分析流程：CPU 分析、GPU 分析、内存/GC 分析
+- 识别常见的帧率瓶颈：实体数量多、绘制调用过多、物理更新、GC 压力
+- 产出带有优先级排序的建议列表（先解决影响最大的项目）
+- 明确标注哪些建议影响 CPU（→ gameplay-programmer/engine-programmer），哪些影响 GPU（→ technical-artist/engine-programmer）
+- 不实施任何更改——产出规格供对应程序员执行
+
+### 用例 2：领域外请求——正确重定向
+**输入**："优化粒子系统以减少绘制调用。"
+**预期行为**：
+- 不产出粒子系统的实现代码
+- 明确声明粒子系统实现属于 `technical-artist` 的职责范围
+- 将实现请求重定向给 `technical-artist`
+- 可产出粒子系统的分析数据：当前绘制调用数量、优化目标、预期收益
+
+### 用例 3：性能预算制定
+**输入**："为我们的目标帧率 60fps 建立性能预算。"
+**预期行为**：
+- 产出完整的性能预算文档，基于 16.67ms 的帧时间预算
+- 为各子系统分配预算：
+  - CPU：物理（3ms）、AI（2ms）、游戏逻辑（4ms）、渲染准备（2ms）、其他（2ms）= 13ms
+  - GPU：几何（4ms）、着色器（3ms）、后处理（2ms）、UI（1ms）= 10ms
+  - 留出缓冲区以应对峰值
+- 为各系统设定绘制调用、三角面数、纹理内存上限
+- 将预算记录为可追踪的指标
+
+### 用例 4：性能回归——新功能引入的卡顿
+**输入**："新的合成系统引入了严重帧卡顿（偶发性冻结250ms）。"
+**预期行为**：
+- 识别 250ms 偶发冻结通常指向以下之一：GC 回收、大型同步加载、或计算量大的操作阻塞主线程
+- 提出排查步骤：检查合成系统的内存分配、查找同步文件/数据库读取、查找每帧 O(n²) 操作
+- 产出给 `gameplay-programmer` 的具体优化建议规格（如"将配方查找改为缓存 HashMap，避免每次查询遍历列表"）
+- 将阻塞主线程的操作标记为高优先级问题，而非低优先级优化
+
+### 用例 5：上下文传递——性能预算合规性检查
+**上下文输入**：性能预算文档中规定绘制调用上限为500。当前分析显示：玩家区域绘制调用为620，超出预算24%。
+**预期行为**：
+- 引用上下文中的具体数字：620 vs. 500 预算（超出120次，24%）
+- 将此标记为性能预算违规，而非普通观察
+- 识别潜在的超支原因：批处理失效（材质/着色器不一致、实例化未启用）、合并机会（静态网格、UI 元素）
+- 量化优化目标：需减少120次绘制调用才能达标
+- 产出给 technical-artist 或 engine-programmer 的优先建议，附预期减少量（如"启用实例化"预计减少40-80次绘制调用）
 
 ---
 
-## Coverage Notes
-- Frame time analysis (Case 1) output should be structured as a report filed in `production/qa/evidence/`
-- Regression case (Case 3) confirms the agent investigates cause, not just measures symptoms
-- Code quality trade-off (Case 4) verifies the agent does not recommend optimizations that violate coding standards without flagging the conflict
+## 协议合规
+
+- [ ] 保持在声明领域内（性能分析、建议、预算制定、指标追踪）
+- [ ] 不实施代码变更——产出给对应程序员的规格
+- [ ] 返回结构化产出（优先级建议列表、预算文档、性能报告）
+- [ ] 引用上下文中的具体数字；不产出缺乏量化数据的泛泛建议
+- [ ] 将 CPU 和 GPU 问题路由给正确的 Agent（gameplay/engine/technical-artist）
+
+---
+
+## 覆盖说明
+- 性能预算（用例 3）是最重要的产出——必须具体，不能使用占位值
+- 预算合规性检查（用例 5）确认 Agent 使用上下文中的实际数字，而非行业基准
+- 卡顿诊断（用例 4）验证 Agent 能区分不同类型的性能问题（GC vs. 计算 vs. I/O）

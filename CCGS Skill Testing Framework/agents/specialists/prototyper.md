@@ -1,82 +1,84 @@
-# Agent Test Spec: prototyper
+# Agent 测试规格：prototyper
 
-## Agent Summary
-- **Domain**: Rapid throwaway prototypes in the `prototypes/` directory, concept validation experiments, mechanical feasibility tests. Standards intentionally relaxed for speed — prototypes are not production code.
-- **Does NOT own**: Production source code in `src/` (gameplay-programmer), design documents (game-designer), production-grade architecture decisions (lead-programmer / technical-director)
-- **Model tier**: Sonnet
-- **Gate IDs**: None; produces recommendation docs after prototype conclusion; does not participate in phase gates
-
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references rapid prototyping, prototypes/ directory, throwaway code)
-- [ ] `allowed-tools:` list matches the agent's role (Read/Write scoped to prototypes/ directory; no production src/ write access)
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition explicitly states that prototype code is not production code and must not be copied to src/
+## Agent 概述
+- **职责领域**：`prototypes/` 目录中的快速原型、概念验证与机制可行性测试；有意放宽质量标准以追求速度
+- **不负责**：正式生产代码（gameplay-programmer）、正式设计文档（game-designer）、正式生产架构（lead-programmer / technical-director）
+- **模型层级**：Sonnet
+- **关卡 ID**：无；有时在原型结论阶段接收 game-designer 或 producer 的上下文
 
 ---
 
-## Test Cases
+## 静态断言（结构检查）
 
-### Case 1: In-domain request — prototype a card-drawing mechanic
-**Input**: "Prototype a card-drawing mechanic in 2 hours. The core question: does drawing 3 cards per turn with hand-size limit of 7 feel good? I need something to test in a playtest today."
-**Expected behavior**:
-- Produces a minimal working prototype written in the project's engine scripting language, scoped to `prototypes/card-draw-mechanic/`
-- Code prioritizes speed over correctness: no unit tests, no doc comments required, global state is acceptable for a prototype
-- Implements the minimal viable mechanic: a deck, a draw function (draw N cards), a hand container with a size limit, and a simple UI or debug print to verify state
-- Does NOT implement production patterns (dependency injection, signals, data-driven config) unless they take less time than not using them
-- Includes a `README.md` in the prototype folder: hypothesis being tested, how to run, what to observe in the playtest
-
-### Case 2: Out-of-domain request — production-grade implementation
-**Input**: "The card mechanic prototype worked great. Now write the production implementation of the card system for src/gameplay/cards/."
-**Expected behavior**:
-- Does not write production code to `src/`
-- States clearly: "Prototyper produces throwaway code in prototypes/ to validate concepts; production implementation of validated mechanics is handled by gameplay-programmer"
-- Offers to produce a transition document: what the prototype proved, what the production implementation should preserve (the mechanic), and what it should discard (the throwaway implementation patterns)
-- Does NOT copy the prototype code into src/ or suggest it as a starting point without warning about its non-production quality
-
-### Case 3: Prototype validates the mechanic — recommendation output
-**Input**: "The card-draw prototype playtested well. Three sessions all enjoyed drawing 3 cards/turn with hand limit 7. No confusion observed. What's next?"
-**Expected behavior**:
-- Produces a prototype conclusion document in `prototypes/card-draw-mechanic/conclusion.md` (or equivalent)
-- Document includes: hypothesis that was tested, playtest method (sessions, duration, observer notes), result verdict (VALIDATED), key findings (what worked, any minor issues observed), recommendation for production (specific mechanic parameters to preserve: 3 cards/turn, hand limit 7), and a flag to route the production implementation request to gameplay-programmer
-- Does NOT begin writing production code
-- Output is structured as a decision-ready recommendation, not a narrative summary
-
-### Case 4: Prototype reveals the mechanic is unworkable — abandonment note
-**Input**: "The prototype for the physics-based lock-picking mechanic is done. After 4 playtest sessions, all testers found it frustrating — too much precision required, not fun. One tester rage-quit."
-**Expected behavior**:
-- Produces a prototype abandonment note in `prototypes/lock-picking-physics/conclusion.md`
-- Document includes: hypothesis that was tested, result verdict (ABANDONED), specific reasons (precision barrier too high, negative emotional response, rage-quit incident as evidence), and a recommendation for alternative approaches to explore (simplified key-tumbler mechanic, rhythm-based alternative, removal of the mechanic entirely)
-- Does NOT recommend persisting with the prototype mechanic because of sunk cost
-- Does NOT mark the result as inconclusive — after 4 sessions with consistent negative responses, abandonment is the correct verdict
-
-### Case 5: Context pass — using the project's engine scripting language
-**Input context**: Project uses Godot 4.6 with GDScript (configured in technical-preferences.md).
-**Input**: "Prototype a basic grid movement system — player clicks a tile and the character moves to it."
-**Expected behavior**:
-- Produces the prototype in GDScript — not Python, C#, or pseudocode
-- Uses Godot 4.6 node types appropriate for a grid: TileMap or a custom grid manager node, CharacterBody2D or Node2D for the player
-- Does NOT apply production coding standards (no required test coverage, no doc comments, global state acceptable)
-- Writes the output to `prototypes/grid-movement/` not to `src/`
-- If a Godot 4.6 API is uncertain (given the LLM knowledge cutoff noted in VERSION.md), flags the specific API with a note to verify against the Godot 4.6 docs
+- [ ] `description:` 字段存在且明确（引用快速原型 / 概念验证）
+- [ ] `allowed-tools:` 列表仅包含 `prototypes/` 范围内的写入工具
+- [ ] 模型层级为 Sonnet（专员的默认层级）
+- [ ] Agent 定义未主张对 `src/` 生产代码、设计文档或生产架构拥有权
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (prototypes/ directory only; throwaway code for concept validation)
-- [ ] Redirects production implementation requests to gameplay-programmer with a transition document offer
-- [ ] Produces structured conclusion documents (VALIDATED or ABANDONED verdict) after prototype evaluation
-- [ ] Does not recommend preserving prototype code in production form without explicit warnings
-- [ ] Uses the project's configured engine and scripting language; flags version uncertainty
+### 用例 1：领域内请求——合适的输出
+**输入**："在2小时内为卡牌游戏原型设计一个抽牌机制。不需要精美图形，只需验证核心循环是否有趣。"
+**预期行为**：
+- 在 `prototypes/card-draw-mechanic/` 中产出最小可运行原型
+- 不要求测试、文档注释或编码标准合规——在原型中允许硬编码值
+- 实现核心循环：牌库、抽牌、手牌管理
+- 包含 `prototypes/card-draw-mechanic/README.md`，说明：验证的假设、运行方法、观察要点
+- 不编写任何东西到 `src/` 中
+
+### 用例 2：领域外请求——正确重定向
+**输入**："抽牌原型验证通过。现在将其实现为生产代码并集成到游戏中。"
+**预期行为**：
+- 不产出生产实现代码
+- 明确声明生产代码实现属于 `gameplay-programmer` 的职责范围
+- 将请求重定向给 `gameplay-programmer`
+- 提供一份交接文档，说明：原型验证了什么、哪些决策值得保留、哪些应在生产阶段重写
+
+### 用例 3：原型完成——记录结论
+**输入**："卡牌抽取原型通过了3轮游戏测试。连击系统有效，但随机奖励令人感到平淡。"
+**预期行为**：
+- 在 `prototypes/card-draw-mechanic/` 中创建 `conclusion.md`
+- 按标准格式记录：
+  - 假设（待验证的内容）
+  - 游戏测试方法（运行了多少局，参与者是谁）
+  - 裁定：**VALIDATED**（已验证）
+  - 主要发现（连击有效 / 随机平淡）
+  - 建议（如何在生产中继续）
+  - 路由给：`gameplay-programmer` 进行生产实现
+
+### 用例 4：原型失败——记录失败
+**输入**："物理解谜原型：经过4轮游戏测试，玩家无法理解力学，谜题无法玩通。放弃该方向。"
+**预期行为**：
+- 在 `prototypes/physics-puzzle/` 中创建 `conclusion.md`
+- 使用 **ABANDONED**（已放弃）裁定，不美化失败
+- 记录具体失败原因（如：力学过于隐晦、玩家心智模型与物理系统不符）
+- 提出替代方向供 game-designer 考虑
+- 不因沉没成本而建议继续追加投入
+
+### 用例 5：上下文传递——引擎感知原型
+**上下文输入**：项目引擎为 Godot 4.6，脚本语言为 GDScript。请求："为新的跳墙机制创建一个快速原型。"
+**预期行为**：
+- 使用 GDScript 产出原型（不使用 C# 或 GDNative）
+- 使用 Godot 节点类型（CharacterBody2D/3D、Node3D）符合 Godot 4.x 规范
+- 写入 `prototypes/wall-jump/` 而非 `src/`
+- 若原型使用了 4.6 版之后可能已变更的 API，注明说明
 
 ---
 
-## Coverage Notes
-- Case 2 (production redirect) is critical — prototype code leaking into src/ is a common quality problem
-- Case 4 (abandonment honesty) tests whether the agent avoids sunk-cost bias — prototypes that fail should be cleanly abandoned
-- Case 5 requires that technical-preferences.md has the engine and language configured; test is incomplete if not configured
-- The intentional relaxation of coding standards is a feature, not a gap — do not flag missing tests or doc comments as failures in prototype output
-- No automated runner; review manually or via `/skill-test`
+## 协议合规
+
+- [ ] 仅写入 `prototypes/` 目录——绝不写入 `src/`、`design/` 或生产目录
+- [ ] 将生产实现请求重定向给 gameplay-programmer，并附交接文档
+- [ ] 产出结构化原型结论文档（VALIDATED/ABANDONED），不口头总结
+- [ ] 提醒原型代码不符合生产质量标准
+- [ ] 使用项目配置的引擎和语言，而非默认假设
+
+---
+
+## 覆盖说明
+- 结论文档（用例 3 和用例 4）是核心产物——没有结论就没有可传递给 game-designer 的原型价值
+- 失败记录（用例 4）确认 Agent 能正视负面结果，不给失败方向续命
+- 生产重定向（用例 2）验证 Agent 维护 prototypes/ 与 src/ 之间的严格分离
+- 无自动运行器；请手动审查或通过 `/skill-test`

@@ -1,196 +1,175 @@
-# Skill Test Spec: /map-systems
+# Skill 测试规范：/map-systems
 
-## Skill Summary
+## Skill 摘要
 
-`/map-systems` decomposes a game concept into a systems index. It reads the
-approved game concept and pillars, enumerates both explicit and implicit systems,
-maps dependencies between systems, assigns priority tiers (MVP / Vertical Slice /
-Alpha / Full Vision), and organizes systems into a layered design order
-(Foundation → Core → Feature → Presentation). The output is written to
-`design/systems-index.md` after user approval.
+`/map-systems` 读取游戏概念文档，将游戏分解为独立系统，映射依赖关系并创建系统索引。系统按层级（Foundation → Core → Feature → Presentation）和优先级排列，帮助确定 GDD 编写顺序。
 
-This skill is required between game concept approval and per-system GDD creation
-— it is a mandatory gate in the pipeline. In `full` review mode, CD-SYSTEMS
-(creative-director) and TD-SYSTEM-BOUNDARY (technical-director) spawn in parallel
-after the decomposition is drafted. In `lean` or `solo` mode, both gates are
-skipped. The skill writes to `design/systems-index.md`.
+在 `full` 审核模式下，CD-SYSTEMS（Creative Director）和 TD-SYSTEM-BOUNDARY（Technical Director）两个门控并行运行。在 `lean` 或 `solo` 模式下，两个门控均被跳过并注明。Skill 将系统索引写入 `design/systems-index.md`。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构性）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需 Fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: COMPLETE, BLOCKED
-- [ ] Contains "May I write" collaborative protocol language (for systems-index.md)
-- [ ] Has a next-step handoff at the end (`/design-system`)
-- [ ] Documents gate behavior: CD-SYSTEMS + TD-SYSTEM-BOUNDARY in parallel in full mode
-
----
-
-## Director Gate Checks
-
-In `full` mode: CD-SYSTEMS (creative-director) and TD-SYSTEM-BOUNDARY
-(technical-director) spawn in parallel after the systems decomposition is drafted
-and before `design/systems-index.md` is written.
-
-In `lean` mode: both gates are skipped. Output notes:
-"CD-SYSTEMS skipped — lean mode" and "TD-SYSTEM-BOUNDARY skipped — lean mode".
-
-In `solo` mode: both gates are skipped with equivalent notes.
+- [ ] 包含必填 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含 ≥2 个阶段标题
+- [ ] 包含 verdict 关键词：COMPLETE、BLOCKED
+- [ ] 包含"May I write"协作协议语言（针对 systems-index.md）
+- [ ] 末尾包含下一步交接（`/design-system [next-system]`）
+- [ ] 说明 CD-SYSTEMS 和 TD-SYSTEM-BOUNDARY 门控行为（full 模式并行）
 
 ---
 
-## Test Cases
+## Director 门控检查
 
-### Case 1: Happy Path — Game concept exists, 5-8 systems identified
+`full` 模式下：CD-SYSTEMS（Creative Director）和 TD-SYSTEM-BOUNDARY（Technical Director）并行生成，对系统分解草稿进行审核。两个门控均通过后，才进行"May I write"询问。
 
-**Fixture:**
-- `design/gdd/game-concept.md` exists with Core Mechanics and MVP Definition sections
-- `design/gdd/game-pillars.md` exists with ≥1 pillar defined
-- No `design/systems-index.md` exists yet
-- `production/session-state/review-mode.txt` contains `full`
+`lean` 模式下：两个门控均被跳过。输出注明："CD-SYSTEMS skipped — lean mode"和"TD-SYSTEM-BOUNDARY skipped — lean mode"。
 
-**Input:** `/map-systems`
-
-**Expected behavior:**
-1. Skill reads game-concept.md and game-pillars.md
-2. Identifies 5-8 systems (explicit + implicit)
-3. Maps dependencies between systems and assigns layers
-4. CD-SYSTEMS and TD-SYSTEM-BOUNDARY spawn in parallel and return APPROVED
-5. Asks "May I write `design/systems-index.md`?"
-6. Writes systems-index.md after approval
-7. Updates `production/session-state/active.md`
-
-**Assertions:**
-- [ ] Between 5 and 8 systems are identified (not fewer, not more without explanation)
-- [ ] CD-SYSTEMS and TD-SYSTEM-BOUNDARY spawn in parallel (not sequentially)
-- [ ] Both gates complete before the "May I write" ask
-- [ ] "May I write `design/systems-index.md`?" is asked before writing
-- [ ] systems-index.md is NOT written without approval
-- [ ] Session state is updated after writing
-- [ ] Verdict is COMPLETE
+`solo` 模式下：两个门控均被跳过，以"solo mode"标签注明。
 
 ---
 
-### Case 2: Failure Path — No game concept found
+## 测试用例
 
-**Fixture:**
-- `design/gdd/game-concept.md` does NOT exist
-- `design/gdd/` directory may be empty or absent
+### 用例 1：正常路径——游戏概念存在，全模式分解为 5-8 个系统
 
-**Input:** `/map-systems`
+**Fixture：**
+- `design/gdd/game-concept.md` 存在，描述完整的游戏概念
+- `design/gdd/game-pillars.md` 存在
+- 不存在 `design/systems-index.md`
+- `production/session-state/review-mode.txt` 内容为 `full`
 
-**Expected behavior:**
-1. Skill attempts to read `design/gdd/game-concept.md`
-2. File not found
-3. Skill outputs: "No game concept found. Run `/brainstorm` to create one, then return to `/map-systems`."
-4. Skill exits without creating systems-index.md
+**输入：** `/map-systems`
 
-**Assertions:**
-- [ ] Skill outputs a clear error naming the missing file path
-- [ ] Skill recommends `/brainstorm` as the next action
-- [ ] No systems-index.md is created
-- [ ] Verdict is BLOCKED
+**预期行为：**
+1. Skill 读取 `design/gdd/game-concept.md` 和 `design/gdd/game-pillars.md`
+2. 分解为 5-8 个系统，并按层级和优先级排列
+3. CD-SYSTEMS 和 TD-SYSTEM-BOUNDARY 并行生成，审核分解结果
+4. 两个门控均返回 APPROVED 后展示系统索引草稿
+5. 询问"May I write `design/systems-index.md`?"
+6. 批准后写入系统索引，并更新会话状态
 
----
-
-### Case 3: Director Gate — CD-SYSTEMS returns CONCERNS (missing core system)
-
-**Fixture:**
-- Game concept exists
-- `production/session-state/review-mode.txt` contains `full`
-- CD-SYSTEMS gate returns CONCERNS: "The [core-system] is implied by the concept but not identified"
-
-**Input:** `/map-systems`
-
-**Expected behavior:**
-1. Systems are drafted (5-8 initial systems identified)
-2. CD-SYSTEMS gate returns CONCERNS naming the missing core system
-3. TD-SYSTEM-BOUNDARY returns APPROVED
-4. Skill surfaces CD-SYSTEMS concerns to user
-5. User is asked: revise systems list to add the missing system, or proceed as-is
-6. If revised: updated systems list shown before "May I write" ask
-
-**Assertions:**
-- [ ] CD-SYSTEMS concerns are shown to the user before writing
-- [ ] Skill does NOT auto-write systems-index.md while CONCERNS are unresolved
-- [ ] User is given the option to revise or proceed
-- [ ] Revised systems list is re-shown after revision before final "May I write"
+**断言：**
+- [ ] 任何写入询问前先读取游戏概念文档
+- [ ] 全模式下 CD-SYSTEMS 和 TD-SYSTEM-BOUNDARY 并行生成
+- [ ] 两个门控均通过后才进行"May I write"询问
+- [ ] 系统按层级（Foundation/Core/Feature/Presentation）组织
+- [ ] 写入前询问"May I write"
+- [ ] Verdict 为 COMPLETE
 
 ---
 
-### Case 4: Edge Case — systems-index.md already exists
+### 用例 2：失败路径——未找到游戏概念
 
-**Fixture:**
-- `design/gdd/game-concept.md` exists
-- `design/systems-index.md` already exists with N systems
+**Fixture：**
+- `design/gdd/game-concept.md` 不存在
 
-**Input:** `/map-systems`
+**输入：** `/map-systems`
 
-**Expected behavior:**
-1. Skill reads the existing systems-index.md and presents its current state
-2. Skill asks: "systems-index.md already exists with [N] systems. Update with new systems, or review and revise priorities?"
-3. User chooses an action
-4. Skill does NOT silently overwrite the existing index
+**预期行为：**
+1. Skill 尝试读取 `design/gdd/game-concept.md` 但失败
+2. Skill 输出："No game concept found. Run `/brainstorm` to create a game concept before mapping systems."
+3. Skill 退出，不进行系统分解
 
-**Assertions:**
-- [ ] Skill detects and reads the existing systems-index.md before proceeding
-- [ ] User is offered update/review options — not auto-overwritten
-- [ ] Existing system count is presented to the user
-- [ ] Skill does NOT proceed with a full re-decomposition without user choosing to do so
+**断言：**
+- [ ] 未找到游戏概念时 Skill 以明确消息退出
+- [ ] 不写入系统索引
+- [ ] Skill 推荐 `/brainstorm` 作为下一步
+- [ ] Verdict 为 BLOCKED
 
 ---
 
-### Case 5: Director Gate — Lean mode and solo mode both skip gates, noted
+### 用例 3：Director 门控——CD-SYSTEMS 返回 CONCERNS
 
-**Fixture (lean mode):**
-- Game concept exists
-- `production/session-state/review-mode.txt` contains `lean`
+**Fixture：**
+- 游戏概念存在
+- `production/session-state/review-mode.txt` 内容为 `full`
+- CD-SYSTEMS 门控返回 CONCERNS（例如某系统与游戏支柱不一致）
 
-**Lean mode expected behavior:**
-1. Systems are decomposed and drafted
-2. Both CD-SYSTEMS and TD-SYSTEM-BOUNDARY are skipped
-3. Output notes: "CD-SYSTEMS skipped — lean mode" and "TD-SYSTEM-BOUNDARY skipped — lean mode"
-4. "May I write" ask proceeds directly
+**输入：** `/map-systems`
 
-**Assertions (lean mode):**
-- [ ] Both gate skip notes appear in output
-- [ ] Skill proceeds to "May I write" without gate approval
-- [ ] systems-index.md is written after user approval
+**预期行为：**
+1. CD-SYSTEMS 返回带具体反馈的 CONCERNS
+2. TD-SYSTEM-BOUNDARY 可以同时通过
+3. Skill 在"May I write"询问前向用户呈现 CONCERNS
+4. 向用户提供选项：修订系统列表或接受并继续
+5. 修订后重新展示系统列表，再进行"May I write"询问
 
-**Fixture (solo mode):**
-- Same game concept, `production/session-state/review-mode.txt` contains `solo`
-
-**Solo mode expected behavior:**
-1. Same decomposition workflow
-2. Both gates skipped — noted in output with "solo mode"
-3. "May I write" ask proceeds
-
-**Assertions (solo mode):**
-- [ ] Both skip notes appear with "solo mode" label
-- [ ] Behavior is otherwise identical to lean mode for this skill
+**断言：**
+- [ ] CONCERNS 在写入前呈现给用户
+- [ ] 向用户提供修订或继续的选择
+- [ ] 修订后最终批准前重新展示修订后的系统列表
 
 ---
 
-## Protocol Compliance
+### 用例 4：边缘情况——systems-index.md 已存在
 
-- [ ] Reads game-concept.md and game-pillars.md before any decomposition
-- [ ] "May I write `design/systems-index.md`?" asked before writing
-- [ ] systems-index.md is NOT written without user approval
-- [ ] CD-SYSTEMS and TD-SYSTEM-BOUNDARY spawn in parallel in full mode
-- [ ] Skipped gates noted by name and mode in lean/solo output
-- [ ] Ends with next-step handoff: `/design-system [next-system]`
+**Fixture：**
+- `design/gdd/game-concept.md` 存在
+- `design/systems-index.md` 已存在，包含 N 个系统
+
+**输入：** `/map-systems`
+
+**预期行为：**
+1. Skill 读取已有的 systems-index.md 并呈现当前状态
+2. Skill 询问："systems-index.md already exists with [N] systems. Update with new systems, or review and revise priorities?"
+3. 用户选择操作
+4. Skill 不静默覆盖已有索引
+
+**断言：**
+- [ ] Skill 在继续前检测并读取已有的 systems-index.md
+- [ ] 向用户提供更新/审阅选项——不自动覆盖
+- [ ] 向用户呈现已有系统数量
+- [ ] 用户未选择重新分解时 Skill 不执行完整重新分解
 
 ---
 
-## Coverage Notes
+### 用例 5：Director 门控——lean 模式和 solo 模式均跳过门控，并注明
 
-- Circular dependency detection (System A depends on System B which depends on A)
-  is part of the dependency mapping phase — not independently fixture-tested here.
-- Priority tier assignment (MVP heuristics) is evaluated as part of the Case 1
-  collaborative workflow rather than independently.
-- The `next` argument mode (handing off the highest-priority undesigned system to
-  `/design-system`) is not tested here — it is a post-index-creation convenience.
+**Fixture（lean 模式）：**
+- 游戏概念存在
+- `production/session-state/review-mode.txt` 内容为 `lean`
+
+**Lean 模式预期行为：**
+1. 系统分解完成并起草
+2. CD-SYSTEMS 和 TD-SYSTEM-BOUNDARY 均被跳过
+3. 输出注明："CD-SYSTEMS skipped — lean mode"和"TD-SYSTEM-BOUNDARY skipped — lean mode"
+4. 直接进行"May I write"询问
+
+**断言（lean 模式）：**
+- [ ] 两条门控跳过注明均出现在输出中
+- [ ] Skill 无需门控批准直接进行"May I write"
+- [ ] 用户批准后写入 systems-index.md
+
+**Fixture（solo 模式）：**
+- 相同游戏概念，`production/session-state/review-mode.txt` 内容为 `solo`
+
+**Solo 模式预期行为：**
+1. 相同分解工作流
+2. 两个门控均被跳过——在输出中以"solo mode"注明
+3. 进行"May I write"询问
+
+**断言（solo 模式）：**
+- [ ] 两条跳过注明均以"solo mode"标签出现
+- [ ] 该 Skill 的行为与 lean 模式相同
+
+---
+
+## 协议合规
+
+- [ ] 任何分解前先读取 game-concept.md 和 game-pillars.md
+- [ ] 写入前询问"May I write `design/systems-index.md`?"
+- [ ] 用户未批准时 systems-index.md 不写入
+- [ ] full 模式下 CD-SYSTEMS 和 TD-SYSTEM-BOUNDARY 并行生成
+- [ ] lean/solo 输出中按名称和模式注明被跳过的门控
+- [ ] 末尾包含下一步交接：`/design-system [next-system]`
+
+---
+
+## 覆盖范围说明
+
+- 循环依赖检测（系统 A 依赖系统 B，系统 B 又依赖 A）是依赖映射阶段的一部分——此处不单独进行 Fixture 测试。
+- 优先级层级分配（MVP 启发式方法）作为用例 1 协作工作流的一部分进行评估，而非单独测试。
+- `next` 参数模式（将最高优先级未设计系统交接给 `/design-system`）此处未测试——它是索引创建后的便利功能。

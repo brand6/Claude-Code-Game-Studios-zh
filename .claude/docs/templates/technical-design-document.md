@@ -1,96 +1,98 @@
-# Technical Design: [System Name]
+# 技术设计文档：[System Name]
 
-## Document Status
-- **Version**: 1.0
-- **Last Updated**: [Date]
-- **Author**: [Agent/Person]
-- **Reviewer**: lead-programmer
-- **Related ADR**: [ADR-XXXX if applicable]
-- **Related Design Doc**: [Link to game design doc this implements]
+## 文档状态
+- **版本**：1.0
+- **最后更新**：[Date]
+- **作者**：[Agent/Person]
+- **审查人**：lead-programmer
+- **关联 ADR**：[ADR-XXXX，如适用]
+- **关联设计文档**：[链接到本文档所实现的游戏设计文档]
 
-## Engine API Surface
+## 引擎 API 概览
 
-| Field | Value |
-|-------|-------|
-| **Engine** | [e.g. Godot 4.6 / Unity 6 / Unreal Engine 5.4] |
-| **APIs Depended On** | [Specific classes/methods/nodes used, version-pinned — e.g. `CharacterBody3D.move_and_slide() (Godot 4.x)`] |
-| **References Consulted** | [engine-reference docs read before writing this — e.g. `docs/engine-reference/godot/modules/physics.md`] |
-| **Post-Cutoff Features Used** | [Features from engine versions beyond LLM training cutoff, or "None"] |
-| **Unverified Assumptions** | [API behaviours assumed but not yet tested against the target version, or "None"] |
-| **Engine Upgrade Risk** | [LOW / MEDIUM / HIGH — how fragile is this design if the engine version changes?] |
+| 字段 | 内容 |
+|------|------|
+| **引擎** | [例：Godot 4.6 / Unity 6 / Unreal Engine 5.4] |
+| **依赖的 API** | [使用的具体类/方法/节点，需锁定版本——例：`CharacterBody3D.move_and_slide() (Godot 4.x)`] |
+| **参考文档** | [编写本文档前已阅读的引擎参考资料——例：`docs/engine-reference/godot/modules/physics.md`] |
+| **使用了训练截止日期后的功能** | [LLM 训练截止日期之后引擎版本新增的功能，或"无"] |
+| **未经验证的假设** | [已假设但尚未在目标版本中验证的 API 行为，或"无"] |
+| **引擎升级风险** | [LOW / MEDIUM / HIGH——引擎版本变更时，本设计的脆弱程度] |
 
-> **Rule**: If any **Unverified Assumptions** are listed, this document cannot be marked
-> as Accepted until those assumptions are validated in the actual engine environment.
+> **规则**：如列出了任何**未经验证的假设**，在这些假设于实际引擎环境中得到验证之前，本文档不得标记为 Accepted（已接受）。
 
-## Overview
-[2-3 sentence summary of what this system does and why it exists]
+## 概述
+[用 2–3 句话说明本系统的功能及其存在的意义]
 
-## Requirements
-### Functional Requirements
-- [FR-1]: [Description]
-- [FR-2]: [Description]
+## 需求
 
-### Non-Functional Requirements
-- **Performance**: [Budget — e.g., "< 1ms per frame"]
-- **Memory**: [Budget — e.g., "< 50MB at peak"]
-- **Scalability**: [Limits — e.g., "Support up to 1000 entities"]
-- **Thread Safety**: [Requirements]
+### 功能需求
+- [FR-1]：[描述]
+- [FR-2]：[描述]
 
-## Architecture
+### 非功能需求
+- **性能**：[预算——例："每帧 < 1ms"]
+- **内存**：[预算——例："峰值 < 50MB"]
+- **可扩展性**：[上限——例："最多支持 1000 个实体"]
+- **线程安全**：[需求]
 
-### System Diagram
+## 架构
+
+### 系统图
 ```
-[ASCII diagram showing components and data flow]
-```
-
-### Component Breakdown
-| Component | Responsibility | Owns |
-| --------- | -------------- | ---- |
-| [Name] | [What it does] | [What data it owns] |
-
-### Public API
-```
-[Interface/API definition in pseudocode or target language]
+[用 ASCII 图展示组件与数据流]
 ```
 
-### Data Structures
+### 组件分解
+
+| 组件 | 职责 | 拥有数据 |
+|------|------|---------|
+| [名称] | [功能说明] | [所拥有的数据] |
+
+### 公共 API
 ```
-[Key data structures with field descriptions]
+[用伪代码或目标语言定义接口/API]
 ```
 
-### Data Flow
-[Step by step: how data moves through the system during a typical frame]
+### 数据结构
+```
+[关键数据结构及字段说明]
+```
 
-## Implementation Plan
+### 数据流
+[逐步说明：典型帧内数据如何在系统中流动]
 
-### Phase 1: [Core Functionality]
-- [ ] [Task 1]
-- [ ] [Task 2]
+## 实现计划
 
-### Phase 2: [Extended Features]
-- [ ] [Task 3]
-- [ ] [Task 4]
+### 阶段一：[核心功能]
+- [ ] [任务 1]
+- [ ] [任务 2]
 
-### Phase 3: [Optimization/Polish]
-- [ ] [Task 5]
+### 阶段二：[扩展功能]
+- [ ] [任务 3]
+- [ ] [任务 4]
 
-## Dependencies
-| Depends On | For What |
-| ---------- | -------- |
-| [System] | [Reason] |
+### 阶段三：[优化/润色]
+- [ ] [任务 5]
 
-| Depended On By | For What |
-| -------------- | -------- |
-| [System] | [Reason] |
+## 依赖关系
 
-## Testing Strategy
-- **Unit Tests**: [What to test at unit level]
-- **Integration Tests**: [Cross-system tests needed]
-- **Performance Tests**: [Benchmarks to create]
-- **Edge Cases**: [Specific scenarios to test]
+| 依赖项 | 用途 |
+|--------|------|
+| [系统] | [原因] |
 
-## Known Limitations
-[What this design intentionally does NOT support and why]
+| 被依赖方 | 用途 |
+|---------|------|
+| [系统] | [原因] |
 
-## Future Considerations
-[What might need to change if requirements evolve — but do NOT build for this now]
+## 测试策略
+- **单元测试**：[单元级别测试内容]
+- **集成测试**：[需要的跨系统测试]
+- **性能测试**：[需要创建的基准测试]
+- **边界情况**：[需要测试的特定场景]
+
+## 已知限制
+[本设计有意不支持的内容及原因]
+
+## 未来考量
+[需求演变时可能需要修改的内容——但**当前不要**为此提前构建]

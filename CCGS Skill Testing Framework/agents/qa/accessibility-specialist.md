@@ -1,81 +1,81 @@
-# Agent Test Spec: accessibility-specialist
+# Agent 测试规格：accessibility-specialist
 
-## Agent Summary
-Domain: Input remapping, text scaling, colorblind modes, screen reader support, and accessibility standards compliance (WCAG, platform certifications).
-Does NOT own: overall UX flow design (ux-designer), visual art style direction (art-director).
-Model tier: Sonnet (default).
-No gate IDs assigned.
-
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references accessibility / inclusive design / WCAG)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Bash, Glob, Grep
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over UX flow or visual art style
+## Agent 摘要
+**领域：** 输入重映射、文字缩放、色盲模式、屏幕阅读器支持以及无障碍标准合规性（WCAG、平台认证）。
+**不拥有：** 整体 UX 流程设计（ux-designer）、视觉美术风格方向（art-director）。
+**模型层级：** Sonnet（默认）。
+**关卡 ID：** 无。
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Review the player HUD for accessibility."
-**Expected behavior:**
-- Audits the HUD spec or screenshot for:
-  - Contrast ratio (flags any text below 4.5:1 for AA or 7:1 for AAA)
-  - Alternative representation for color-coded information (e.g., enemy health bars use only color, no shape distinction)
-  - Text size (flags any text below 16px equivalent at 1080p)
-  - Screen reader or TTS annotation availability for key status elements
-- Produces a prioritized finding list with specific element names and the criteria they fail
-- Does NOT redesign the HUD — produces findings for ux-designer and ui-programmer to act on
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Design the overall game flow: main menu → character select → loading → gameplay → pause → results."
-**Expected behavior:**
-- Does NOT produce UX flow architecture
-- Explicitly states that overall game flow design belongs to `ux-designer`
-- Redirects the request to `ux-designer`
-- May note it can review the flow for accessibility concerns (e.g., time limits, cognitive load) once the flow is designed
-
-### Case 3: Colorblind mode conflict
-**Input:** "The proposed colorblind mode for deuteranopia replaces the enemy red health bars with orange, but the art palette already uses orange for friendly units."
-**Expected behavior:**
-- Identifies the conflict: orange collision between colorblind mode and the established friendly-unit palette
-- Does NOT unilaterally change the art palette (that belongs to art-director)
-- Flags the conflict to `art-director` with the specific visual overlap described
-- Proposes alternative differentiation strategies that don't require palette changes (e.g., shape/icon overlay, pattern fill, iconography)
-
-### Case 4: UI state requirement for accessibility feature
-**Input:** "Screen reader support for the inventory requires the system to expose item names and quantities as accessible text nodes."
-**Expected behavior:**
-- Produces an accessibility requirements spec defining the required accessible text properties for each inventory element
-- Identifies that implementing accessible text nodes requires UI system changes
-- Coordinates with `ui-programmer` to implement the required accessible text node exposure
-- Does NOT implement the UI system changes itself
-
-### Case 5: Context pass — WCAG 2.1 targets
-**Input:** Project accessibility target provided in context: WCAG 2.1 AA compliance. Request: "Review the dialogue system for accessibility."
-**Expected behavior:**
-- References specific WCAG 2.1 AA success criteria relevant to dialogue (e.g., 1.4.3 Contrast Minimum, 1.4.4 Resize Text, 2.2.1 Timing Adjustable for auto-advancing dialogue)
-- Uses exact criterion numbers and names from the standard, not paraphrases
-- Flags each finding with the specific criterion it fails
-- Notes which criteria are out of scope for AA (AAA-only) so they are not incorrectly flagged as failures
+- [ ] `description:` 字段存在且针对特定领域（引用无障碍/包容性设计/WCAG）
+- [ ] `allowed-tools:` 列表包含 Read、Write、Edit、Bash、Glob、Grep
+- [ ] 模型层级为 Sonnet（专家类默认值）
+- [ ] Agent 定义不声明对 UX 流程或视觉美术风格的权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (remapping, text scaling, colorblind modes, screen reader, standards compliance)
-- [ ] Redirects UX flow design to ux-designer, art palette decisions to art-director
-- [ ] Returns structured findings with specific element names, contrast ratios, and criterion references
-- [ ] Does not implement UI changes — coordinates with ui-programmer for implementation
-- [ ] References specific WCAG criteria by number when compliance target is provided
-- [ ] Flags conflicts between accessibility requirements and art decisions to art-director
+### 用例 1：领域内请求 — 适当的输出
+**输入：** "请评审玩家 HUD 的无障碍性。"
+**预期行为：**
+- 对 HUD 规格或截图进行审计，检查：
+  - 对比度比率（标记任何 AA 低于 4.5:1 或 AAA 低于 7:1 的文字）
+  - 颜色编码信息的替代表现形式（例如：敌方血条仅使用颜色，无形状区分）
+  - 文字大小（标记在 1080p 下任何低于 16px 等效大小的文字）
+  - 关键状态元素的屏幕阅读器或 TTS 注释可用性
+- 产出带有具体元素名称及其不符合标准项的优先级发现列表
+- 不重新设计 HUD — 仅产出供 ux-designer 和 ui-programmer 处理的发现
+
+### 用例 2：领域外请求 — 正确重定向
+**输入：** "请设计整体游戏流程：主菜单 → 角色选择 → 加载 → 游戏中 → 暂停 → 结算。"
+**预期行为：**
+- 不产出 UX 流程架构
+- 明确说明整体游戏流程设计属于 `ux-designer`
+- 将请求重定向至 `ux-designer`
+- 可以说明在流程设计完成后，可以评审该流程的无障碍顾虑（例如时间限制、认知负荷）
+
+### 用例 3：色盲模式冲突
+**输入：** "针对绿色盲提出的色盲模式将敌方红色血条替换为橙色，但美术调色板已将橙色用于友方单位。"
+**预期行为：**
+- 识别冲突：色盲模式与已建立的友方单位调色板之间的橙色碰撞
+- 不单方面更改美术调色板（该权限属于 art-director）
+- 向 `art-director` 标记冲突，并描述具体的视觉重叠情况
+- 提出不需要更改调色板的替代区分策略（例如形状/图标叠加、图案填充、图形符号）
+
+### 用例 4：无障碍功能的 UI 状态需求
+**输入：** "库存的屏幕阅读器支持需要系统将物品名称和数量作为无障碍文本节点暴露出来。"
+**预期行为：**
+- 产出无障碍需求规格，定义每个库存元素所需的无障碍文本属性
+- 识别实现无障碍文本节点需要 UI 系统的变更
+- 协调 `ui-programmer` 实施所需的无障碍文本节点暴露
+- 不自行实现 UI 系统变更
+
+### 用例 5：上下文传递 — WCAG 2.1 目标
+**输入上下文：** 项目无障碍目标：WCAG 2.1 AA 合规。请求："请评审对话系统的无障碍性。"
+**预期行为：**
+- 引用与对话相关的具体 WCAG 2.1 AA 成功标准（例如：1.4.3 对比度最低要求、1.4.4 文字缩放、2.2.1 时间可调整 — 用于自动推进的对话）
+- 使用标准中的精确准则编号和名称，而非概括性描述
+- 每条发现附带其不符合的具体准则
+- 注明哪些准则超出 AA 范围（仅 AAA），以避免被错误标记为失败
 
 ---
 
-## Coverage Notes
-- HUD audit (Case 1) should produce findings trackable as accessibility stories in the sprint backlog
-- Colorblind conflict (Case 3) confirms the agent respects art-director's authority over the palette
-- WCAG criteria (Case 5) verifies the agent uses standards precisely, not generically
+## 协议合规性
+
+- [ ] 严守声明的领域（重映射、文字缩放、色盲模式、屏幕阅读器、标准合规性）
+- [ ] 将 UX 流程设计重定向至 ux-designer，美术调色板决策重定向至 art-director
+- [ ] 返回带有具体元素名称、对比度比率和准则引用的结构化发现
+- [ ] 不实现 UI 变更 — 协调 ui-programmer 进行实现
+- [ ] 在提供合规目标时按编号引用具体的 WCAG 准则
+- [ ] 将无障碍需求与美术决策的冲突标记给 art-director
+
+---
+
+## 覆盖说明
+- HUD 审计（用例 1）应产出可作为无障碍故事追踪到冲刺待办列表的发现
+- 色盲冲突（用例 3）确认 agent 尊重 art-director 对调色板的权限
+- WCAG 准则（用例 5）验证 agent 精确使用标准，而非泛泛而谈

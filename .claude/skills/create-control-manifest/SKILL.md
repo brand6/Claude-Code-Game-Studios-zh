@@ -1,276 +1,259 @@
 ---
 name: create-control-manifest
-description: "After architecture is complete, produces a flat actionable rules sheet for programmers — what you must do, what you must never do, per system and per layer. Extracted from all Accepted ADRs, technical preferences, and engine reference docs. More immediately actionable than ADRs (which explain why)."
-argument-hint: "[update — regenerate from current ADRs]"
+description: "架构完成后，为程序员生成一份扁平化的可操作规则清单——每个系统和每个层级应该做什么、绝不能做什么。内容提取自所有已接受的 ADR、技术偏好文档和引擎参考文档。比 ADR（解释原因）更直接可操作。"
+argument-hint: "[update — 根据当前 ADR 重新生成]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write, Task
 agent: technical-director
 ---
 
-# Create Control Manifest
+# 创建控制清单
 
-The Control Manifest is a flat, actionable rules sheet for programmers. It
-answers "what do I do?" and "what must I never do?" — organized by architectural
-layer, extracted from all Accepted ADRs, technical preferences, and engine
-reference docs. Where ADRs explain *why*, the manifest tells you *what*.
+控制清单是为程序员准备的扁平化、可操作的规则表。它回答"我应该做什么？"和"我绝不能做什么？"——按架构层级组织，提取自所有已接受的 ADR、技术偏好文档和引擎参考文档。ADR 解释*为什么*，清单告诉你*做什么*。
 
-**Output:** `docs/architecture/control-manifest.md`
+**输出：** `docs/architecture/control-manifest.md`
 
-**When to run:** After `/architecture-review` passes and ADRs are in Accepted
-status. Re-run whenever new ADRs are accepted or existing ADRs are revised.
+**运行时机：** 在 `/architecture-review` 通过且 ADR 处于已接受状态后运行。每当有新 ADR 被接受或现有 ADR 被修订时重新运行。
 
 ---
 
-## 1. Load All Inputs
+## 1. 加载所有输入
 
-### ADRs
-- Glob `docs/architecture/adr-*.md` and read every file
-- Filter to only Accepted ADRs (Status: Accepted) — skip Proposed, Deprecated,
-  Superseded
-- Note the ADR number and title for every rule sourced
+### ADR
+- Glob `docs/architecture/adr-*.md` 并读取所有文件
+- 仅筛选已接受的 ADR（Status: Accepted）——跳过 Proposed、Deprecated、Superseded
+- 记录每条规则来源的 ADR 编号和标题
 
-### Technical Preferences
-- Read `.claude/docs/technical-preferences.md`
-- Extract: naming conventions, performance budgets, approved libraries/addons,
-  forbidden patterns
+### 技术偏好文档
+- 读取 `.claude/docs/technical-preferences.md`
+- 提取：命名规范、性能预算、已批准的库/插件、禁止的模式
 
-### Engine Reference
-- Read `docs/engine-reference/[engine]/VERSION.md` for engine + version
-- Read `docs/engine-reference/[engine]/deprecated-apis.md` — these become
-  forbidden API entries
-- Read `docs/engine-reference/[engine]/current-best-practices.md` if it exists
+### 引擎参考
+- 读取 `docs/engine-reference/[engine]/VERSION.md` 获取引擎 + 版本
+- 读取 `docs/engine-reference/[engine]/deprecated-apis.md`——这些成为禁用 API 条目
+- 如果存在，读取 `docs/engine-reference/[engine]/current-best-practices.md`
 
-Report: "Loaded [N] Accepted ADRs, engine: [name + version]."
+报告："已加载 [N] 个已接受的 ADR，引擎：[名称 + 版本]。"
 
 ---
 
-## 2. Extract Rules from Each ADR
+## 2. 从每个 ADR 提取规则
 
-For each Accepted ADR, extract:
+对每个已接受的 ADR，提取：
 
-### Required Patterns (from "Implementation Guidelines" section)
-- Every "must", "should", "required to", "always" statement
-- Every specific pattern or approach mandated
+### 必须遵循的模式（来自"实现指南"章节）
+- 每条"必须"、"应该"、"要求"、"始终"的表述
+- 每个规定的具体模式或方法
 
-### Forbidden Approaches (from "Alternatives Considered" sections)
-- Every alternative that was explicitly rejected — *why* it was rejected becomes
-  the rule ("never use X because Y")
-- Any anti-patterns explicitly called out
+### 禁止的方法（来自"已考虑的替代方案"章节）
+- 每个被明确拒绝的替代方案——*拒绝原因*成为规则（"永远不要使用 X，因为 Y"）
+- 任何被明确指出的反模式
 
-### Performance Guardrails (from "Performance Implications" section)
-- Budget constraints: "max N ms per frame for this system"
-- Memory limits: "this system must not exceed N MB"
+### 性能护栏（来自"性能影响"章节）
+- 预算约束："该系统每帧最多 N 毫秒"
+- 内存限制："该系统不得超过 N MB"
 
-### Engine API Constraints (from "Engine Compatibility" section)
-- Post-cutoff APIs that require verification
-- Verified behaviours that differ from default LLM assumptions
-- API fields or methods that behave differently in the pinned engine version
+### 引擎 API 约束（来自"引擎兼容性"章节）
+- 需要核实的截止后 API
+- 与默认 LLM 假设不同的已验证行为
+- 在已锁定引擎版本中行为不同的 API 字段或方法
 
-### Layer Classification
-Classify each rule by the architectural layer of the system it governs:
-- **Foundation**: Scene management, event architecture, save/load, engine init
-- **Core**: Core gameplay loops, main player systems, physics/collision
-- **Feature**: Secondary systems, secondary mechanics, AI
-- **Presentation**: Rendering, audio, UI, VFX, shaders
+### 层级分类
+将每条规则按其所管辖系统的架构层级进行分类：
+- **基础层（Foundation）**：场景管理、事件架构、存档/读档、引擎初始化
+- **核心层（Core）**：核心游戏循环、主玩家系统、物理/碰撞
+- **功能层（Feature）**：次要系统、次要机制、AI
+- **表现层（Presentation）**：渲染、音频、UI、VFX、着色器
 
-If an ADR spans multiple layers, duplicate the rule into each relevant layer.
-
----
-
-## 3. Add Global Rules
-
-Combine rules that apply to all layers:
-
-### From technical-preferences.md:
-- Naming conventions (classes, variables, signals/events, files, constants)
-- Performance budgets (target framerate, frame budget, draw call limits, memory ceiling)
-
-### From deprecated-apis.md:
-- All deprecated APIs → Forbidden API entries
-
-### From current-best-practices.md (if available):
-- Engine-recommended patterns → Required entries
-
-### From technical-preferences.md forbidden patterns:
-- Copy any "Forbidden Patterns" entries directly
+如果一个 ADR 跨越多个层级，将该规则复制到每个相关层级中。
 
 ---
 
-## 4. Present Rules Summary Before Writing
+## 3. 添加全局规则
 
-Before writing the manifest, present a summary to the user:
+整合适用于所有层级的规则：
+
+### 来自 technical-preferences.md：
+- 命名规范（类、变量、信号/事件、文件、常量）
+- 性能预算（目标帧率、帧预算、绘制调用上限、内存上限）
+
+### 来自 deprecated-apis.md：
+- 所有已废弃的 API → 成为禁用 API 条目
+
+### 来自 current-best-practices.md（如果存在）：
+- 引擎推荐的模式 → 必须遵循的条目
+
+### 来自 technical-preferences.md 的禁止模式：
+- 直接复制所有"禁止模式"条目
+
+---
+
+## 4. 写入前展示规则摘要
+
+在写入清单之前，向用户展示摘要：
 
 ```
-## Control Manifest Preview
-Engine: [name + version]
-ADRs covered: [list ADR numbers]
-Total rules extracted:
-  - Foundation layer: [N] required, [M] forbidden, [P] guardrails
-  - Core layer: [N] required, [M] forbidden, [P] guardrails
-  - Feature layer: ...
-  - Presentation layer: ...
-  - Global: [N] naming conventions, [M] forbidden APIs, [P] approved libraries
+## 控制清单预览
+引擎：[名称 + 版本]
+已覆盖的 ADR：[列出 ADR 编号]
+已提取的规则总数：
+  - 基础层：[N] 条必须遵循，[M] 条禁止，[P] 条护栏
+  - 核心层：[N] 条必须遵循，[M] 条禁止，[P] 条护栏
+  - 功能层：...
+  - 表现层：...
+  - 全局：[N] 条命名规范，[M] 条禁用 API，[P] 个已批准的库
 ```
 
-Ask: "Does this look complete? Any rules to add or remove before I write the manifest?"
+询问："看起来完整吗？在我写入清单之前，是否有需要添加或移除的规则？"
 
 ---
 
-## 4b. Director Gate — Technical Review
+## 4b. 总监关卡 — 技术评审
 
-**Review mode check** — apply before spawning TD-MANIFEST:
-- `solo` → skip. Note: "TD-MANIFEST skipped — Solo mode." Proceed to Phase 5.
-- `lean` → skip. Note: "TD-MANIFEST skipped — Lean mode." Proceed to Phase 5.
-- `full` → spawn as normal.
+**评审模式检查** — 在生成 TD-MANIFEST 之前应用：
+- `solo` → 跳过。注明："TD-MANIFEST 已跳过——Solo 模式。"继续进行阶段 5。
+- `lean` → 跳过。注明："TD-MANIFEST 已跳过——Lean 模式。"继续进行阶段 5。
+- `full` → 正常生成。
 
-Spawn `technical-director` via Task using gate **TD-MANIFEST** (`.claude/docs/director-gates.md`).
+通过 Task 工具生成 `technical-director` 子智能体，应用关卡 **TD-MANIFEST**（`.claude/docs/director-gates.md`）。
 
-Pass: the Control Manifest Preview from Phase 4 (rule counts per layer, full extracted rule list), the list of ADRs covered, engine version, and any rules sourced from technical-preferences.md or engine reference docs.
+传入：阶段 4 的控制清单预览（每层规则数量、完整提取的规则列表）、已覆盖的 ADR 列表、引擎版本，以及来自 technical-preferences.md 或引擎参考文档的规则。
 
-The technical-director reviews whether:
-- All mandatory ADR patterns are captured and accurately stated
-- Forbidden approaches are complete and correctly attributed
-- No rules were added that lack a source ADR or preference document
-- Performance guardrails are consistent with the ADR constraints
+技术总监评审以下内容：
+- 所有强制 ADR 模式是否已被准确捕获
+- 禁止的方法是否完整且归因正确
+- 是否没有添加缺乏来源 ADR 或偏好文档的规则
+- 性能护栏是否与 ADR 约束一致
 
-Apply the verdict:
-- **APPROVE** → proceed to Phase 5
-- **CONCERNS** → surface via `AskUserQuestion` with options: `Revise flagged rules` / `Accept and proceed` / `Discuss further`
-- **REJECT** → do not write the manifest; fix the flagged rules and re-present the summary
+应用结论：
+- **APPROVE** → 继续进行阶段 5
+- **CONCERNS** → 通过 `AskUserQuestion` 呈现，选项：`修订标注的规则` / `接受并继续` / `进一步讨论`
+- **REJECT** → 不写入清单；修复标注的规则后重新展示摘要
 
 ---
 
-## 5. Write the Control Manifest
+## 5. 写入控制清单
 
-Ask: "May I write this to `docs/architecture/control-manifest.md`?"
+询问："是否允许我将此内容写入 `docs/architecture/control-manifest.md`？"
 
-Format:
+格式：
 
 ```markdown
-# Control Manifest
+# 控制清单
 
-> **Engine**: [name + version]
-> **Last Updated**: [date]
-> **Manifest Version**: [date]
-> **ADRs Covered**: [ADR-NNNN, ADR-MMMM, ...]
-> **Status**: [Active — regenerate with `/create-control-manifest update` when ADRs change]
+> **引擎**：[名称 + 版本]
+> **最后更新**：[日期]
+> **清单版本**：[日期]
+> **已覆盖的 ADR**：[ADR-NNNN, ADR-MMMM, ...]
+> **状态**：[有效——ADR 变更时使用 `/create-control-manifest update` 重新生成]
 
-`Manifest Version` is the date this manifest was generated. Story files embed
-this date when created. `/story-readiness` compares a story's embedded version
-to this field to detect stories written against stale rules. Always matches
-`Last Updated` — they are the same date, serving different consumers.
+`清单版本` 是生成本清单的日期。用户故事文件创建时会嵌入此日期。`/story-readiness` 会将用户故事嵌入的版本与此字段对比，检测基于过期规则编写的用户故事。始终与 `最后更新` 一致——它们是同一日期，服务于不同的使用者。
 
-This manifest is a programmer's quick-reference extracted from all Accepted ADRs,
-technical preferences, and engine reference docs. For the reasoning behind each
-rule, see the referenced ADR.
+本清单是为程序员提供的快速参考，提取自所有已接受的 ADR、技术偏好文档和引擎参考文档。每条规则背后的推理请查阅所引用的 ADR。
 
 ---
 
-## Foundation Layer Rules
+## 基础层规则
 
-*Applies to: scene management, event architecture, save/load, engine initialisation*
+*适用于：场景管理、事件架构、存档/读档、引擎初始化*
 
-### Required Patterns
-- **[rule]** — source: [ADR-NNNN]
-- **[rule]** — source: [ADR-NNNN]
+### 必须遵循的模式
+- **[规则]** — 来源：[ADR-NNNN]
+- **[规则]** — 来源：[ADR-NNNN]
 
-### Forbidden Approaches
-- **Never [anti-pattern]** — [brief reason] — source: [ADR-NNNN]
+### 禁止的方法
+- **永远不要 [反模式]** — [简短原因] — 来源：[ADR-NNNN]
 
-### Performance Guardrails
-- **[system]**: max [N]ms/frame — source: [ADR-NNNN]
+### 性能护栏
+- **[系统]**：每帧最多 [N] 毫秒 — 来源：[ADR-NNNN]
 
 ---
 
-## Core Layer Rules
+## 核心层规则
 
-*Applies to: core gameplay loop, main player systems, physics, collision*
+*适用于：核心游戏循环、主玩家系统、物理、碰撞*
 
-### Required Patterns
+### 必须遵循的模式
 ...
 
-### Forbidden Approaches
+### 禁止的方法
 ...
 
-### Performance Guardrails
+### 性能护栏
 ...
 
 ---
 
-## Feature Layer Rules
+## 功能层规则
 
-*Applies to: secondary mechanics, AI systems, secondary features*
+*适用于：次要机制、AI 系统、次要功能*
 
-### Required Patterns
+### 必须遵循的模式
 ...
 
-### Forbidden Approaches
-...
-
----
-
-## Presentation Layer Rules
-
-*Applies to: rendering, audio, UI, VFX, shaders, animations*
-
-### Required Patterns
-...
-
-### Forbidden Approaches
+### 禁止的方法
 ...
 
 ---
 
-## Global Rules (All Layers)
+## 表现层规则
 
-### Naming Conventions
-| Element | Convention | Example |
-|---------|-----------|---------|
-| Classes | [from technical-preferences] | [example] |
-| Variables | [from technical-preferences] | [example] |
-| Signals/Events | [from technical-preferences] | [example] |
-| Files | [from technical-preferences] | [example] |
-| Constants | [from technical-preferences] | [example] |
+*适用于：渲染、音频、UI、VFX、着色器、动画*
 
-### Performance Budgets
-| Target | Value |
-|--------|-------|
-| Framerate | [from technical-preferences] |
-| Frame budget | [from technical-preferences] |
-| Draw calls | [from technical-preferences] |
-| Memory ceiling | [from technical-preferences] |
+### 必须遵循的模式
+...
 
-### Approved Libraries / Addons
-- [library] — approved for [purpose]
+### 禁止的方法
+...
 
-### Forbidden APIs ([engine version])
-These APIs are deprecated or unverified for [engine + version]:
-- `[api name]` — deprecated since [version] / unverified post-cutoff
-- Source: `docs/engine-reference/[engine]/deprecated-apis.md`
+---
 
-### Cross-Cutting Constraints
-- [constraint that applies everywhere, regardless of layer]
+## 全局规则（所有层级）
+
+### 命名规范
+| 元素 | 规范 | 示例 |
+|------|------|------|
+| 类 | [来自 technical-preferences] | [示例] |
+| 变量 | [来自 technical-preferences] | [示例] |
+| 信号/事件 | [来自 technical-preferences] | [示例] |
+| 文件 | [来自 technical-preferences] | [示例] |
+| 常量 | [来自 technical-preferences] | [示例] |
+
+### 性能预算
+| 目标 | 值 |
+|------|-----|
+| 帧率 | [来自 technical-preferences] |
+| 帧预算 | [来自 technical-preferences] |
+| 绘制调用 | [来自 technical-preferences] |
+| 内存上限 | [来自 technical-preferences] |
+
+### 已批准的库 / 插件
+- [库] — 已批准用于 [用途]
+
+### 禁用 API（[引擎版本]）
+以下 API 在 [引擎 + 版本] 中已废弃或未经验证：
+- `[api 名称]` — 自 [版本] 起废弃 / 截止后未验证
+- 来源：`docs/engine-reference/[engine]/deprecated-apis.md`
+
+### 跨层约束
+- [适用于所有层级、不分层的约束]
 ```
 
 ---
 
-## 6. Suggest Next Steps
+## 6. 建议后续步骤
 
-After writing the manifest:
+写入清单后：
 
-- If epics/stories don't exist yet: "Run `/create-epics layer: foundation` then `/create-stories [epic-slug]` — programmers
-  can now use this manifest when writing story implementation notes."
-- If this is a regeneration (manifest already existed): "Updated. Recommend
-  notifying the team of changed rules — especially any new Forbidden entries."
+- 如果史诗/用户故事尚不存在："运行 `/create-epics layer: foundation`，然后运行 `/create-stories [epic-slug]`——程序员现在可以在编写用户故事实现说明时参考本清单。"
+- 如果是重新生成（清单已存在）："已更新。建议通知团队规则变更——尤其是任何新增的禁止条目。"
 
 ---
 
-## Collaborative Protocol
+## 协作协议
 
-1. **Load silently** — read all inputs before presenting anything
-2. **Show the summary first** — let the user see the scope before writing
-3. **Ask before writing** — always confirm before creating or overwriting the manifest. On write: Verdict: **COMPLETE** — control manifest written. On decline: Verdict: **BLOCKED** — user declined write.
-4. **Source every rule** — never add a rule that doesn't trace to an ADR, a
-   technical preference, or an engine reference doc
-5. **No interpretation** — extract rules as stated in ADRs; do not paraphrase
-   in ways that change meaning
+1. **静默加载** — 在展示任何内容之前先读取所有输入
+2. **先展示摘要** — 让用户在写入之前看清范围
+3. **写入前征得同意** — 在创建或覆盖清单之前始终确认。写入后结论：**COMPLETE** — 控制清单已写入。拒绝时结论：**BLOCKED** — 用户拒绝写入。
+4. **每条规则都要有来源** — 绝不添加无法追溯到 ADR、技术偏好或引擎参考文档的规则
+5. **不做解读** — 按 ADR 原文提取规则；不以改变含义的方式进行意译

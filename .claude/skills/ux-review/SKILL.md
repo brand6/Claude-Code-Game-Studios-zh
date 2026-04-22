@@ -1,204 +1,176 @@
 ---
 name: ux-review
-description: "Validates a UX spec, HUD design, or interaction pattern library for completeness, accessibility compliance, GDD alignment, and implementation readiness. Produces APPROVED / NEEDS REVISION / MAJOR REVISION NEEDED verdict with specific gaps."
-argument-hint: "[file-path or 'all' or 'hud' or 'patterns']"
+description: "验证 UX 规格、HUD 设计或交互模式库的完整性、无障碍合规性、GDD 对齐情况及实施就绪状态。生成 APPROVED / NEEDS REVISION / MAJOR REVISION NEEDED 结论，附具体缺口说明。"
+argument-hint: "[文件路径 或 'all' 或 'hud' 或 'patterns']"
 user-invocable: true
 allowed-tools: Read, Glob, Grep
 agent: ux-designer
 ---
 
-## Overview
+## 概述
 
-Validates UX design documents before they enter the implementation pipeline.
-Acts as the quality gate between UX Design and Visual Design/Implementation in
-the `/team-ui` pipeline.
+在 UX 设计文档进入实施流水线之前对其进行验证。
+在 `/team-ui` 流水线的 UX 设计与视觉设计/实施之间充当质量门控。
 
-**Run this skill:**
-- After completing a UX spec with `/ux-design`
-- Before handing off to `ui-programmer` or `art-director`
-- Before the Pre-Production to Production gate check (which requires key screens
-  to have reviewed UX specs)
-- After major revisions to a UX spec
+**运行本技能的时机：**
+- 用 `/ux-design` 完成 UX 规格后
+- 交付给 `ui-programmer` 或 `art-director` 之前
+- 预生产到生产门控检查之前（要求关键屏幕有已审阅的 UX 规格）
+- 对 UX 规格进行重大修订后
 
-**Verdict levels:**
-- **APPROVED** — spec is complete, consistent, and implementation-ready
-- **NEEDS REVISION** — specific gaps found; fix before handoff but not a full redesign
-- **MAJOR REVISION NEEDED** — fundamental issues with scope, player need, or
-  completeness; needs significant rework
+**结论等级：**
+- **APPROVED** — 规格完整、一致，可实施
+- **NEEDS REVISION** — 发现具体缺口；在交付前修复，但不需要完全重新设计
+- **MAJOR REVISION NEEDED** — 范围、玩家需求或完整性存在根本性问题；需要大量返工
 
 ---
 
-## Phase 1: Parse Arguments
+## 第 1 阶段：解析参数
 
-- **Specific file path** (e.g., `/ux-review design/ux/inventory.md`): validate
-  that one document
-- **`all`**: find all files in `design/ux/` and validate each
-- **`hud`**: validate `design/ux/hud.md` specifically
-- **`patterns`**: validate `design/ux/interaction-patterns.md` specifically
-- **No argument**: ask the user which spec to validate
+- **具体文件路径**（如 `/ux-review design/ux/inventory.md`）：验证该文档
+- **`all`**：找到 `design/ux/` 中的所有文件并逐一验证
+- **`hud`**：专门验证 `design/ux/hud.md`
+- **`patterns`**：专门验证 `design/ux/interaction-patterns.md`
+- **无参数**：询问用户要验证哪个规格
 
-For `all`, output a summary table first (file | verdict | primary issue) then
-full detail for each.
+对于 `all`，先输出摘要表（文件 | 结论 | 主要问题），然后逐个提供详细信息。
 
 ---
 
-## Phase 2: Load Cross-Reference Context
+## 第 2 阶段：加载交叉参考上下文
 
-Before validating any spec, load:
+在验证任何规格之前，加载：
 
-1. **Input & Platform config**: Read `.claude/docs/technical-preferences.md` and
-   extract `## Input & Platform`. This is the authoritative source for which input
-   methods the game supports — use it to drive the Input Method Coverage checks in
-   Phase 3A, not the spec's own header. If unconfigured, fall back to the spec header.
-2. The accessibility tier committed to in `design/accessibility-requirements.md`
-   (if it exists)
-3. The interaction pattern library at `design/ux/interaction-patterns.md` (if
-   it exists)
-4. The GDDs referenced in the spec's header (read their UI Requirements sections)
-5. The player journey map at `design/player-journey.md` (if it exists) for
-   context-arrival validation
+1. **输入与平台配置**：读取 `.claude/docs/technical-preferences.md` 并
+   提取 `## Input & Platform`。这是游戏支持哪些输入方式的权威来源——
+   用它驱动第 3A 阶段的输入方式覆盖检查，而不是规格自己的标题。
+   若未配置，则退回到规格标题。
+2. `design/accessibility-requirements.md` 中承诺的无障碍等级（若存在）
+3. `design/ux/interaction-patterns.md` 中的交互模式库（若存在）
+4. 规格标题中引用的 GDD（读取它们的 UI 需求部分）
+5. `design/player-journey.md` 中的玩家旅程地图（若存在）用于情境到达验证
 
 ---
 
-## Phase 3A: UX Spec Validation Checklist
+## 第 3A 阶段：UX 规格验证清单
 
-Run all checks against a `ux-spec.md`-based document.
+对基于 `ux-spec.md` 的文档运行所有检查。
 
-### Completeness (required sections)
+### 完整性（必需部分）
 
-- [ ] Document header present with Status, Author, Platform Target
-- [ ] Purpose & Player Need — has a player-perspective need statement (not
-  developer-perspective)
-- [ ] Player Context on Arrival — describes player's state and prior activity
-- [ ] Navigation Position — shows where screen sits in hierarchy
-- [ ] Entry & Exit Points — all entry sources and exit destinations documented
-- [ ] Layout Specification — zones defined, component inventory table present
-- [ ] States & Variants — at minimum: loading, empty/populated, and error states
-  documented
-- [ ] Interaction Map — covers all target input methods (check platform target
-  in header)
-- [ ] Data Requirements — every displayed data element has a source system and owner
-- [ ] Events Fired — every player action has a corresponding event or null
-  explanation
-- [ ] Transitions & Animations — at least enter/exit transitions specified
-- [ ] Accessibility Requirements — screen-level requirements present
-- [ ] Localization Considerations — max character counts for text elements
-- [ ] Acceptance Criteria — at least 5 specific testable criteria
+- [ ] 文档标题包含 Status、Author、Platform Target
+- [ ] 目的与玩家需求——有玩家视角的需求声明（非开发者视角）
+- [ ] 到达时的玩家情境——描述玩家状态和先前活动
+- [ ] 导航位置——显示屏幕在层级中的位置
+- [ ] 入口与出口——所有入口来源和出口目标已记录
+- [ ] 布局规格——区域已定义，组件清单表格已存在
+- [ ] 状态与变体——至少记录了加载、空/已填充和错误状态
+- [ ] 交互地图——覆盖所有目标输入方式（检查标题中的平台目标）
+- [ ] 数据需求——每个显示的数据元素均有来源系统和所有者
+- [ ] 触发的事件——每个玩家操作均有对应事件或空解释
+- [ ] 过渡与动画——至少指定了进入/退出过渡
+- [ ] 无障碍需求——屏幕级需求已存在
+- [ ] 本地化注意事项——文字元素的最大字符数
+- [ ] 验收标准——至少 5 条具体可测试的标准
 
-### Quality Checks
+### 质量检查
 
-**Player Need Clarity**
-- [ ] Purpose is written from player perspective, not system/developer perspective
-- [ ] Player goal on arrival is unambiguous ("The player arrives wanting to ___")
-- [ ] The player context on arrival is specific (not just "they opened the
-  inventory")
+**玩家需求清晰度**
+- [ ] 目的从玩家视角撰写，而非系统/开发者视角
+- [ ] 玩家到达时的目标明确（"玩家到达时想要 ___"）
+- [ ] 玩家到达时的情境具体（不只是"他们打开了背包"）
 
-**Completeness of States**
-- [ ] Error state is documented (not just happy path)
-- [ ] Empty state is documented (no data scenario)
-- [ ] Loading state is documented if the screen fetches async data
-- [ ] Any state with a timer or auto-dismiss is documented with duration
+**状态完整性**
+- [ ] 错误状态已记录（不只有理想路径）
+- [ ] 空状态已记录（无数据场景）
+- [ ] 若屏幕获取异步数据，加载状态已记录
+- [ ] 有计时器或自动关闭的状态已记录持续时间
 
-**Input Method Coverage**
-- [ ] If platform includes PC: keyboard-only navigation is fully specified
-- [ ] If platform includes console/gamepad: d-pad navigation and face button
-  mapping documented
-- [ ] No interaction requires mouse-like precision on gamepad
-- [ ] Focus order is defined (Tab order for keyboard, d-pad order for gamepad)
+**输入方式覆盖**
+- [ ] 若平台包含 PC：纯键盘导航已完整指定
+- [ ] 若平台包含主机/手柄：方向键导航和面键映射已记录
+- [ ] 手柄上没有需要鼠标精度的交互
+- [ ] 焦点顺序已定义（键盘的 Tab 顺序，手柄的方向键顺序）
 
-**Data Architecture**
-- [ ] No data element has "UI" listed as the owner (UI must not own game state)
-- [ ] Update frequency is specified for all real-time data (not just "realtime" —
-  what triggers update?)
-- [ ] Null handling is specified for all data elements (what shows when data is
-  unavailable?)
+**数据架构**
+- [ ] 没有数据元素将"UI"列为所有者（UI 不能拥有游戏状态）
+- [ ] 所有实时数据均指定了更新频率（不只是"实时"——什么触发更新？）
+- [ ] 所有数据元素均指定了空处理（数据不可用时显示什么？）
 
-**Accessibility**
-- [ ] Accessibility tier from `accessibility-requirements.md` is matched or exceeded
-- [ ] If Basic tier: no color-only information indicators
-- [ ] If Standard tier+: focus order documented, text contrast ratios specified
-- [ ] If Comprehensive tier+: screen reader announcements for key state changes
-- [ ] Colorblind check: any color-coded elements have non-color alternatives
+**无障碍**
+- [ ] `accessibility-requirements.md` 中承诺的无障碍等级已满足或超出
+- [ ] 若为 Basic 等级：没有仅通过颜色传递的信息指示器
+- [ ] 若为 Standard 等级以上：焦点顺序已记录，文字对比度已指定
+- [ ] 若为 Comprehensive 等级以上：关键状态变化的屏幕阅读器通知
+- [ ] 色盲检查：任何颜色编码的元素均有非颜色的替代方案
 
-**GDD Alignment**
-- [ ] Every GDD UI Requirement referenced in the header is addressed in this spec
-- [ ] No UI element displays or modifies game state without a corresponding GDD
-  requirement
-- [ ] No GDD UI Requirement is missing from this spec (cross-check the referenced
-  GDD sections)
+**GDD 对齐**
+- [ ] 标题中引用的每条 GDD UI 需求均在本规格中得到体现
+- [ ] 没有 UI 元素在没有对应 GDD 需求的情况下显示或修改游戏状态
+- [ ] 本规格中没有遗漏的 GDD UI 需求（与引用的 GDD 部分交叉核查）
 
-**Pattern Library Consistency**
-- [ ] All interactive components reference the pattern library (or note they are
-  new patterns)
-- [ ] No pattern behavior is re-specified from scratch if it already exists in
-  the pattern library
-- [ ] Any new patterns invented in this spec are flagged for addition to the
-  pattern library
+**模式库一致性**
+- [ ] 所有交互组件引用了模式库（或注明为新模式）
+- [ ] 没有模式行为在模式库中已存在的情况下从头重新规格
+- [ ] 本规格中发明的任何新模式均已标记为待添加到模式库
 
-**Localization**
-- [ ] Character limit warnings present for all text-heavy elements
-- [ ] Any layout-critical text has been flagged for 40% expansion accommodation
+**本地化**
+- [ ] 所有文字密集元素均存在字符数限制警告
+- [ ] 所有布局关键文字均已标记为需要 40% 扩展适应
 
-**Acceptance Criteria Quality**
-- [ ] Criteria are specific enough for a QA tester who hasn't seen the design docs
-- [ ] Performance criterion present (screen opens within Xms)
-- [ ] Resolution criterion present
-- [ ] No criterion requires reading another document to evaluate
+**验收标准质量**
+- [ ] 标准对于未阅读设计文档的 QA 测试员来说足够具体
+- [ ] 存在性能标准（屏幕打开时间）
+- [ ] 存在分辨率标准
+- [ ] 没有需要阅读其他文档才能评估的标准
 
 ---
 
-## Phase 3B: HUD Validation Checklist
+## 第 3B 阶段：HUD 验证清单
 
-Run all checks against a `hud-design.md`-based document.
+对基于 `hud-design.md` 的文档运行所有检查。
 
-### Completeness
+### 完整性
 
-- [ ] HUD Philosophy defined
-- [ ] Information Architecture table covers ALL systems with UI Requirements in GDDs
-- [ ] Layout Zones defined with safe zone margins for all target platforms
-- [ ] Every HUD element has a full specification (zone, visibility trigger, data
-  source, priority)
-- [ ] HUD States by Gameplay Context covers at minimum: exploration, combat,
-  dialogue/cutscene, paused
-- [ ] Visual Budget defined (max simultaneous elements, max screen %)
-- [ ] Platform Adaptation covers all target platforms
-- [ ] Tuning Knobs present for player-adjustable elements
+- [ ] HUD 哲学已定义
+- [ ] 信息架构表涵盖 GDD 中所有有 UI 需求的系统
+- [ ] 布局区域已定义，包含所有目标平台的安全区域边距
+- [ ] 每个 HUD 元素均有完整规格（区域、可见性触发器、数据来源、优先级）
+- [ ] 按游戏情境的 HUD 状态至少涵盖：探索、战斗、对话/过场动画、暂停
+- [ ] 视觉预算已定义（最大同时元素数、最大屏幕占比）
+- [ ] 平台适应涵盖所有目标平台
+- [ ] 玩家可调节元素存在调节旋钮
 
-### Quality Checks
+### 质量检查
 
-- [ ] No HUD element covers the center play area without a visibility rule to
-  hide it
-- [ ] Every information item that exists in any GDD is either in the HUD or
-  explicitly categorized as "hidden/demand"
-- [ ] All color-coded HUD elements have colorblind variants
-- [ ] HUD elements in the Feedback & Notification section have queue/priority
-  behavior defined
-- [ ] Visual Budget compliance: total simultaneous elements is within budget
+- [ ] 没有 HUD 元素在没有可见性规则隐藏它的情况下覆盖中心游戏区域
+- [ ] 所有 GDD 中存在的每条信息要么在 HUD 中，要么明确分类为"隐藏/按需"
+- [ ] 所有颜色编码的 HUD 元素均有色盲变体
+- [ ] 反馈与通知部分的 HUD 元素定义了队列/优先级行为
+- [ ] 视觉预算合规：总同时元素在预算内
 
-### GDD Alignment
+### GDD 对齐
 
-- [ ] All systems in `design/gdd/systems-index.md` with UI category have
-  representation in HUD (or justified absence)
+- [ ] `design/gdd/systems-index.md` 中所有 UI 类别的系统在 HUD 中均有体现
+  （或有合理的缺席说明）
 
 ---
 
-## Phase 3C: Pattern Library Validation Checklist
+## 第 3C 阶段：模式库验证清单
 
-- [ ] Pattern catalog index is current (matches actual patterns in document)
-- [ ] All standard control patterns are specified: button variants, toggle,
-  slider, dropdown, list, grid, modal, dialog, toast, tooltip, progress bar,
-  input field, tab bar, scroll
-- [ ] All game-specific patterns needed by current UX specs are present
-- [ ] Each pattern has: When to Use, When NOT to Use, full state specification,
-  accessibility spec, implementation notes
-- [ ] Animation Standards table present
-- [ ] Sound Standards table present
-- [ ] No conflicting behaviors between patterns (e.g., "Back" behavior consistent
-  across all navigation patterns)
+- [ ] 模式目录索引是最新的（与文档中的实际模式匹配）
+- [ ] 所有标准控件模式均已指定：按钮变体、切换、滑块、下拉菜单、
+  列表、网格、模态框、对话框、Toast 提示、工具提示、进度条、
+  输入框、标签栏、滚动
+- [ ] 当前 UX 规格所需的所有游戏特定模式均存在
+- [ ] 每个模式均包含：使用时机、不使用时机、完整状态规格、无障碍规格、实施说明
+- [ ] 动画标准表已存在
+- [ ] 音效标准表已存在
+- [ ] 模式之间没有冲突行为（例如所有导航模式中"返回"行为一致）
 
 ---
 
-## Phase 4: Output the Verdict
+## 第 4 阶段：输出结论
 
 ```markdown
 ## UX Review: [Document Name]
@@ -245,18 +217,16 @@ Recommend returning to `/ux-design` to rework [sections].
 
 ---
 
-## Phase 5: Collaborative Protocol
+## 第 5 阶段：协作协议
 
-This skill is READ-ONLY — it never edits or writes files. It reports findings only.
+本技能为只读——它永远不会编辑或写入文件。仅报告发现结果。
 
-After delivering the verdict:
-- For **APPROVED**: suggest running `/team-ui` to begin implementation coordination
-- For **NEEDS REVISION**: offer to help fix specific gaps ("Would you like me to
-  help draft the missing error state?") — but do not auto-fix; wait for user
-  instruction
-- For **MAJOR REVISION NEEDED**: suggest returning to `/ux-design` with the
-  specific sections to rework
+交付结论后：
+- **APPROVED**：建议运行 `/team-ui` 开始实施协调
+- **NEEDS REVISION**：提议帮助修复具体缺口（"需要我帮助起草缺失的错误状态吗？"）
+  ——但不要自动修复；等待用户指令
+- **MAJOR REVISION NEEDED**：建议返回 `/ux-design` 处理需要返工的具体部分
 
-Never block the user from proceeding — the verdict is advisory. Document risks,
-present findings, let the user decide whether to proceed despite concerns. A user
-who chooses to proceed with a NEEDS REVISION spec takes on the documented risk.
+永远不要阻止用户继续——结论是建议性的。记录风险，呈现发现结果，
+让用户决定是否在有顾虑的情况下继续。选择在 NEEDS REVISION 规格下继续的用户
+承担已记录的风险。

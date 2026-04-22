@@ -148,3 +148,17 @@ $RECYCLE.BIN/
 
 # Ignore Smart Environment folder
 .smart-env
+
+# === Local Workspace State ===
+.obsidian/
+.venv/
+
+# === Translation Workbench (not part of release root) ===
+auto/
+zh-auto/
+task_plan.md
+progress.md
+findings.md
+check-list.md
+CCGS修改记录.md
+修改指南.md

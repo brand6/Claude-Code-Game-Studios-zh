@@ -1,89 +1,85 @@
 ---
 name: test-setup
-description: "Scaffold the test framework and CI/CD pipeline for the project's engine. Creates the tests/ directory structure, engine-specific test runner configuration, and GitHub Actions workflow. Run once during Technical Setup phase before the first sprint begins."
+description: "为项目引擎搭建测试框架和 CI/CD 流水线。创建 tests/ 目录结构、引擎特定测试运行器配置以及 GitHub Actions 工作流。在首次冲刺开始前的技术设置阶段运行一次。"
 argument-hint: "[force]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Bash, Write
 ---
 
-# Test Setup
+# 测试设置
 
-This skill scaffolds the automated testing infrastructure for the project.
-It detects the configured engine, generates the appropriate test runner
-configuration, creates the standard directory layout, and wires up CI/CD
-so tests run on every push.
+本技能为项目搭建自动化测试基础设施。
+检测已配置的引擎，生成相应的测试运行器配置，创建标准目录布局，
+并接入 CI/CD，以便在每次推送时运行测试。
 
-Run this once during the Technical Setup phase, before any implementation
-begins. A test framework installed at sprint start costs 30 minutes.
-A test framework installed at sprint four costs 3 sprints.
+在技术设置阶段运行一次，在任何实现开始之前。
+在冲刺开始时安装测试框架需要 30 分钟。在第四个冲刺时安装需要 3 个冲刺的代价。
 
-**Output:** `tests/` directory structure + `.github/workflows/tests.yml`
+**输出：** `tests/` 目录结构 + `.github/workflows/tests.yml`
 
 ---
 
-## Phase 1: Detect Engine and Existing State
+## 阶段 1：检测引擎和现有状态
 
-1. **Read engine config**:
-   - Read `.claude/docs/technical-preferences.md` and extract the `Engine:` value.
-   - If engine is not configured (`[TO BE CONFIGURED]`), stop:
-     "Engine not configured. Run `/setup-engine` first, then re-run `/test-setup`."
+1. **读取引擎配置**：
+   - 读取 `.claude/docs/technical-preferences.md` 并提取 `Engine:` 值。
+   - 若引擎未配置（`[TO BE CONFIGURED]`），停止：
+     "引擎未配置。先运行 `/setup-engine`，然后重新运行 `/test-setup`。"
 
-2. **Check for existing test infrastructure**:
-   - Glob `tests/` — does the directory exist?
-   - Glob `tests/unit/` and `tests/integration/` — do subdirectories exist?
-   - Glob `.github/workflows/` — does a CI workflow file exist?
-   - Glob `tests/gdunit4_runner.gd` (Godot) or `tests/EditMode/` (Unity) or
-     `Source/Tests/` (Unreal) for engine-specific artifacts.
+2. **检查现有测试基础设施**：
+   - Glob `tests/` — 目录是否存在？
+   - Glob `tests/unit/` 和 `tests/integration/` — 子目录是否存在？
+   - Glob `.github/workflows/` — CI 工作流文件是否存在？
+   - Glob `tests/gdunit4_runner.gd`（Godot）、`tests/EditMode/`（Unity）或
+     `Source/Tests/`（Unreal）用于引擎特定制品。
 
-3. **Report findings**:
-   - "Engine: [engine]. Test directory: [found / not found]. CI workflow: [found / not found]."
-   - If everything already exists AND `force` argument was not passed:
-     "Test infrastructure appears to be in place. Re-run with `/test-setup force`
-     to regenerate. Proceeding will not overwrite existing test files."
+3. **报告发现结果**：
+   - "引擎：[engine]。测试目录：[找到 / 未找到]。CI 工作流：[找到 / 未找到]。"
+   - 若所有内容已存在且未传入 `force` 参数：
+     "测试基础设施似乎已就位。使用 `/test-setup force` 重新运行以重新生成。
+     继续操作不会覆盖现有测试文件。"
 
-If the `force` argument is passed, skip the "already exists" early-exit and
-proceed — but still do not overwrite files that already exist at a given path.
-Only create files that are missing.
+若传入 `force` 参数，跳过"已存在"的提前退出并继续——
+但仍不要覆盖给定路径上已存在的文件。仅创建缺失的文件。
 
 ---
 
-## Phase 2: Present Plan
+## 阶段 2：呈现计划
 
-Based on the engine detected and the existing state, present a plan:
+根据检测到的引擎和现有状态，呈现计划：
 
 ```
-## Test Setup Plan — [Engine]
+## 测试设置计划 — [Engine]
 
-I will create the following (skipping any that already exist):
+我将创建以下内容（跳过已存在的）：
 
 tests/
-  unit/           — Isolated unit tests for formulas, state, and logic
-  integration/    — Cross-system tests and save/load round-trips
-  smoke/          — Critical path test list (15-minute manual gate)
-  evidence/       — Screenshot and manual test sign-off records
-  README.md       — Test framework documentation
+  unit/           — 用于公式、状态和逻辑的隔离单元测试
+  integration/    — 跨系统测试和存档/读档往返测试
+  smoke/          — 关键路径测试列表（15 分钟手动门控）
+  evidence/       — 截图和手动测试签收记录
+  README.md       — 测试框架文档
 
-[Engine-specific files — see per-engine details below]
+[引擎特定文件——见各引擎详情]
 
-.github/workflows/tests.yml  — CI: run tests on every push to main
+.github/workflows/tests.yml  — CI：每次推送到 main 时运行测试
 
-Estimated time: ~5 minutes to create all files.
+预估时间：创建所有文件约需 5 分钟。
 ```
 
-Ask: "May I create these files? I will not overwrite any test files that
-already exist at these paths."
+询问："我可以创建这些文件吗？我不会覆盖这些路径上已存在的任何测试文件。"
 
-Do not proceed without approval.
+未经批准不得继续。
 
 ---
 
-## Phase 3: Create Directory Structure
+## 阶段 3：创建目录结构
 
-After approval, create the following files:
+批准后，创建以下文件：
 
 ### `tests/README.md`
 
-```markdown
+````markdown
 # Test Infrastructure
 
 **Engine**: [engine name + version]
@@ -125,14 +121,13 @@ tests/
 
 Tests run automatically on every push to `main` and on every pull request.
 A failed test suite blocks merging.
-```
-```
+````
 
-### Engine-specific files
+### 引擎特定文件
 
-#### Godot 4 (`Engine: Godot`)
+#### Godot 4（`Engine: Godot`）
 
-Create `tests/gdunit4_runner.gd`:
+创建 `tests/gdunit4_runner.gd`：
 
 ```gdscript
 # GdUnit4 test runner — invoked by CI and /smoke-check
@@ -150,23 +145,23 @@ func _init() -> void:
     quit(0)
 ```
 
-Create `tests/unit/.gdignore_placeholder` with content:
+创建 `tests/unit/.gdignore_placeholder`，内容为：
 `# Unit tests go here — one subdirectory per system (e.g., tests/unit/combat/)`
 
-Create `tests/integration/.gdignore_placeholder` with content:
+创建 `tests/integration/.gdignore_placeholder`，内容为：
 `# Integration tests go here — one subdirectory per system`
 
-Note in the README: **Installing GdUnit4**
+在 README 中说明：**安装 GdUnit4**
 ```
-1. Open Godot → AssetLib → search "GdUnit4" → Download & Install
-2. Enable the plugin: Project → Project Settings → Plugins → GdUnit4 ✓
-3. Restart the editor
-4. Verify: res://addons/gdunit4/ exists
+1. 打开 Godot → AssetLib → 搜索 "GdUnit4" → 下载并安装
+2. 启用插件：项目 → 项目设置 → 插件 → GdUnit4 ✓
+3. 重启编辑器
+4. 验证：res://addons/gdunit4/ 存在
 ```
 
-#### Unity (`Engine: Unity`)
+#### Unity（`Engine: Unity`）
 
-Create `tests/EditMode/` placeholder file `tests/EditMode/README.md`:
+创建 `tests/EditMode/README.md` 占位文件：
 ```markdown
 # Edit Mode Tests
 Unit tests that run without entering Play Mode.
@@ -174,7 +169,7 @@ Use for pure logic: formulas, state machines, data validation.
 Assembly definition required: `tests/EditMode/EditModeTests.asmdef`
 ```
 
-Create `tests/PlayMode/README.md`:
+创建 `tests/PlayMode/README.md`：
 ```markdown
 # Play Mode Tests
 Integration tests that run in a real game scene.
@@ -182,15 +177,15 @@ Use for cross-system interactions, physics, and coroutines.
 Assembly definition required: `tests/PlayMode/PlayModeTests.asmdef`
 ```
 
-Note in the README: **Enabling Unity Test Framework**
+在 README 中说明：**启用 Unity 测试框架**
 ```
 Window → General → Test Runner
-(Unity Test Framework is included by default in Unity 2019+)
+（Unity 测试框架默认包含在 Unity 2019+ 中）
 ```
 
-#### Unreal Engine (`Engine: Unreal` or `Engine: UE5`)
+#### Unreal Engine（`Engine: Unreal` 或 `Engine: UE5`）
 
-Create `Source/Tests/README.md`:
+创建 `Source/Tests/README.md`：
 ```markdown
 # Unreal Automation Tests
 Tests use the UE Automation Testing Framework.
@@ -203,11 +198,11 @@ Test category naming: "MyGame.[System].[Feature]"
 
 ---
 
-## Phase 4: Create CI/CD Workflow
+## 阶段 4：创建 CI/CD 工作流
 
 ### Godot 4
 
-Create `.github/workflows/tests.yml`:
+创建 `.github/workflows/tests.yml`：
 
 ```yaml
 name: Automated Tests
@@ -248,7 +243,7 @@ jobs:
 
 ### Unity
 
-Create `.github/workflows/tests.yml`:
+创建 `.github/workflows/tests.yml`：
 
 ```yaml
 name: Automated Tests
@@ -294,12 +289,11 @@ jobs:
           path: test-results/
 ```
 
-Note: Unity CI requires a `UNITY_LICENSE` secret. Add to GitHub repository
-secrets before the first CI run.
+注意：Unity CI 需要 `UNITY_LICENSE` Secret。首次 CI 运行前将其添加到 GitHub 仓库 Secrets 中。
 
 ### Unreal Engine
 
-Create `.github/workflows/tests.yml`:
+创建 `.github/workflows/tests.yml`：
 
 ```yaml
 name: Automated Tests
@@ -337,14 +331,14 @@ jobs:
           path: Saved/Logs/
 ```
 
-Note: UE CI requires a self-hosted runner with Unreal Editor installed.
-Set the `UE_EDITOR_PATH` environment variable on the runner.
+注意：UE CI 需要安装了 Unreal Editor 的自托管运行器。
+在运行器上设置 `UE_EDITOR_PATH` 环境变量。
 
 ---
 
-## Phase 5: Create Smoke Test Seed
+## 阶段 5：创建冒烟测试种子
 
-Create `tests/smoke/critical-paths.md`:
+创建 `tests/smoke/critical-paths.md`：
 
 ```markdown
 # Smoke Test: Critical Paths
@@ -378,48 +372,43 @@ Create `tests/smoke/critical-paths.md`:
 
 ---
 
-## Phase 6: Post-Setup Summary
+## 阶段 6：设置后摘要
 
-After writing all files, report:
+写入所有文件后，报告：
 
 ```
-Test infrastructure created for [engine].
+已为 [engine] 创建测试基础设施。
 
-Files created:
+已创建文件：
 - tests/README.md
-- tests/unit/ (directory)
-- tests/integration/ (directory)
+- tests/unit/（目录）
+- tests/integration/（目录）
 - tests/smoke/critical-paths.md
-- tests/evidence/ (directory)
-[engine-specific files]
+- tests/evidence/（目录）
+[引擎特定文件]
 - .github/workflows/tests.yml
 
-Next steps:
-1. [Engine-specific install step, e.g., "Install GdUnit4 via AssetLib"]
-2. Write your first test: create tests/unit/[first-system]/[system]_test.[ext]
-3. Run `/qa-plan sprint` before your first sprint to classify stories and set
-   test evidence requirements
-4. `/smoke-check` before every QA hand-off
+下一步：
+1. [引擎特定安装步骤，例如"通过 AssetLib 安装 GdUnit4"]
+2. 编写第一个测试：创建 tests/unit/[first-system]/[system]_test.[ext]
+3. 在第一个冲刺前运行 `/qa-plan sprint` 对故事进行分类并设置测试证据要求
+4. 每次 QA 移交前运行 `/smoke-check`
 
-Gate note: /gate-check Technical Setup → Pre-Production now requires:
-- tests/ directory with unit/ and integration/ subdirectories
+门控说明：`/gate-check` 技术设置 → 前期制作现在需要：
+- tests/ 目录包含 unit/ 和 integration/ 子目录
 - .github/workflows/tests.yml
-- At least one example test file
-Run /test-setup and write one example test before advancing.
+- 至少一个示例测试文件
+运行 /test-setup 并编写一个示例测试后再推进。
 
-Verdict: **COMPLETE** — test framework scaffolded and CI/CD wired up.
+结论：**COMPLETE** — 测试框架已搭建，CI/CD 已接入。
 ```
 
 ---
 
 ## Collaborative Protocol
 
-- **Never overwrite existing test files** — only create files that are missing.
-  If a test runner file exists, leave it as-is.
-- **Always ask before creating files** — Phase 2 requires explicit approval.
-- **Engine detection is non-negotiable** — if the engine is not configured,
-  stop and redirect to `/setup-engine`. Do not guess.
-- **`force` flag skips the "already exists" early-exit but never overwrites.**
-  It means "create any missing files even if the directory already exists."
-- For Unity CI, note that the `UNITY_LICENSE` secret must be configured
-  manually. Do not attempt to automate license management.
+- **绝不覆盖已有测试文件** — 仅创建缺失的文件。若测试运行器文件已存在，保持原样。
+- **创建文件前始终询问** — 阶段 2 需要明确批准。
+- **引擎检测不可协商** — 若引擎未配置，停止并重定向到 `/setup-engine`。不猜测。
+- **`force` 标志跳过"已存在"的提前退出，但绝不覆盖。** 它的含义是"即使目录已存在也创建所有缺失文件。"
+- 对于 Unity CI，注意 `UNITY_LICENSE` Secret 必须手动配置。不要尝试自动化许可证管理。

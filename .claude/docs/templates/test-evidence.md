@@ -1,86 +1,78 @@
-# Test Evidence: [Story Title]
+# 测试证据：[Story Title]
 
-> **Story**: `[path to story file]`
-> **Story Type**: [Visual/Feel | UI]
-> **Date**: [date]
-> **Tester**: [who performed the test]
-> **Build / Commit**: [version or git hash]
-
----
-
-## What Was Tested
-
-[One paragraph describing the feature or behaviour that was validated. Include
-the acceptance criteria numbers from the story that this evidence covers.]
-
-**Acceptance criteria covered**: [AC-1, AC-2, AC-3]
+> **Story**：`[故事文件路径]`
+> **Story 类型**：[Visual/Feel | UI]
+> **日期**：[date]
+> **测试人员**：[执行测试的人员]
+> **构建版本 / 提交哈希**：[版本号或 git hash]
 
 ---
 
-## Acceptance Criteria Results
+## 测试内容
 
-| # | Criterion (from story) | Result | Notes |
-|---|----------------------|--------|-------|
-| AC-1 | [exact criterion text] | PASS / FAIL | [any observations] |
-| AC-2 | [exact criterion text] | PASS / FAIL | |
-| AC-3 | [exact criterion text] | PASS / FAIL | |
+[用一段话描述经过验证的功能或行为。包含本证据所覆盖的故事中的验收标准编号。]
+
+**覆盖的验收标准**：[AC-1, AC-2, AC-3]
 
 ---
 
-## Screenshots / Video
+## 验收标准结果
 
-List all captured evidence below. Store files in the same directory as this
-document or in `production/qa/evidence/[story-slug]/`.
+| # | 标准（来自故事） | 结果 | 备注 |
+|---|---------------|------|------|
+| AC-1 | [验收标准原文] | PASS / FAIL | [任何观察记录] |
+| AC-2 | [验收标准原文] | PASS / FAIL | |
+| AC-3 | [验收标准原文] | PASS / FAIL | |
 
-| # | Filename | What It Shows | Acceptance Criterion |
-|---|----------|--------------|----------------------|
-| 1 | `[filename.png]` | [brief description of what is visible] | AC-1 |
+---
+
+## 截图 / 视频
+
+请将所有截获的证据文件列于下方。文件存储于本文档所在目录，或 `production/qa/evidence/[story-slug]/`。
+
+| # | 文件名 | 展示内容 | 对应验收标准 |
+|---|--------|---------|------------|
+| 1 | `[filename.png]` | [可见内容的简要描述] | AC-1 |
 | 2 | `[filename.png]` | | AC-2 |
 
-*If video: note the timestamp and what it demonstrates.*
+*如为视频：请注明时间戳及其所展示的内容。*
 
 ---
 
-## Test Conditions
+## 测试条件
 
-- **Game state at start**: [e.g., "fresh save, player at level 1, no items"]
-- **Platform / hardware**: [e.g., "Windows 11, GTX 1080, 1080p"]
-- **Framerate during test**: [e.g., "stable 60fps" or "~45fps — within budget"]
-- **Any special setup required**: [e.g., "dev menu used to trigger specific state"]
-
----
-
-## Observations
-
-[Anything noteworthy that didn't cause a FAIL but should be recorded. Examples:
-minor visual jitter, frame dip under load, behaviour that technically passes
-but felt slightly off. These become candidates for polish work.]
-
-- [Observation 1]
-- [Observation 2]
-
-If nothing notable: *No significant observations.*
+- **测试开始时的游戏状态**：[例："全新存档，玩家等级 1，无物品"]
+- **平台 / 硬件**：[例："Windows 11，GTX 1080，1080p"]
+- **测试期间帧率**：[例："稳定 60fps"或"约 45fps——在预算范围内"]
+- **所需特殊设置**：[例："使用开发者菜单触发特定状态"]
 
 ---
 
-## Sign-Off
+## 观察记录
 
-All three sign-offs are required before the story can be marked COMPLETE via
-`/story-done`. Visual/Feel stories require the designer or art-lead sign-off.
-UI stories require the UX lead or designer sign-off.
+[记录未导致 FAIL 但值得记录的任何事项。例如：轻微视觉抖动、负载下帧率下降、行为技术上通过但体感略有偏差等。这些内容将成为润色工作的候选项。]
 
-| Role | Name | Date | Signature |
-|------|------|------|-----------|
-| Developer (implemented) | | | [ ] Approved |
-| Designer / Art Lead / UX Lead | | | [ ] Approved |
-| QA Lead | | | [ ] Approved |
+- [观察 1]
+- [观察 2]
 
-**Any sign-off can be marked "Deferred — [reason]"** if the person is
-unavailable. Deferred sign-offs must be resolved before the story advances
-past the sprint review.
+若无特别记录：*无显著观察事项。*
 
 ---
 
-*Template: `.claude/docs/templates/test-evidence.md`*
-*Used for: Visual/Feel and UI story type evidence records*
-*Location: `production/qa/evidence/[story-slug]-evidence.md`*
+## 签字确认
+
+在通过 `/story-done` 将故事标记为 COMPLETE 之前，须获得以下三方签字。Visual/Feel 类故事需要设计师或美术负责人签字；UI 类故事需要 UX 负责人或设计师签字。
+
+| 角色 | 姓名 | 日期 | 签字 |
+|------|------|------|------|
+| 开发者（实现方） | | | [ ] Approved |
+| 设计师 / 美术负责人 / UX 负责人 | | | [ ] Approved |
+| QA 负责人 | | | [ ] Approved |
+
+**若当事人不在场，任何签字均可标注"Deferred — [原因]"**。延期签字必须在故事进入 Sprint 评审之前完成。
+
+---
+
+*模板来源：`.claude/docs/templates/test-evidence.md`*
+*适用范围：Visual/Feel 及 UI 类型故事的测试证据记录*
+*存储位置：`production/qa/evidence/[story-slug]-evidence.md`*

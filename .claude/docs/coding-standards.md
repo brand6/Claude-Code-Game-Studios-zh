@@ -1,65 +1,65 @@
-# Coding Standards
+# 编码规范
 
-- All game code must include doc comments on public APIs
-- Every system must have a corresponding architecture decision record in `docs/architecture/`
-- Gameplay values must be data-driven (external config), never hardcoded
-- All public methods must be unit-testable (dependency injection over singletons)
-- Commits must reference the relevant design document or task ID
-- **Verification-driven development**: Write tests first when adding gameplay systems.
-  For UI changes, verify with screenshots. Compare expected output to actual output
-  before marking work complete. Every implementation should have a way to prove it works.
+- 所有游戏代码的公开 API 必须添加文档注释
+- 每个系统必须在 `docs/architecture/` 中有对应的架构决策记录
+- 游戏玩法数值必须数据驱动（外部配置），严禁硬编码
+- 所有公开方法必须可进行单元测试（依赖注入优先于单例）
+- 提交信息必须引用相关设计文档或任务 ID
+- **验证驱动开发**：添加游戏玩法系统时先编写测试。
+  UI 变更须通过截图验证。将预期输出与实际输出对比后，方可标记工作完成。
+  每个实现都应有一种可以证明其有效的方式。
 
-# Design Document Standards
+# 设计文档规范
 
-- All design docs use Markdown
-- Each mechanic has a dedicated document in `design/gdd/`
-- Documents must include these 8 required sections:
-  1. **Overview** -- one-paragraph summary
-  2. **Player Fantasy** -- intended feeling and experience
-  3. **Detailed Rules** -- unambiguous mechanics
-  4. **Formulas** -- all math defined with variables
-  5. **Edge Cases** -- unusual situations handled
-  6. **Dependencies** -- other systems listed
-  7. **Tuning Knobs** -- configurable values identified
-  8. **Acceptance Criteria** -- testable success conditions
-- Balance values must link to their source formula or rationale
+- 所有设计文档使用 Markdown
+- 每个机制在 `design/gdd/` 中有专属文档
+- 文档必须包含以下 8 个必要章节：
+  1. **概述** — 一段总结
+  2. **玩家幻想** — 预期感受与体验
+  3. **详细规则** — 无歧义的机制描述
+  4. **公式** — 所有数学公式及变量定义
+  5. **边界情况** — 异常情况的处理方式
+  6. **依赖关系** — 列出其他相关系统
+  7. **调节旋钮** — 标识可配置值
+  8. **验收标准** — 可测试的成功条件
+- 平衡数值必须链接到其来源公式或依据
 
-# Testing Standards
+# 测试规范
 
-## Test Evidence by Story Type
+## 按故事类型划分的测试证据要求
 
-All stories must have appropriate test evidence before they can be marked Done:
+所有故事在标记为完成前必须具备相应的测试证据：
 
-| Story Type | Required Evidence | Location | Gate Level |
+| 故事类型 | 所需证据 | 存放位置 | 门控级别 |
 |---|---|---|---|
-| **Logic** (formulas, AI, state machines) | Automated unit test — must pass | `tests/unit/[system]/` | BLOCKING |
-| **Integration** (multi-system) | Integration test OR documented playtest | `tests/integration/[system]/` | BLOCKING |
-| **Visual/Feel** (animation, VFX, feel) | Screenshot + lead sign-off | `production/qa/evidence/` | ADVISORY |
-| **UI** (menus, HUD, screens) | Manual walkthrough doc OR interaction test | `production/qa/evidence/` | ADVISORY |
-| **Config/Data** (balance tuning) | Smoke check pass | `production/qa/smoke-[date].md` | ADVISORY |
+| **逻辑型**（公式、AI、状态机） | 自动化单元测试——必须通过 | `tests/unit/[system]/` | BLOCKING |
+| **集成型**（多系统） | 集成测试或有记录的试玩测试 | `tests/integration/[system]/` | BLOCKING |
+| **视觉/手感型**（动画、VFX、手感） | 截图 + 负责人确认 | `production/qa/evidence/` | ADVISORY |
+| **UI 型**（菜单、HUD、界面） | 手动操作文档或交互测试 | `production/qa/evidence/` | ADVISORY |
+| **配置/数据型**（平衡调整） | 冒烟测试通过 | `production/qa/smoke-[date].md` | ADVISORY |
 
-## Automated Test Rules
+## 自动化测试规则
 
-- **Naming**: `[system]_[feature]_test.[ext]` for files; `test_[scenario]_[expected]` for functions
-- **Determinism**: Tests must produce the same result every run — no random seeds, no time-dependent assertions
-- **Isolation**: Each test sets up and tears down its own state; tests must not depend on execution order
-- **No hardcoded data**: Test fixtures use constant files or factory functions, not inline magic numbers
-  (exception: boundary value tests where the exact number IS the point)
-- **Independence**: Unit tests do not call external APIs, databases, or file I/O — use dependency injection
+- **命名规范**：文件命名 `[system]_[feature]_test.[ext]`；函数命名 `test_[scenario]_[expected]`
+- **确定性**：测试每次运行必须产生相同结果——不使用随机种子，不依赖时间的断言
+- **隔离性**：每个测试自行建立和清理状态；测试间不得依赖执行顺序
+- **无硬编码数据**：测试 fixture 使用常量文件或工厂函数，不使用内联魔法数字
+  （例外：边界值测试中确切数字本身就是测试要点）
+- **独立性**：单元测试不调用外部 API、数据库或文件 I/O——使用依赖注入
 
-## What NOT to Automate
+## 不应自动化的内容
 
-- Visual fidelity (shader output, VFX appearance, animation curves)
-- "Feel" qualities (input responsiveness, perceived weight, timing)
-- Platform-specific rendering (test on target hardware, not headlessly)
-- Full gameplay sessions (covered by playtesting, not automation)
+- 视觉保真度（shader 输出、VFX 外观、动画曲线）
+- "手感"品质（输入响应、感知重量、时机）
+- 平台特定渲染（在目标硬件上测试，而非无头模式）
+- 完整游戏流程（由试玩测试覆盖，而非自动化）
 
-## CI/CD Rules
+## CI/CD 规则
 
-- Automated test suite runs on every push to main and every PR
-- No merge if tests fail — tests are a blocking gate in CI
-- Never disable or skip failing tests to make CI pass — fix the underlying issue
-- Engine-specific CI commands:
-  - **Godot**: `godot --headless --script tests/gdunit4_runner.gd`
-  - **Unity**: `game-ci/unity-test-runner@v4` (GitHub Actions)
-  - **Unreal**: headless runner with `-nullrhi` flag
+- 自动化测试套件在每次推送到 main 及每个 PR 时运行
+- 测试失败则不得合并——测试是 CI 中的阻塞门控
+- 禁止为使 CI 通过而禁用或跳过失败的测试——须修复根本问题
+- 各引擎 CI 命令：
+  - **Godot**：`godot --headless --script tests/gdunit4_runner.gd`
+  - **Unity**：`game-ci/unity-test-runner@v4`（GitHub Actions）
+  - **Unreal**：带 `-nullrhi` 标志的无头运行器

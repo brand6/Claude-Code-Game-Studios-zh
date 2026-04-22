@@ -1,262 +1,300 @@
 ---
 name: reverse-document
-description: "Generate design or architecture documents from existing implementation. Works backwards from code/prototypes to create missing planning docs."
-argument-hint: "<type> <path> (e.g., 'design src/gameplay/combat' or 'architecture src/core')"
+description: "从现有实现中生成设计或架构文档。从代码/原型反向推导，补充缺失的规划文档。"
+argument-hint: "<type> <path>（例如：'design src/gameplay/combat' 或 'architecture src/core'）"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write, Edit, Bash
-# Read-only diagnostic skill — no specialist agent delegation needed
 ---
 
-# Reverse Documentation
+# 反向文档化
 
-This skill analyzes existing implementation (code, prototypes, systems) and generates
-appropriate design or architecture documentation. Use this when:
-- You built a feature without writing a design doc first
-- You inherited a codebase without documentation
-- You prototyped a mechanic and need to formalize it
-- You need to document "why" behind existing code
+从代码或原型反向推导文档，分三种类型：
+
+- **design**：从代码生成缺失的 GDD 系统文档
+- **architecture**：从代码生成 ADR 或架构文档
+- **concept**：从原型生成游戏概念文档
+
+**何时使用：**
+- 已有实现或原型，但设计文档未事先编写
+- 文档落后于代码，需要重新同步
+- 加入现有项目，需要为已有实现补充文档
+
+**协作原则：** 绝不主观揣测意图。先分析代码，再向用户提问，最后生成文档。
 
 ---
 
-## Workflow
+## 工作流程
 
-## Phase 1: Parse Arguments
+本技能从最小化交互的原则运作：先静默分析实现，再请用户确认意图，然后生成文档。首先运行 `/reverse-document <type> <path>`。
 
-**Format**: `/reverse-document <type> <path>`
-
-**Type options**:
-- `design` → Generate a game design document (GDD section)
-- `architecture` → Generate an Architecture Decision Record (ADR)
-- `concept` → Generate a concept document from prototype
-
-**Path**: Directory or file to analyze
-- `src/gameplay/combat/` → All combat-related code
-- `src/core/event-system.cpp` → Specific file
-- `prototypes/stealth-mech/` → Prototype directory
-
-**Examples**:
-```bash
-/reverse-document design src/gameplay/magic-system
-/reverse-document architecture src/core/entity-component
-/reverse-document concept prototypes/vehicle-combat
-```
-
-## Phase 2: Analyze Implementation
-
-**Read and understand the code/prototype**:
-
-**For design docs (GDD):**
-- Identify mechanics, rules, formulas
-- Extract gameplay values (damage, cooldowns, ranges)
-- Find state machines, ability systems, progression
-- Detect edge cases handled in code
-- Map dependencies (what systems interact?)
-
-**For architecture docs (ADR):**
-- Identify patterns (ECS, singleton, observer, etc.)
-- Understand technical decisions (threading, serialization, etc.)
-- Map dependencies and coupling
-- Assess performance characteristics
-- Find constraints and trade-offs
-
-**For concept docs (prototype analysis):**
-- Identify core mechanic
-- Extract emergent gameplay patterns
-- Note what worked vs what didn't
-- Find technical feasibility insights
-- Document player fantasy / feel
-
-## Phase 3: Ask Clarifying Questions
-
-**DO NOT** just describe the code. **ASK** about intent:
-
-**Design questions**:
-- "I see a [resource] system that depletes during [activity]. Was this for:
-  - Pacing (prevent spam)?
-  - Resource management (strategic depth)?
-  - Or something else?"
-- "The [mechanic] seems central. Is this a core pillar, or supporting feature?"
-- "[Value] scales exponentially with [factor]. Intentional design, or needs rebalancing?"
-
-**Architecture questions**:
-- "You're using a service locator pattern. Was this chosen for:
-  - Testability (mock dependencies)?
-  - Decoupling (reduce hard references)?
-  - Or inherited from existing code?"
-- "I see manual memory management instead of smart pointers. Performance requirement, or legacy?"
-
-**Concept questions**:
-- "The prototype emphasizes stealth over combat. Is that the intended pillar?"
-- "Players seem to exploit the grappling hook for speed. Feature or bug?"
-
-## Phase 4: Present Findings
-
-Before drafting, show what you discovered:
-
-```
-I've analyzed [path]/. Here's what I found:
-
-MECHANICS IMPLEMENTED:
-- [mechanic-a] with [property] (e.g. timing windows, cooldowns)
-- [mechanic-b] (e.g. interaction between two states)
-- [resource] system (depletes on [action], regens on [condition])
-- [state] system (builds up, triggers [effect])
-
-FORMULAS DISCOVERED:
-- [Output] = [formula using discovered variables]
-- [Secondary output] = [formula]
-
-UNCLEAR INTENT AREAS:
-1. [Resource] system — pacing or resource management?
-2. [Mechanic] — core pillar or supporting feature?
-3. [Value] scaling — intentional design or needs tuning?
-
-Before I draft the design doc, could you clarify these points?
-```
-
-Wait for user to clarify intent before drafting.
-
-## Phase 5: Draft Document Using Template
-
-Based on type, use appropriate template:
-
-| Type | Template | Output Path |
-|------|----------|-------------|
-| `design` | `templates/design-doc-from-implementation.md` | `design/gdd/[system-name].md` |
-| `architecture` | `templates/architecture-doc-from-code.md` | `docs/architecture/[decision-name].md` |
-| `concept` | `templates/concept-doc-from-prototype.md` | `prototypes/[name]/CONCEPT.md` or `design/concepts/[name].md` |
-
-**Draft structure**:
-- Capture **what exists** (mechanics, patterns, implementation)
-- Document **why it exists** (intent clarified with user)
-- Identify **what's missing** (edge cases not handled, gaps in design)
-- Flag **follow-up work** (balance tuning, missing features)
-
-## Phase 6: Show Draft and Request Approval
-
-**Collaborative protocol**:
-```
-I've drafted the [system-name] design doc based on your code and clarifications.
-
-[Show key sections: Overview, Mechanics, Formulas, Design Intent]
-
-ADDITIONS I MADE:
-- Documented [mechanic] as "[intent]" per your clarification
-- Added edge cases not in code (e.g., what if [resource] hits 0 mid-[action]?)
-- Flagged balance concern: [scaling type] scaling at [boundary condition]
-
-SECTIONS MARKED AS INCOMPLETE:
-- "[System] interaction with [other-system]" (not fully implemented yet)
-- "[Variant or feature]" (only [subset] implemented so far)
-
-May I write this to design/gdd/[system-name].md?
-```
-
-Wait for approval. User may request changes before writing.
-
-## Phase 7: Write Document with Metadata
-
-When approved, write the file with special markers:
-
-```markdown
----
-status: reverse-documented
-source: [path/]
-date: [today]
-verified-by: [User name]
 ---
 
-# [System Name] Design
+## 阶段 1：解析参数
 
-> **Note**: This document was reverse-engineered from the existing implementation.
-> It captures current behavior and clarified design intent. Some sections may be
-> incomplete where implementation is partial or intent was unclear.
+从用户输入中提取：
+- **type**：`design`、`architecture` 或 `concept`
+- **path**：要分析的目录或文件路径
 
-[Rest of document...]
+若无效则输出帮助信息：
 ```
-
-## Phase 8: Flag Follow-Up Work
-
-After writing, suggest next steps:
-
-```
-✅ Written to design/gdd/combat-system.md
-
-FOLLOW-UP RECOMMENDED:
-1. Run /balance-check on combat formulas (exponential scaling concern)
-2. Create ADR for stamina system architecture decision
-3. Implement missing edge cases:
-   - Stamina depletion mid-combo behavior
-   - Stagger state during dodge
-4. Extend design doc when weapon variety is implemented
-
-Would you like me to tackle any of these now?
+用法：/reverse-document <type> <path>
+类型：design | architecture | concept
+示例：/reverse-document design src/gameplay/combat
+      /reverse-document architecture src/core
+      /reverse-document concept prototypes/
 ```
 
 ---
 
-## Template Selection Logic
+## 阶段 2：分析实现
 
-| If analyzing... | Use template... | Because... |
+### 步骤 2a — 了解文件结构
+
+Glob 目标路径，列出所有代码文件及其目录结构。
+
+记录：
+- 文件数量
+- 技术栈（引擎/语言，从 CLAUDE.md 获取）
+- 目录层级结构
+- 文件命名规律
+
+### 步骤 2b — 读取主要实现文件
+
+从目标路径读取主要代码文件（最多 10 个文件，优先选择较大或命名直观的文件）。
+
+**Design 类型 — 读取时重点关注：**
+- 公共方法和属性（接口定义了系统的功能）
+- 函数名称中揭示的玩法规则
+- 常量和平衡数值（如血量、伤害数值、计时参数等）
+- 状态枚举（系统的状态机）
+- 信号或事件名称（系统如何与其他部分通信）
+- 注释中对设计意图的说明
+
+**Architecture 类型 — 读取时重点关注：**
+- 类层级结构（继承/组合关系）
+- 依赖注入和服务定位方式
+- 系统间的数据流
+- 设计模式（命令模式、观察者模式、状态模式、工厂模式等）
+- 性能考量（对象池、懒加载等）
+- 代码注释中提及的取舍决策
+
+**Concept 类型 — 读取时重点关注：**
+- 入口点（主场景、主循环）
+- 实现了哪些核心机制
+- 测试了哪些内容（用于推断验证目标）
+- 明显的局限性或占位逻辑
+
+### 步骤 2c — 搜索补充上下文
+
+- Grep 相关系统在现有文件中的引用（了解其他部分如何使用该系统）
+- 检查是否存在现有的 GDD 或 ADR 引用（`design/gdd/`、`docs/architecture/`）
+- 检查相关测试文件（`tests/unit/[system]/`）
+
+---
+
+## 阶段 3：提出澄清问题
+
+**绝不主观揣测意图。** 在生成文档前，向用户提出有针对性的问题。
+
+提出 3-5 个关键问题——重点询问代码中无法推断的信息：
+
+**Design 类型典型问题：**
+- "这个系统面向的是什么类型的玩家体验？"
+- "公式中的 [常量/数值] 是有意为之的平衡设计，还是临时占位？"
+- "这个系统有哪些计划中但尚未实现的功能？"
+- "[具体行为] 是设计意图，还是实现上的副产品？"
+
+**Architecture 类型典型问题：**
+- "这套架构选择是有意为之的，还是自然演化的结果？"
+- "[设计模式] 是出于特定原因选用的吗？"
+- "有哪些已知的技术债务需要在文档中记录？"
+- "这套设计有哪些预期的局限性或约束？"
+
+**Concept 类型典型问题：**
+- "这个原型想验证的核心假设是什么？"
+- "哪些机制已被验证，哪些仍存疑？"
+- "玩法感觉达到你期望的状态了吗？"
+
+等待用户回答后再继续。
+
+---
+
+## 阶段 4：展示分析结果
+
+在提案文档前，先向用户概述分析结论：
+
+```
+我在 [路径] 中分析了 [N] 个文件。以下是我的理解：
+
+**系统名称（推断）**：[推断的名称]
+**核心职责**：[该系统负责什么]
+**关键机制**：
+- [机制 1]
+- [机制 2]
+- [机制 3]
+**系统依赖**：[依赖的其他系统]
+**已发现的数据/常量**：[关键数值]
+
+**不确定的内容**：
+- [从代码中无法确定的信息]
+
+根据您对上述问题的回答，我将生成 [类型] 文档。
+继续生成文档草稿？
+```
+
+---
+
+## 阶段 5：起草文档
+
+根据文档类型，使用对应的项目模板：
+
+**Design（GDD 系统文档）：**
+遵循 `.claude/skills/design-system/SKILL.md` 中的 GDD 结构，填写以下章节：
+- 概述与核心循环
+- 玩家幻想（从代码中可见的意图推断）
+- 机制与规则（直接从代码中提取，注明任何不确定之处）
+- 公式与数值（直接从代码中提取）
+- 系统接口（该系统的输入与输出）
+- 验收标准（将已实现功能改写为可测试的标准）
+- 未实现部分（计划功能中代码尚未覆盖的）
+
+**Architecture（ADR 或架构文档）：**
+遵循 ADR 格式：
+- 背景（解决了什么问题）
+- 决策（从代码中明确可见的架构选择）
+- 取舍（代码结构所暗示的优点与缺点）
+- 约束（从实现中可观察到的）
+- 待解决问题（需要用户澄清的不确定决策）
+
+**Concept（原型报告）：**
+- 原型目标（从用户回答中获取）
+- 已实现内容（直接来自代码分析）
+- 验证发现（玩法有效/存疑）
+- 建议的下一步（是否进行全面生产）
+
+**诚实性原则：**
+- 代码明确支持的内容 → 陈述为事实
+- 推断内容 → 标记为"（从实现推断）"
+- 无法从代码中确定的内容 → 标记为"（待澄清）"
+- 绝不凭空捏造设计意图
+
+---
+
+## 阶段 6：展示草稿
+
+在对话中展示完整文档草稿。
+
+说明：
+```
+这是根据代码分析和您的回答生成的草稿。
+标注了不确定内容的地方——请在批准前进行审查和修正。
+
+若此草稿符合您的期望，我可以将其写入适当的位置。
+```
+
+**绝不在未经用户审查前直接写入文件。**
+
+---
+
+## 阶段 7：写入文档
+
+等待用户批准（可能附带修改意见）。
+
+根据文档类型，确定目标路径：
+- **design** → `design/gdd/systems/[system-slug]-gdd.md`
+- **architecture** → `docs/architecture/adr-[NNN]-[slug].md`（下一个可用编号）
+- **concept** → `prototypes/[slug]-report.md`
+
+询问："May I write this to `[path]`？"
+
+若用户建议不同的路径，改用用户指定的路径。
+
+---
+
+## 阶段 8：标记后续事项
+
+写入后，提示用户需要后续处理的事项：
+
+**Design 类型：**
+- 建议运行 `/design-review` 对新 GDD 进行正式审查
+- 若存在（待澄清）标注，询问是否安排后续会议确认
+- 提示：这份 GDD 需要在架构开始前经过审查
+
+**Architecture 类型：**
+- 建议运行 `/architecture-review` 将此 ADR 纳入完整性检查
+- 若存在（待澄清）标注，提示可能需要一个补充 ADR
+
+**Concept 类型：**
+- 若原型验证成功：建议运行 `/brainstorm` 将概念正式化
+- 若存在重大不确定项：建议先澄清再继续
+
+**所有类型：**
+若有任何（待澄清）标注遗留在文档中，一律标记为"待解决设计问题"。
+
+---
+
+## 模板选择逻辑
+
+| 如果分析的是… | 使用模板… | 因为… |
 |----------------|-----------------|------------|
-| `src/gameplay/*` | design-doc-from-implementation.md | Gameplay mechanics → GDD |
-| `src/core/*`, `src/ai/*` | architecture-doc-from-code.md | Core systems → ADR |
-| `prototypes/*` | concept-doc-from-prototype.md | Experiments → concept doc |
-| `src/networking/*` | architecture-doc-from-code.md | Technical systems → ADR |
-| `src/ui/*` | design-doc-from-implementation.md | UI/UX → design spec |
+| `src/gameplay/*` | design-doc-from-implementation.md | 玩法机制 → GDD |
+| `src/core/*`, `src/ai/*` | architecture-doc-from-code.md | 核心系统 → ADR |
+| `prototypes/*` | concept-doc-from-prototype.md | 实验 → 概念文档 |
+| `src/networking/*` | architecture-doc-from-code.md | 技术系统 → ADR |
+| `src/ui/*` | design-doc-from-implementation.md | UI/UX → 设计规格 |
 
 ---
 
-## Example Session: Reverse-Document a System
+## 示例会话：对一个系统进行反向文档化
 
 ```
 User: /reverse-document design src/gameplay/[system]
 
-Agent: I'll analyze your [system] implementation to create a design doc.
-       [Reads code, discovers mechanics, formulas]
+Agent: 我将分析您的 [system] 实现以创建设计文档。
+       [读取代码，发现机制、公式]
 
-Agent: I've analyzed src/gameplay/[system]/. Here's what I found:
-       [Shows mechanics, formulas, unclear areas]
+Agent: 我在 src/gameplay/[system]/ 中分析了以下内容：
+       [展示机制、公式、不确定区域]
 
-       Before drafting, could you clarify:
-       1. [Resource] system intent?
-       2. Is [mechanic] a core pillar?
-       3. [Value] scaling — intentional or needs tuning?
+       在起草前，请确认：
+       1. 资源系统意图？
+       2. [mechanic] 是核心支柱吗？
+       3. [数值] 缩放——有意为之还是需要调整？
 
-User: 1. [Resource] is for pacing, prevent [unwanted behavior]
-      2. [Mechanic] is core — I want [design intent]
-      3. Yeah, exponential is too much, should be linear
+User: 1. 资源系统用于节奏，防止 [unwanted behavior]
+      2. [mechanic] 是核心——我希望 [design intent]
+      3. 是的，指数太大，应改为线性
 
-Agent: Perfect, that clarifies the vision. Let me draft the design doc.
-       [Shows draft with clarified intent]
+Agent: 面局已清晰。让我起草设计文档。
+       [展示含清晰意图的草稿]
 
-       May I write this to design/gdd/[system-name].md?
+       可以将其写入 design/gdd/[system-name].md 吗？
 
-User: Yes, write it.
+User: 是，写入。
 
-Agent: ✅ Written to design/gdd/[system-name].md
-       ✅ Marked as [REVERSE-DOCUMENTED]
-       ✅ Flagged [value] scaling for rebalancing
+Agent: ✅ 已写入 design/gdd/[system-name].md
+       ✅ 已标记为 [REVERSE-DOCUMENTED]
+       ✅ 已标记 [数值] 缩放需要重新平衡
 
-       Next steps:
-       - Update [formula] to [corrected scaling]
-       - Run /balance-check to validate [curve]
-       - Document [mechanic] as core pillar in game-pillars.md
+       后续步骤：
+       - 将 [formula] 更新为 [修正后的缩放]
+       - 运行 /balance-check 验证 [curve]
+       - 将 [mechanic] 展示为 game-pillars.md 中的核心支柱
 ```
 
 ---
 
 ## Collaborative Protocol
 
-This skill follows the collaborative design principle:
+本技能遵循协作设计原则：
 
-1. **Analyze First**: Read code, understand implementation
-2. **Question Intent**: Ask about "why", not just "what"
-3. **Present Findings**: Show discoveries, highlight unclear areas
-4. **User Clarifies**: Separate intent from accidents
-5. **Draft Document**: Create doc based on reality + intent
-6. **Show Draft**: Display key sections, explain additions
-7. **Get Approval**: "May I write to [filepath]?" On approval: Verdict: **COMPLETE** — document generated. On decline: Verdict: **BLOCKED** — user declined write.
-8. **Flag Follow-Up**: Suggest related work, don't auto-execute
+1. **先分析**：读取代码，理解实现
+2. **询问意图**：询问"为何"而非"是什么"
+3. **展示发现**：展示发现，突出不确定区域
+4. **用户确认**：将意图与偶然事故区分开
+5. **起草文档**：基于实际情况与意图创建文档
+6. **展示草稿**：展示关键章节，说明添加的内容
+7. **获得批准**：「May I write to [filepath]?」批准后：Verdict: **COMPLETE** — 文档已生成。拒绝后：Verdict: **BLOCKED** — 用户拒绝写入。
+8. **标记后续事项**：建议相关工作，不自动执行
 
-**Never assume intent. Always ask before documenting "why".**
+**绝不假设意图。始终先询问再记录"为何"。**

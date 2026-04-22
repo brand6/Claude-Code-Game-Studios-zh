@@ -1,544 +1,445 @@
-# UX Specification: [Screen / Flow Name]
+# UX 设计规范：[Screen / Flow Name]
 
-> **Status**: Draft | In Review | Approved | Implemented
-> **Author**: [Name or agent — e.g., ui-designer]
-> **Last Updated**: [Date]
-> **Screen / Flow Name**: [Short identifier used in code and tickets — e.g., `InventoryScreen`, `NewGameFlow`]
-> **Platform Target**: [PC | Console | Mobile | All — list all that this spec covers]
-> **Related GDDs**: [Links to the GDD sections that generated this UI requirement — e.g., `design/gdd/inventory.md § UI Requirements`]
-> **Related ADRs**: [Any architectural decisions that constrain this screen — e.g., `ADR-0012: UI Framework Selection`]
-> **Related UX Specs**: [Sibling and parent screens — e.g., `ux-spec-pause-menu.md`, `ux-spec-settings.md`]
-> **Accessibility Tier**: Basic | Standard | Comprehensive | Exemplary
+> **状态**：Draft | In Review | Approved | Implemented
+> **作者**：[姓名或 Agent——例：ui-designer]
+> **最后更新**：[Date]
+> **界面 / 流程名称**：[在代码和工单中使用的简短标识符——例：`InventoryScreen`、`NewGameFlow`]
+> **目标平台**：[PC | Console | Mobile | All——列出本规范覆盖的所有平台]
+> **关联 GDD**：[生成本 UI 需求的 GDD 章节链接——例：`design/gdd/inventory.md § UI Requirements`]
+> **关联 ADR**：[对本界面有约束的架构决策——例：`ADR-0012: UI Framework Selection`]
+> **关联 UX 规范**：[同级及父级界面——例：`ux-spec-pause-menu.md`、`ux-spec-settings.md`]
+> **无障碍等级**：Basic | Standard | Comprehensive | Exemplary
 
-> **Note — Scope boundary**: This template covers discrete screens and flows (menus,
-> dialogs, inventory, settings, cutscene UI, etc.). For persistent in-game overlays
-> that exist during active gameplay, use `hud-design.md` instead. If a screen is a
-> hybrid (e.g., a pause menu that overlays the game world), treat it as a screen spec
-> and note the overlay relationship in Navigation Position.
+> **注意——范围边界**：本模板适用于独立界面和流程（菜单、对话框、背包、设置、过场 UI 等）。对于在游戏过程中持续存在的游戏内覆盖层，请改用 `hud-design.md`。若某界面为混合型（例如覆盖游戏世界的暂停菜单），请将其作为界面规范处理，并在"导航位置"中注明覆盖关系。
 
 ---
 
-## 1. Purpose & Player Need
+## 1. 目的与玩家需求
 
-> **Why this section exists**: Every screen must justify its existence from the
-> player's perspective. Screens that are designed from a developer perspective ("display
-> the save data") produce cluttered, confusing interfaces. Screens designed from the
-> player's perspective ("let the player feel confident their progress is safe before they
-> put the controller down") produce purposeful, calm interfaces. Write this section before
-> touching any layout decisions — it is the filter through which every subsequent choice
-> is evaluated.
+> **本章节存在的原因**：每个界面都必须从玩家视角证明其存在的合理性。从开发者视角设计的界面（"展示存档数据"）会产生杂乱、令人困惑的交互。从玩家视角设计的界面（"让玩家在放下手柄前对进度保存有充分的信心"）会产生有目的、让人安心的交互。在做任何布局决策之前，先写好本章节——它是评估后续每个选择的过滤器。
 
-**What player need does this screen serve?**
+**本界面满足的玩家需求是什么？**
 
-[One paragraph. Name the real human need, not the system function. Consider: what would
-a player say they want when they open this screen? What would frustrate them if it did
-not work? That frustration describes the need.
+[一段话。说明真实的人类需求，而非系统功能。思考：打开这个界面时，玩家会说他们想要什么？如果不能正常工作，什么会让他们沮丧？那种沮丧感就描述了这个需求。
 
-Example — bad: "Displays the player's current items and equipment."
-Example — good: "Lets the player understand what they're carrying and quickly decide what
-to take into the next encounter, without breaking their mental model of the game world.
-The inventory is the player's planning tool between moments of action."]
+示例——不好的写法："展示玩家当前携带的物品和装备。"
+示例——好的写法："让玩家了解自己携带的物品，并在不破坏游戏世界心理模型的前提下，快速决定下一次遭遇要带什么。背包是玩家在行动间隙的规划工具。"]
 
-**The player goal** (what the player wants to accomplish):
+**玩家目标**（玩家想要完成的事情）：
 
-[One sentence. Specific enough that you could write an acceptance criterion for it.
-Example: "Find the item they are looking for within three button presses and equip it
-without navigating to a separate screen."]
+[一句话。具体到可以为其编写验收标准。示例："在三次按键内找到目标物品并直接装备，无需跳转到其他界面。"]
 
-**The game goal** (what the game needs to communicate or capture):
+**游戏目标**（游戏需要通过此交互传达或获取的信息）：
 
-[One sentence. This is what the system needs from this interaction. Example: "Record the
-player's equipment choices and relay them to the combat system before the next encounter
-loads." This section prevents UI that looks good but fails to serve the system it is
-part of.]
+[一句话。这是系统从此次交互中所需的内容。示例："在下一关卡加载前，将玩家的装备选择记录并传递给战斗系统。"本章节防止界面外观好看但无法服务其所属的系统。]
 
 ---
 
-## 2. Player Context on Arrival
+## 2. 玩家到达时的情境
 
-> **Why this section exists**: Screens do not exist in isolation. A player opening the
-> inventory mid-combat is in a completely different cognitive and emotional state than
-> a player opening it after clearing a dungeon. The same information architecture can
-> feel oppressively complex in one context and trivially simple in another. Document the
-> context so that design decisions — what to show first, what to hide, what to animate,
-> what to simplify — are calibrated to the actual player arriving at this screen, not
-> an abstract user.
+> **本章节存在的原因**：界面并非孤立存在。在战斗中途打开背包的玩家，与清完地牢后打开背包的玩家，认知和情感状态截然不同。同样的信息架构在一个情境下可能显得压迫感十足，在另一个情境下却平淡无奇。记录情境，这样设计决策——先显示什么、隐藏什么、添加什么动画、简化什么——就能针对真实到达此界面的玩家来校准，而非针对抽象用户。
 
-| Question | Answer |
-|----------|--------|
-| What was the player just doing? | [e.g., Completed a combat encounter / Pressed Esc from exploration / Triggered a story cutscene] |
-| What is their emotional state? | [e.g., High tension — just narrowly survived / Calm — exploring between objectives] |
-| What cognitive load are they carrying? | [e.g., High — actively tracking enemy positions / Low — no active threats] |
-| What information do they already have? | [e.g., They know they just picked up an item but haven't seen its stats yet] |
-| What are they most likely trying to do? | [e.g., Check if the new item is better than their current weapon — primary use case] |
-| What are they likely afraid of? | [e.g., Missing something, making an irreversible mistake, losing track of where they were] |
+| 问题 | 回答 |
+|------|------|
+| 玩家刚刚在做什么？ | [例：完成了一次战斗 / 从探索中按下 Esc / 触发了一段故事过场] |
+| 玩家的情绪状态如何？ | [例：高度紧张——刚刚险些撑过去 / 平静——在目标间隙探索] |
+| 玩家承载的认知负荷有多高？ | [例：高——正在追踪敌人位置 / 低——无当前威胁] |
+| 玩家已掌握哪些信息？ | [例：他们知道刚拾取了一件物品，但还未查看其属性] |
+| 玩家最可能想做什么？ | [例：检查新物品是否优于当前武器——主要使用场景] |
+| 玩家可能担心什么？ | [例：错过某些内容、做出不可撤销的错误选择、忘记自己之前在哪里] |
 
-**Emotional design target for this screen**:
+**本界面的情感设计目标**：
 
-[One sentence describing the feeling the player should have while using this screen.
-Example: "Confident and in control — the player should feel like they have complete
-information and complete authority over their choices, with no ambiguity about outcomes."]
+[一句话，描述玩家使用本界面时应有的感受。示例："自信而从容——玩家应感到拥有完整信息和充分自主权，对操作结果没有任何歧义。"]
 
 ---
 
-## 3. Navigation Position
+## 3. 导航位置
 
-> **Why this section exists**: A screen that does not know where it sits in the
-> navigation hierarchy cannot define its entry/exit transitions, its back-button
-> behavior, or its relationship to the game's pause state. Navigation position also
-> reveals architectural problems early — if this screen is reachable from eight
-> different places, that is a complexity flag that should be resolved in design, not
-> implementation.
+> **本章节存在的原因**：不清楚自己在导航层级中所处位置的界面，无法定义进入/退出过渡动画、返回键行为，以及与游戏暂停状态的关系。导航位置还能提前揭示架构问题——如果这个界面有八个入口，那是一个在设计阶段就应该解决的复杂度警示，而非留到实现阶段。
 
-**Screen hierarchy** (use indentation to show parent-child relationships):
+**界面层级**（用缩进表示父子关系）：
 
 ```
-[Root — e.g., Main Menu]
-  └── [Parent Screen — e.g., Settings]
-        └── [This Screen — e.g., Audio Settings]
-              ├── [Child Screen — e.g., Advanced Audio Options]
-              └── [Child Screen — e.g., Speaker Test Dialog]
+[根——例：主菜单]
+  └── [父级界面——例：设置]
+        └── [本界面——例：音频设置]
+              ├── [子界面——例：高级音频选项]
+              └── [子界面——例：扬声器测试对话框]
 ```
 
-**Modal behavior**: [Modal (blocks everything behind it, requires explicit dismiss) | Non-modal (game continues behind it) | Overlay (renders over game world, game paused) | Overlay-live (renders over game world, game continues)]
+**模态行为**：[Modal（阻断其后面的一切，需明确关闭）| Non-modal（游戏在其背后继续运行）| Overlay（覆盖游戏世界渲染，游戏暂停）| Overlay-live（覆盖游戏世界渲染，游戏继续运行）]
 
-> If this screen is modal: document the dismiss behavior. Can it be dismissed by pressing
-> Back/B? By pressing Escape? By clicking outside it? Can it be dismissed at all, or
-> must the player complete it? Undismissable modals are high-friction — justify them.
+> 若本界面为 Modal：请记录关闭行为。是否可以按返回键/B 键关闭？按 Esc 键？点击外部区域？是否完全不可关闭，玩家必须完成后才能退出？不可关闭的 Modal 摩擦感极强——请说明理由。
 
-**Reachability — all entry points**:
+**可达路径——所有入口**：
 
-| Entry Point | Triggered By | Notes |
-|-------------|-------------|-------|
-| [e.g., Main Menu → Play] | [Player selects "New Game"] | [Primary entry point] |
-| [e.g., Pause Menu → Resume] | [Player presses Start from any gameplay state] | [Secondary entry] |
-| [e.g., Game event] | [Tutorial system forces open first time only] | [Systemic entry — must not break if player dismisses] |
+| 入口 | 触发方式 | 备注 |
+|------|---------|------|
+| [例：主菜单 → 开始游戏] | [玩家选择"新游戏"] | [主要入口] |
+| [例：暂停菜单 → 继续] | [玩家从任意游戏状态按开始键] | [次要入口] |
+| [例：游戏事件] | [教程系统仅首次触发强制打开] | [系统入口——玩家关闭后不得中断游戏] |
 
 ---
 
-## 4. Entry & Exit Points
+## 4. 进入与退出
 
-> **Why this section exists**: Entry and exit define the screen's contract with the
-> rest of the navigation system. Every entry point must have a corresponding exit point.
-> Transitions that are undefined become bugs — the player finds themselves stuck, or the
-> game state becomes inconsistent. Fill this table completely before implementation
-> begins. Empty cells are a sign that design work is unfinished.
+> **本章节存在的原因**：进入和退出定义了本界面与其余导航系统的契约。每个入口都必须有对应的出口。未定义的过渡是潜在的 bug——玩家会发现自己卡住，或游戏状态变得不一致。在实现开始前完整填写此表格。空白单元格意味着设计工作尚未完成。
 
-**Entry table**:
+**进入表格**：
 
-| Trigger | Source Screen / State | Transition Type | Data Passed In | Notes |
-|---------|----------------------|-----------------|----------------|-------|
-| [e.g., Player presses Inventory button] | [Gameplay / Exploration state] | [Overlay push — game pauses] | [Current player loadout, inventory contents] | [Works from any non-combat state] |
-| [e.g., Item pickup prompt accepted] | [Gameplay / Item Pickup dialog] | [Replace dialog with full inventory] | [Newly acquired item pre-highlighted] | [The new item should be visually distinguished on open] |
-| [e.g., Quest system directs player to inventory] | [Gameplay / Quest Update notification] | [Overlay push] | [Quest-relevant item ID for highlight] | [Screen should deep-link to the relevant item] |
+| 触发器 | 来源界面 / 状态 | 过渡类型 | 传入数据 | 备注 |
+|--------|--------------|---------|---------|------|
+| [例：玩家按下背包按键] | [游戏中 / 探索状态] | [覆盖推入——游戏暂停] | [当前玩家装载、背包内容] | [可从任何非战斗状态触发] |
+| [例：接受物品拾取提示] | [游戏中 / 物品拾取对话框] | [用完整背包替换对话框] | [新获取物品预先高亮] | [打开时新物品应在视觉上有所区分] |
+| [例：任务系统引导玩家到背包] | [游戏中 / 任务更新通知] | [覆盖推入] | [任务相关物品 ID 用于高亮] | [界面应深度链接到相关物品] |
 
-**Exit table**:
+**退出表格**：
 
-| Exit Action | Destination | Transition Type | Data Returned / Saved | Notes |
-|-------------|------------|-----------------|----------------------|-------|
-| [e.g., Player closes inventory (Back/B/Esc)] | [Previous state — Exploration] | [Overlay pop — game resumes] | [Updated equipment loadout committed] | [Changes must be committed before transition begins] |
-| [e.g., Player selects "Equip" on item] | [Same screen, updated state] | [In-place state change] | [Loadout change event fired] | [No navigation, just a state refresh] |
-| [e.g., Player navigates to Map from inventory shortcut] | [Map Screen] | [Replace] | [No data] | [Inventory state is preserved if player returns] |
+| 退出操作 | 目标界面 | 过渡类型 | 返回/保存的数据 | 备注 |
+|---------|---------|---------|--------------|------|
+| [例：玩家关闭背包（返回/B/Esc）] | [上一状态——探索] | [覆盖弹出——游戏恢复] | [已更新的装备载入已提交] | [过渡开始前必须提交变更] |
+| [例：玩家对物品选择"装备"] | [同一界面，更新状态] | [原地状态变更] | [装备变更事件触发] | [无导航跳转，仅状态刷新] |
+| [例：玩家从背包快捷键跳转至地图] | [地图界面] | [替换] | [无数据] | [返回时背包状态保留] |
 
 ---
 
-## 5. Layout Specification
+## 5. 布局规范
 
-> **Why this section exists**: The layout specification is the handoff artifact between
-> UX design and UI programming. It does not need to be pixel-perfect — it needs to
-> communicate hierarchy (what is important), proximity (what belongs together), and
-> proportion (what is big vs. small). ASCII wireframes achieve this without requiring
-> design software. A programmer who reads this section should be able to build the
-> correct structure without guessing. An artist who reads it should know where
-> visual weight should be concentrated.
+> **本章节存在的原因**：布局规范是 UX 设计与 UI 编程之间的交付物。它不需要精确到像素——它需要传达层级（什么重要）、邻近关系（什么属于一组）和比例（什么大、什么小）。ASCII 线框图无需设计软件即可实现这一点。读完本章节的程序员应该能够构建出正确结构，而不必猜测。读完本章节的美工应该知道视觉重量应集中在哪里。
 >
-> Draw the layout at one standard resolution (e.g., 1920x1080). Note adaptations
-> for other resolutions separately.
+> 在某一标准分辨率下绘制布局（例如 1920x1080）。其他分辨率的适配方案单独说明。
 
-### 5.1 Wireframe
+### 5.1 线框图
 
 ```
-[Draw the screen layout using ASCII art. Suggested characters:
- ┌ ┐ └ ┘ │ ─    for borders
- ╔ ╗ ╚ ╝ ║ ═    for emphasized/modal borders
- [ ]              for interactive elements (buttons, inputs)
- { }              for content areas (lists, grids, images)
- ...              for scrollable content
- ●                for the focused element on open
+[使用 ASCII 绘制界面布局，推荐字符：
+ ┌ ┐ └ ┘ │ ─    用于边框
+ ╔ ╗ ╚ ╝ ║ ═    用于强调/模态边框
+ [ ]              用于可交互元素（按钮、输入框）
+ { }              用于内容区域（列表、网格、图片）
+ ...              用于可滚动内容
+ ●                用于打开时聚焦的元素
 
-Example:
+示例：
 ┌──────────────────────────────────────────────┐
-│  [← Back]        INVENTORY         [Options] │  ← HEADER ZONE
+│  [← 返回]        背包         [选项] │  ← 头部区域
 ├──────────────────────────────────────────────┤
 │ ┌──────────────┐  ┌─────────────────────────┐│
-│ │ CATEGORY NAV │  │  ITEM DETAIL PANEL      ││  ← CONTENT ZONE
-│ │  ● Weapons   │  │  Item Name              ││
-│ │    Armor     │  │  {item icon}            ││
-│ │    Consumable│  │  Stats comparison       ││
-│ │    Key Items │  │  Description text...    ││
+│ │ 分类导航     │  │  物品详情面板           ││  ← 内容区域
+│ │  ● 武器      │  │  物品名称               ││
+│ │    防具      │  │  {物品图标}             ││
+│ │    消耗品    │  │  属性对比               ││
+│ │    任务道具  │  │  描述文本...            ││
 │ ├──────────────┤  └─────────────────────────┘│
-│ │ ITEM GRID    │                             │
+│ │ 物品网格     │                             │
 │ │ {□}{□}{□}{□} │                             │
 │ │ {□}{□}{□}{□} │                             │
 │ │ ...          │                             │
 │ └──────────────┘                             │
 ├──────────────────────────────────────────────┤
-│   [Equip]     [Drop]     [Compare]  [Close]  │  ← ACTION BAR
+│   [装备]     [丢弃]     [对比]  [关闭]  │  ← 操作栏
 └──────────────────────────────────────────────┘
 ]
 ```
 
-### 5.2 Zone Definitions
+### 5.2 区域定义
 
-| Zone Name | Description | Approximate Size | Scrollable? | Overflow Behavior |
-|-----------|-------------|-----------------|-------------|-------------------|
-| [e.g., Header Zone] | [Top bar: navigation, screen title, global actions] | [Full width, ~10% height] | [No] | [Truncate long screen names with ellipsis] |
-| [e.g., Category Nav] | [Left panel: item category tabs] | [~25% width, ~75% height] | [Yes — vertical if categories exceed panel] | [Scroll indicator appears at bottom of list] |
-| [e.g., Item Grid] | [Center: grid of item icons for selected category] | [~45% width, ~75% height] | [Yes — vertical] | [Page-based: 4x4 grid, next page on overflow] |
-| [e.g., Detail Panel] | [Right: stats and description for selected item] | [~30% width, ~75% height] | [Yes — vertical for long descriptions] | [Fade at bottom, scroll to reveal] |
-| [e.g., Action Bar] | [Bottom: context-sensitive actions for selected item] | [Full width, ~15% height] | [No] | [Actions collapse to icon-only below 4] |
+| 区域名称 | 描述 | 大致尺寸 | 可滚动？ | 溢出处理 |
+|---------|------|---------|---------|---------|
+| [例：头部区域] | [顶部栏：导航、界面标题、全局操作] | [全宽，约 10% 高] | [否] | [过长的界面名截断并加省略号] |
+| [例：分类导航] | [左侧面板：物品分类标签] | [约 25% 宽，约 75% 高] | [是——分类过多时纵向滚动] | [列表底部显示滚动指示器] |
+| [例：物品网格] | [中部：已选分类的物品图标网格] | [约 45% 宽，约 75% 高] | [是——纵向] | [分页：4×4 网格，溢出时显示下一页] |
+| [例：详情面板] | [右侧：已选物品的属性和描述] | [约 30% 宽，约 75% 高] | [是——描述过长时纵向滚动] | [底部渐隐，滚动以查看更多] |
+| [例：操作栏] | [底部：已选物品的上下文操作] | [全宽，约 15% 高] | [否] | [少于 4 个时操作收缩为仅图标] |
 
-### 5.3 Component Inventory
+### 5.3 组件清单
 
-> List every discrete UI component on this screen. This table drives the implementation
-> task list — each row becomes a component to build or reuse.
+> 列出本界面上每个独立的 UI 组件。此表格驱动实现任务列表——每行对应一个需要构建或复用的组件。
 
-| Component Name | Type | Zone | Purpose | Required? | Reuses Existing Component? |
-|----------------|------|------|---------|-----------|---------------------------|
-| [e.g., Back Button] | [Button] | [Header] | [Returns to previous screen] | [Yes] | [Yes — standard NavButton component] |
-| [e.g., Screen Title Label] | [Text] | [Header] | [Displays "INVENTORY" or context name] | [Yes] | [Yes — ScreenTitle component] |
-| [e.g., Category Tab] | [Toggle Button] | [Category Nav] | [Filters item grid by category] | [Yes] | [No — new component needed] |
-| [e.g., Item Slot] | [Icon + Frame] | [Item Grid] | [Represents one inventory slot, empty or filled] | [Yes] | [No — new component] |
-| [e.g., Item Name Label] | [Text] | [Detail Panel] | [Shows selected item's name] | [Yes] | [Yes — BodyText component] |
-| [e.g., Stat Comparison Row] | [Compound — label + value + delta] | [Detail Panel] | [Shows stat value vs. currently equipped] | [Yes] | [No — new component] |
-| [e.g., Equip Button] | [Primary Button] | [Action Bar] | [Equips selected item in appropriate slot] | [Yes] | [Yes — PrimaryAction component] |
-| [e.g., Empty State Message] | [Text + Icon] | [Item Grid] | [Shown when category has no items] | [Yes] | [Yes — EmptyState component] |
+| 组件名称 | 类型 | 所在区域 | 用途 | 必需？ | 复用已有组件？ |
+|---------|------|---------|------|--------|-------------|
+| [例：返回按钮] | [按钮] | [头部] | [返回上一界面] | [是] | [是——复用标准 NavButton 组件] |
+| [例：界面标题标签] | [文字] | [头部] | [显示"背包"或上下文名称] | [是] | [是——ScreenTitle 组件] |
+| [例：分类标签页] | [切换按钮] | [分类导航] | [按分类筛选物品网格] | [是] | [否——需新建组件] |
+| [例：物品槽位] | [图标 + 框架] | [物品网格] | [表示一个背包槽位，空置或填充] | [是] | [否——新组件] |
+| [例：物品名称标签] | [文字] | [详情面板] | [显示选中物品名称] | [是] | [是——BodyText 组件] |
+| [例：属性对比行] | [复合——标签 + 数值 + 变化量] | [详情面板] | [显示属性值与当前装备的对比] | [是] | [否——新组件] |
+| [例：装备按钮] | [主操作按钮] | [操作栏] | [将选中物品装备到对应槽位] | [是] | [是——PrimaryAction 组件] |
+| [例：空状态提示] | [文字 + 图标] | [物品网格] | [分类中无物品时显示] | [是] | [是——EmptyState 组件] |
 
-**Primary focus element on open**: [e.g., The first item in the Item Grid — or, if deep-linked, the highlighted item. If the grid is empty, focus lands on the first Category Tab.]
-
----
-
-## 6. States & Variants
-
-> **Why this section exists**: A screen is not a single picture — it is a set of
-> states, each of which must look correct and behave correctly. Screens that are
-> designed only in their "happy path" state ship with broken empty states, invisible
-> loading indicators, and crashes when data is missing. Document every state before
-> implementation. The states table is also the test matrix for QA.
-
-| State Name | Trigger | What Changes Visually | What Changes Behaviorally | Notes |
-|------------|---------|----------------------|--------------------------|-------|
-| [Loading] | [Screen is opening, data not yet available] | [Item Grid shows skeleton/shimmer placeholders; Action Bar buttons disabled] | [No interactions possible except Close] | [Should not be visible >500ms under normal conditions; if it is, investigate data fetch performance] |
-| [Empty — no items in category] | [Player switches to a category with zero items] | [Item Grid replaced by EmptyState component: icon + "Nothing here yet."] | [Action Bar shows no item actions; Drop/Equip/Compare all hidden] | [Do not show disabled buttons — remove them. Disabled buttons with no tooltip are confusing.] |
-| [Populated — items present] | [Category has at least one item] | [Item Grid fills with item slots; first slot is auto-focused] | [All item actions available for selected item] | [Default and most common state] |
-| [Item Selected] | [Player navigates to an item slot] | [Detail Panel populates; selected slot has focus ring; Action Bar updates to item's valid actions] | [Equip/Drop/Compare enabled based on item type] | [Equip is disabled if item is already equipped — show a "Equipped" badge instead] |
-| [Confirmation Pending — Drop] | [Player selects Drop action] | [Confirmation dialog overlays the screen] | [All background interactions suspended until dialog resolves] | [Use a modal confirmation, not an inline toggle. Items cannot be recovered after dropping.] |
-| [Error — data load failed] | [Inventory data could not be retrieved] | [Item Grid shows error state: icon + "Couldn't load items." + Retry button] | [Only Retry and Close are available] | [Log the error; do not expose technical details to player] |
-| [Item Newly Acquired] | [Screen opened from item pickup deep-link] | [Newly acquired item has a visual "New" badge; Detail Panel pre-populated with that item] | [Same as Item Selected but with badge until player navigates away] | [Badge persists until the player manually navigates off that slot once] |
+**打开时的主要聚焦元素**：[例：物品网格中的第一个物品——或深度链接时，高亮的物品。若网格为空，焦点落在第一个分类标签上。]
 
 ---
 
-## 7. Interaction Map
+## 6. 状态与变体
 
-> **Why this section exists**: This section is the source of truth for what every
-> input does on this screen. It forces the designer to think through every input
-> method (mouse, keyboard, gamepad, touch) and every interactive state (hover, focus,
-> pressed, disabled). Gaps in this table are bugs waiting to happen. The
-> interaction map is also the input for the accessibility audit — if an action is
-> only reachable by mouse, it will fail the keyboard and gamepad columns.
+> **本章节存在的原因**：界面不是一张静态图片——它是一组状态，每个状态都必须正确显示并正确运行。仅按"正常路径"设计的界面会在空状态、不可见的加载指示器以及数据缺失时崩溃。在实现前记录每个状态。状态表格同时也是 QA 的测试矩阵。
 
-### 7.1 Navigation Inputs
-
-| Input | Platform | Action | Visual Response | Audio Cue | Notes |
-|-------|----------|--------|-----------------|-----------|-------|
-| [Arrow keys / D-Pad] | [All] | [Move focus within active zone] | [Focus ring moves to adjacent element] | [Soft navigation tick] | [Wrap at edges within zone; do not cross zones with arrows alone] |
-| [Tab / R1] | [KB / Gamepad] | [Move focus to next zone (Category → Grid → Detail → Action Bar)] | [Focus ring jumps to first element in next zone] | [Distinct zone-change tone] | [Shift+Tab / L1 goes backward] |
-| [Mouse hover] | [PC] | [Show hover state on interactive elements] | [Highlight / underline / color shift] | [None] | [Hover does NOT move focus — only click does] |
-| [Mouse click] | [PC] | [Select and focus the clicked element] | [Pressed state flash, then selected/focused] | [Soft click] | [Right-click opens context menu if applicable; otherwise no-op] |
-| [Touch tap] | [Mobile] | [Select and activate in one gesture] | [Press ripple] | [Soft click] | [Treat tap as click + confirm for low-risk actions; require explicit confirm for destructive actions] |
-
-### 7.2 Action Inputs
-
-| Input | Platform | Context (What must be focused) | Action | Response | Animation | Audio Cue | Notes |
-|-------|----------|-------------------------------|--------|----------|-----------|-----------|-------|
-| [Enter / A button / Left click] | [All] | [Item slot focused] | [Select item → populate Detail Panel] | [Detail panel slides in or updates in place] | [Panel fade/slide in, 120ms] | [Soft select tone] | [If item already selected: no-op] |
-| [Enter / A button] | [All] | [Equip button focused] | [Equip selected item] | [Button animates press; item badge updates to "Equipped"; previously equipped item loses badge] | [Badge swap, 80ms] | [Equip success sound] | [Fires EquipItem event to Inventory system] |
-| [Triangle / Y button / Right-click] | [All] | [Item slot focused] | [Open item context menu] | [Context menu appears adjacent to item slot] | [Popover, 80ms] | [Menu open sound] | [Context menu contains: Equip, Drop, Inspect, Compare] |
-| [Square / X button] | [Gamepad] | [Item slot focused] | [Quick-equip without opening detail] | [Equip animation plays inline on slot] | [Slot flash, 80ms] | [Equip success sound] | [Convenience shortcut; does not change screen state] |
-| [Esc / B button / Back] | [All] | [Any, screen level] | [Close screen and return to previous state] | [Screen exit transition plays] | [Slide out, 200ms] | [Back/close tone] | [Commits all changes before closing. No discard — inventory is not a draft.] |
-| [F / L2] | [KB / Gamepad] | [Any] | [Toggle filter panel] | [Sort/filter overlay opens] | [Slide in from right, 200ms] | [Panel open tone] | [If no items in category, filter is disabled] |
-
-### 7.3 State-Specific Behaviors
-
-| State | Input Restriction | Reason |
-|-------|------------------|--------|
-| [Loading] | [All item and action inputs disabled] | [No data to act on; prevent race conditions] |
-| [Confirmation dialog open] | [Only Confirm and Cancel inputs active] | [Modal — background is locked] |
-| [Error state] | [Only Retry and Close active] | [No data available to navigate] |
+| 状态名称 | 触发条件 | 视觉变化 | 行为变化 | 备注 |
+|---------|---------|---------|---------|------|
+| [加载中] | [界面打开，数据尚未就绪] | [物品网格显示骨架屏/微光效果；操作栏按钮禁用] | [除关闭外无任何可操作项] | [正常情况下不应持续超过 500ms；若超过，请排查数据获取性能] |
+| [空状态——该分类无物品] | [玩家切换到没有物品的分类] | [物品网格被替换为空状态组件：图标 + "这里还什么都没有。"] | [操作栏不显示物品操作；丢弃/装备/对比全部隐藏] | [不要显示禁用按钮——直接移除。没有提示的禁用按钮令人困惑。] |
+| [已有物品] | [该分类至少有一件物品] | [物品网格填满物品槽位；第一个槽位自动聚焦] | [已选物品的所有操作可用] | [默认且最常见的状态] |
+| [已选中物品] | [玩家导航到某个物品槽位] | [详情面板填充内容；选中槽位显示焦点环；操作栏更新为该物品的有效操作] | [装备/丢弃/对比根据物品类型启用] | [若物品已装备，装备按钮禁用——改为显示"已装备"徽章] |
+| [待确认——丢弃] | [玩家选择丢弃操作] | [确认对话框覆盖界面] | [所有后台交互暂停，直到对话框解决] | [使用模态确认对话框，而非内联切换。物品丢弃后无法恢复。] |
+| [错误——数据加载失败] | [背包数据无法获取] | [物品网格显示错误状态：图标 + "无法加载物品。" + 重试按钮] | [仅重试和关闭可用] | [记录错误日志；不向玩家暴露技术细节] |
+| [新获取物品] | [从物品拾取深度链接打开界面] | [新获取物品显示"新"徽章；详情面板预填充该物品信息] | [与"已选中物品"状态相同，但带徽章，直到玩家离开该槽位] | [徽章持续显示，直到玩家手动离开该槽位一次] |
 
 ---
 
-## 8. Data Requirements
+## 7. 交互映射
 
-> **Why this section exists**: The separation between UI and game state is the most
-> important architectural boundary in a game's UI system. UI reads data; it does not
-> own it. UI fires events; it does not write state directly. This section defines
-> exactly what data this screen needs to display, where it comes from, and how
-> frequently it updates. Filling this table before implementation prevents two
-> common failure modes: (1) UI developers reaching into systems they should not touch,
-> and (2) systems not knowing they need to expose data until a UI is half-built.
+> **本章节存在的原因**：本章节是每项输入在本界面上的操作的权威来源。它迫使设计师思考每种输入方式（鼠标、键盘、手柄、触屏）以及每种交互状态（悬停、聚焦、按下、禁用）。此表格的空白就是等待出现的 bug。交互映射同时也是无障碍审查的输入——如果某个操作只能通过鼠标触达，它就会在键盘和手柄列上失败。
 
-| Data Element | Source System | Update Frequency | Who Owns It | Format | Null / Missing Handling |
-|--------------|--------------|-----------------|-------------|--------|------------------------|
-| [e.g., Item list] | [Inventory System] | [On screen open; on InventoryChanged event] | [InventorySystem] | [Array of ItemData structs: id, name, icon_path, category, stats, is_equipped] | [Empty array → show Empty State. Never null — system must return array.] |
-| [e.g., Equipped loadout] | [Equipment System] | [On screen open; on EquipmentChanged event] | [EquipmentSystem] | [Dict mapping slot_id → item_id] | [Unequipped slot has null value — UI shows empty slot icon] |
-| [e.g., Item stat comparisons] | [Stats System] | [On item selection change] | [StatsSystem] | [Dict mapping stat_name → {current, new, delta}] | [If no item selected, detail panel shows placeholder. Stats system must handle this gracefully.] |
-| [e.g., Player currency] | [Economy System] | [On screen open only — inventory does not show live currency] | [EconomySystem] | [Int — gold pieces] | [If currency system not active for this game mode, hide the currency row entirely] |
-| [e.g., Newly acquired item flag] | [Inventory System] | [On screen open] | [InventorySystem] | [Array of item_ids flagged as new] | [If empty array, no badges shown] |
+### 7.1 导航输入
 
-> **Rule**: This screen must never write directly to any system listed above. All
-> player actions fire events (see Section 9). Systems update their own data and
-> notify the UI.
+| 输入 | 平台 | 操作 | 视觉响应 | 音效提示 | 备注 |
+|------|------|------|---------|---------|------|
+| [方向键 / D-Pad] | [全平台] | [在当前区域内移动焦点] | [焦点环移动到相邻元素] | [轻微导航音效] | [区域内边缘处循环；不能仅用方向键跨越区域] |
+| [Tab / R1] | [键盘 / 手柄] | [将焦点移动到下一区域（分类 → 网格 → 详情 → 操作栏）] | [焦点环跳转到下一区域的第一个元素] | [独特的区域切换音效] | [Shift+Tab / L1 向后] |
+| [鼠标悬停] | [PC] | [在可交互元素上显示悬停状态] | [高亮 / 下划线 / 颜色变化] | [无] | [悬停不移动焦点——只有点击才移动] |
+| [鼠标点击] | [PC] | [选中并聚焦被点击的元素] | [按下状态闪烁，然后选中/聚焦] | [轻微点击音效] | [右键打开上下文菜单（如适用）；否则无操作] |
+| [触屏点击] | [移动端] | [单个手势完成选择和激活] | [按下水波纹效果] | [轻微点击音效] | [对低风险操作将点击视为点击+确认；对破坏性操作需明确确认] |
 
----
+### 7.2 操作输入
 
-## 9. Events Fired
+| 输入 | 平台 | 上下文（何物聚焦时） | 操作 | 响应 | 动画 | 音效提示 | 备注 |
+|------|------|------------------|------|------|------|---------|------|
+| [回车 / A 键 / 鼠标左键] | [全平台] | [物品槽位聚焦] | [选中物品 → 填充详情面板] | [详情面板滑入或原地更新] | [面板淡入/滑入，120ms] | [轻柔选择音效] | [若物品已选中：无操作] |
+| [回车 / A 键] | [全平台] | [装备按钮聚焦] | [装备选中物品] | [按钮动画按下；物品徽章更新为"已装备"；之前装备的物品失去徽章] | [徽章切换，80ms] | [装备成功音效] | [向背包系统触发 EquipItem 事件] |
+| [三角 / Y 键 / 右键] | [全平台] | [物品槽位聚焦] | [打开物品上下文菜单] | [上下文菜单出现在物品槽位旁边] | [弹出层，80ms] | [菜单打开音效] | [上下文菜单包含：装备、丢弃、查看、对比] |
+| [方块 / X 键] | [手柄] | [物品槽位聚焦] | [快速装备，不打开详情] | [装备动画在槽位上原地播放] | [槽位闪烁，80ms] | [装备成功音效] | [便捷快捷键；不改变界面状态] |
+| [Esc / B 键 / 返回] | [全平台] | [任意位置，界面级] | [关闭界面，返回上一状态] | [界面退出过渡动画播放] | [滑出，200ms] | [返回/关闭音效] | [关闭前提交所有变更。无放弃操作——背包不是草稿。] |
+| [F / L2] | [键盘 / 手柄] | [任意位置] | [切换筛选面板] | [排序/筛选覆盖层打开] | [从右侧滑入，200ms] | [面板打开音效] | [若分类中无物品，筛选禁用] |
 
-> **Why this section exists**: This is the other half of the UI/system boundary.
-> Where Section 8 defines what the UI reads, this section defines what the UI
-> communicates back to the game. Specifying events at design time prevents UI
-> programmers from writing game logic, and prevents game programmers from being
-> surprised by what the UI does. Every destructive or state-changing player action
-> must appear in this table.
+### 7.3 状态专属行为
 
-| Player Action | Event Fired | Payload | Receiver System | Notes |
-|---------------|-------------|---------|-----------------|-------|
-| [Player equips an item] | [EquipItemRequested] | [{item_id: string, target_slot: string}] | [Equipment System] | [Equipment System validates the action and fires EquipmentChanged if successful; UI listens for EquipmentChanged to update its display] |
-| [Player drops an item] | [DropItemRequested] | [{item_id: string, quantity: int}] | [Inventory System] | [Fires only after player confirms the drop dialog. Inventory System removes the item and fires InventoryChanged.] |
-| [Player opens item compare] | [ItemCompareOpened] | [{item_a_id: string, item_b_id: string}] | [Analytics System] | [No game-state change — analytics event only. Compare view is purely local UI state.] |
-| [Player closes screen] | [InventoryScreenClosed] | [{session_duration_ms: int}] | [Analytics System] | [Fires on every close regardless of reason. Used for engagement metrics.] |
-| [Player navigates between categories] | [InventoryCategoryChanged] | [{category: string}] | [Analytics System] | [Analytics only. No game state change.] |
+| 状态 | 输入限制 | 原因 |
+|------|---------|------|
+| [加载中] | [所有物品和操作输入禁用] | [无数据可操作；防止竞态条件] |
+| [确认对话框打开] | [仅确认和取消输入有效] | [Modal——后台已锁定] |
+| [错误状态] | [仅重试和关闭有效] | [无数据可导航] |
 
 ---
 
-## 10. Transition & Animation
+## 8. 数据需求
 
-> **Why this section exists**: Transitions are not decoration — they communicate
-> hierarchy and causality. A screen that slides in from the right implies the
-> player has moved forward. A screen that fades implies a context break. Inconsistent
-> transitions make navigation feel broken even when it is technically correct.
-> This section ensures transitions are specified intentionally, not left to the
-> developer's discretion, and that accessibility settings (reduced motion) are
-> planned for from the start.
+> **本章节存在的原因**：UI 与游戏状态之间的分离是游戏 UI 系统中最重要的架构边界。UI 读取数据；它不拥有数据。UI 触发事件；它不直接写入状态。本章节精确定义了本界面需要展示哪些数据、数据来自哪里、更新频率如何。在实现前填写此表格，可防止两种常见故障：（1）UI 开发者触及不该触及的系统；（2）系统在 UI 已开发到一半时才意识到需要暴露某些数据。
 
-| Transition | Trigger | Direction / Type | Duration (ms) | Easing | Interruptible? | Skipped by Reduced Motion? |
-|------------|---------|-----------------|--------------|--------|----------------|---------------------------|
-| [Screen enter] | [Screen pushed onto stack] | [Slide in from right] | [250] | [Ease out cubic] | [No — must complete before interaction is enabled] | [Yes — instant appear at 0ms] |
-| [Screen exit — Back] | [Player presses Back] | [Slide out to right] | [200] | [Ease in cubic] | [No] | [Yes — instant disappear] |
-| [Screen exit — Forward] | [Player navigates to child screen] | [Slide out to left] | [200] | [Ease in cubic] | [No] | [Yes — instant] |
-| [Detail panel update] | [Player selects a new item] | [Cross-fade content] | [120] | [Linear] | [Yes — if player navigates quickly, previous animation cancels] | [Yes — instant swap] |
-| [Loading → Populated] | [Data arrives after load] | [Skeleton shimmer fades out, content fades in] | [180] | [Ease out] | [No] | [Yes — instant reveal] |
-| [Action Bar button press] | [Player activates a button] | [Scale down 95% on press, return on release] | [60 down / 60 up] | [Ease out / ease in] | [Yes — if released early, returns to normal] | [No — this is tactile feedback, not decorative motion] |
-| [Confirmation dialog open] | [Player initiates destructive action] | [Background dims 60% opacity; dialog scales up from 95%] | [150] | [Ease out] | [No] | [Yes — instant appear, no scale] |
-| [New item badge appear] | [Screen opens with newly acquired item] | [Badge pops from 0% to 110% to 100% scale] | [200 total] | [Ease out back] | [No] | [Yes — instant appear at 100% scale] |
+| 数据元素 | 来源系统 | 更新频率 | 数据归属方 | 格式 | 空值/缺失处理 |
+|---------|---------|---------|----------|------|------------|
+| [例：物品列表] | [背包系统] | [界面打开时；InventoryChanged 事件触发时] | [InventorySystem] | [ItemData 结构体数组：id、name、icon_path、category、stats、is_equipped] | [空数组 → 显示空状态。永不为 null——系统必须返回数组。] |
+| [例：已装备载入] | [装备系统] | [界面打开时；EquipmentChanged 事件触发时] | [EquipmentSystem] | [槽位 id → 物品 id 的字典] | [未装备槽位值为 null——UI 显示空槽位图标] |
+| [例：物品属性对比] | [属性系统] | [物品选择变化时] | [StatsSystem] | [属性名 → {当前值, 新值, 变化量} 的字典] | [未选中物品时，详情面板显示占位符。属性系统必须优雅处理此情况。] |
+| [例：玩家货币] | [经济系统] | [仅界面打开时——背包不显示实时货币] | [EconomySystem] | [整数——金币数] | [若此游戏模式下货币系统未激活，完全隐藏货币行] |
+| [例：新获取物品标记] | [背包系统] | [界面打开时] | [InventorySystem] | [标记为"新"的物品 id 数组] | [空数组时不显示任何徽章] |
+
+> **规则**：本界面绝不能直接写入上表中列出的任何系统。所有玩家操作均通过事件触发（见第 9 节）。系统更新自身数据并通知 UI。
 
 ---
 
-## 11. Input Method Completeness Checklist
+## 9. 触发的事件
 
-> **Why this section exists**: Input completeness is not optional — it is a
-> certification requirement for console platforms and a legal risk area for
-> accessibility laws in multiple markets. Fill this checklist before marking
-> the spec as Approved. Any unchecked item blocks implementation start.
+> **本章节存在的原因**：这是 UI/系统边界的另一半。第 8 节定义了 UI 读取的内容，本章节定义了 UI 向游戏反馈的内容。在设计阶段明确事件，可防止 UI 程序员编写游戏逻辑，以及游戏程序员对 UI 的行为感到意外。每一个破坏性或改变状态的玩家操作都必须出现在此表格中。
 
-**Keyboard**
-- [ ] All interactive elements are reachable using Tab and arrow keys alone
-- [ ] Tab order follows visual reading order (left-to-right, top-to-bottom within each zone)
-- [ ] Every action achievable by mouse is also achievable by keyboard
-- [ ] Focus is visible at all times (no element where focus ring disappears)
-- [ ] Focus does not escape the screen while it is open (focus trap for modals)
-- [ ] Esc key closes or cancels (and does not quit the game from within a screen)
-
-**Gamepad**
-- [ ] All interactive elements reachable with D-Pad and left stick
-- [ ] Face button mapping documented and consistent with platform conventions (see Section 7.2)
-- [ ] No action requires analog stick precision that cannot be replicated with D-Pad
-- [ ] Trigger and bumper shortcuts documented if used
-- [ ] Controller disconnection while screen is open is handled gracefully
-
-**Mouse**
-- [ ] Hover states defined for all interactive elements
-- [ ] Clickable hit targets are at minimum 32x32px (44x44px preferred)
-- [ ] Right-click behavior defined (context menu or no-op — not undefined)
-- [ ] Scroll wheel behavior defined in all scrollable zones
-
-**Touch (if applicable)**
-- [ ] All touch targets are minimum 44x44px
-- [ ] Swipe gestures do not conflict with system-level swipe navigation
-- [ ] All actions achievable with one hand in portrait orientation
-- [ ] Long-press behavior defined if used
+| 玩家操作 | 触发事件 | 载荷 | 接收系统 | 备注 |
+|---------|---------|------|---------|------|
+| [玩家装备物品] | [EquipItemRequested] | [{item_id: string, target_slot: string}] | [装备系统] | [装备系统验证操作，若成功则触发 EquipmentChanged；UI 监听 EquipmentChanged 以更新显示] |
+| [玩家丢弃物品] | [DropItemRequested] | [{item_id: string, quantity: int}] | [背包系统] | [仅在玩家确认丢弃对话框后触发。背包系统移除物品并触发 InventoryChanged。] |
+| [玩家打开物品对比] | [ItemCompareOpened] | [{item_a_id: string, item_b_id: string}] | [数据分析系统] | [不改变游戏状态——仅数据分析事件。对比视图是纯本地 UI 状态。] |
+| [玩家关闭界面] | [InventoryScreenClosed] | [{session_duration_ms: int}] | [数据分析系统] | [无论何种原因关闭都会触发。用于参与度指标。] |
+| [玩家切换分类] | [InventoryCategoryChanged] | [{category: string}] | [数据分析系统] | [仅数据分析。不改变游戏状态。] |
 
 ---
 
-## 12. Screen-Level Accessibility Requirements
+## 10. 过渡与动画
 
-> **Why this section exists**: Accessibility requirements must be specified at design
-> time because retrofitting them is expensive and often architecturally impractical.
-> This section documents requirements specific to this screen. Project-wide standards
-> live in `docs/accessibility-requirements.md` — consult it before filling this
-> section so you do not duplicate or contradict project-level commitments.
+> **本章节存在的原因**：过渡不是装饰——它们传达层级和因果关系。从右侧滑入的界面意味着玩家向前推进了。淡入淡出意味着情境切换。不一致的过渡会让导航感觉出错，即使技术上是正确的。本章节确保过渡是经过有意设计的，而非留给开发者自由发挥；同时确保从设计阶段开始就考虑到无障碍设置（减少动效）。
+
+| 过渡 | 触发条件 | 方向 / 类型 | 时长（ms） | 缓动 | 可打断？ | 减少动效模式下跳过？ |
+|------|---------|-----------|----------|------|---------|------------------|
+| [界面进入] | [界面被推入堆栈] | [从右侧滑入] | [250] | [三次方缓出] | [否——必须完成后才能启用交互] | [是——0ms 瞬间出现] |
+| [界面退出——返回] | [玩家按返回] | [向右侧滑出] | [200] | [三次方缓入] | [否] | [是——瞬间消失] |
+| [界面退出——前进] | [玩家导航到子界面] | [向左侧滑出] | [200] | [三次方缓入] | [否] | [是——瞬间] |
+| [详情面板更新] | [玩家选择新物品] | [交叉淡化内容] | [120] | [线性] | [是——玩家快速导航时，之前的动画取消] | [是——瞬间切换] |
+| [加载中 → 已有物品] | [数据在加载后到达] | [骨架屏微光淡出，内容淡入] | [180] | [缓出] | [否] | [是——瞬间显现] |
+| [操作栏按钮按下] | [玩家激活按钮] | [按下时缩至 95%，松开时恢复] | [60 缩小 / 60 恢复] | [缓出 / 缓入] | [是——提前松开则正常恢复] | [否——这是触觉反馈，不是装饰性动效] |
+| [确认对话框打开] | [玩家发起破坏性操作] | [背景变暗 60% 不透明度；对话框从 95% 放大] | [150] | [缓出] | [否] | [是——瞬间出现，无缩放] |
+| [新获取物品徽章出现] | [界面打开时有新获取物品] | [徽章从 0% → 110% → 100% 缩放弹出] | [200 合计] | [带回弹缓出] | [否] | [是——直接以 100% 缩放瞬间出现] |
+
+---
+
+## 11. 输入方式完整性检查清单
+
+> **本章节存在的原因**：输入完整性不是可选项——它是主机平台的认证要求，也是多个市场无障碍法律的合规风险点。在将规范标记为 Approved 之前填写此检查清单。任何未勾选的项目都阻碍实现开始。
+
+**键盘**
+- [ ] 所有可交互元素仅用 Tab 和方向键即可到达
+- [ ] Tab 顺序遵循视觉阅读顺序（每个区域内从左到右、从上到下）
+- [ ] 鼠标可完成的所有操作也可通过键盘完成
+- [ ] 焦点始终可见（没有任何元素焦点环消失）
+- [ ] 界面打开时焦点不会离开界面（Modal 的焦点陷阱）
+- [ ] Esc 键执行关闭或取消（不从界面内退出游戏）
+
+**手柄**
+- [ ] 所有可交互元素可用 D-Pad 和左摇杆到达
+- [ ] 面部按键映射已记录，且与平台惯例一致（见 7.2 节）
+- [ ] 无操作需要 D-Pad 无法复现的摇杆精确度
+- [ ] 若使用了扳机键和肩键快捷方式，已记录
+- [ ] 界面打开时控制器断开连接的情况已妥善处理
+
+**鼠标**
+- [ ] 所有可交互元素的悬停状态已定义
+- [ ] 可点击的触发区域最小为 32×32px（建议 44×44px）
+- [ ] 右键行为已定义（上下文菜单或无操作——不可未定义）
+- [ ] 所有可滚动区域的滚轮行为已定义
+
+**触屏（如适用）**
+- [ ] 所有触摸目标最小为 44×44px
+- [ ] 滑动手势不与系统级滑动导航冲突
+- [ ] 所有操作在竖屏单手状态下可完成
+- [ ] 长按行为已定义（如使用）
+
+---
+
+## 12. 界面级无障碍需求
+
+> **本章节存在的原因**：无障碍需求必须在设计阶段明确，因为事后补救既昂贵又在架构上难以实现。本章节记录本界面特有的需求。项目级标准在 `docs/accessibility-requirements.md` 中——填写本章节前请先查阅，避免重复或矛盾。
 >
-> Accessibility Tiers in this project:
-> - Basic: WCAG 2.1 AA text contrast, keyboard navigable, no motion-only information
-> - Standard: Basic + screen reader support, colorblind-safe, focus management
-> - Comprehensive: Standard + reduced motion support, text scaling, high contrast mode
-> - Exemplary: Comprehensive + cognitive load management, AAA equivalent, certified
+> 本项目的无障碍等级：
+> - Basic：WCAG 2.1 AA 文字对比度，键盘可导航，无仅凭动效传递的信息
+> - Standard：Basic + 屏幕阅读器支持，色盲友好，焦点管理
+> - Comprehensive：Standard + 减少动效支持，文字缩放，高对比度模式
+> - Exemplary：Comprehensive + 认知负荷管理，AAA 等效，通过认证
 
-**Text contrast requirements for this screen**:
+**本界面的文字对比度需求**：
 
-| Text Element | Background Context | Required Ratio | Current Ratio | Pass? |
-|--------------|-------------------|---------------|---------------|-------|
-| [e.g., Item name in Detail Panel] | [Dark panel background ~#1a1a1a] | [4.5:1 (WCAG AA normal text)] | [TBD — verify in implementation] | [ ] |
-| [e.g., Category tab label — inactive] | [Mid-grey tab background] | [4.5:1] | [TBD] | [ ] |
-| [e.g., Category tab label — active] | [Accent color background] | [4.5:1] | [TBD] | [ ] |
-| [e.g., Action button label] | [Button color (varies by state)] | [4.5:1] | [TBD] | [ ] |
-| [e.g., Stat comparison delta (positive)] | [Detail panel] | [4.5:1 — do NOT rely on green color alone] | [TBD] | [ ] |
+| 文字元素 | 背景情境 | 需求比例 | 当前比例 | 通过？ |
+|---------|---------|---------|---------|--------|
+| [例：详情面板中的物品名称] | [深色面板背景，约 #1a1a1a] | [4.5:1（WCAG AA 正文）] | [待实现后验证] | [ ] |
+| [例：分类标签文字——未激活] | [中灰色标签背景] | [4.5:1] | [待定] | [ ] |
+| [例：分类标签文字——激活] | [强调色背景] | [4.5:1] | [待定] | [ ] |
+| [例：操作按钮文字] | [按钮颜色（随状态变化）] | [4.5:1] | [待定] | [ ] |
+| [例：属性对比变化量（正值）] | [详情面板] | [4.5:1——不得仅依赖绿色] | [待定] | [ ] |
 
-**Colorblind-unsafe elements and mitigations**:
+**色盲不友好元素及缓解措施**：
 
-| Element | Colorblind Risk | Mitigation |
-|---------|----------------|------------|
-| [e.g., Stat delta indicators (red/green for worse/better)] | [Red-green colorblindness (Deuteranopia) — most common form] | [Add arrow icons (↑ / ↓) and +/- prefix in addition to color. Color is a redundant, not sole, indicator.] |
-| [e.g., Item rarity color coding (grey/green/blue/purple/orange)] | [Multiple types — rarity color is a common industry failure] | [Add rarity name text label below icon. Color is supplemental only.] |
+| 元素 | 色盲风险 | 缓解措施 |
+|------|---------|---------|
+| [例：属性变化量指示器（红/绿表示更差/更好）] | [红绿色盲（二型色盲）——最常见] | [在颜色之外增加箭头图标（↑/↓）和 +/- 前缀。颜色仅作辅助，非唯一指示。] |
+| [例：物品稀有度颜色编码（灰/绿/蓝/紫/橙）] | [多种类型——稀有度颜色是业界常见失误] | [在图标下方增加稀有度名称文字标签。颜色仅为补充。] |
 
-**Focus order** (Tab key sequence, numbered):
+**焦点顺序**（Tab 键顺序，按编号）：
 
-[e.g.,
-1. Back button (Header)
-2. Options button (Header)
-3. Category Tab 1 — Weapons
-4. Category Tab 2 — Armor
-5. Category Tab 3 — Consumables
-6. Category Tab 4 — Key Items
-7. Item Slot [0,0]
-8. Item Slot [0,1] ... (grid traverses left-to-right, top-to-bottom)
-9. Last item slot
-10. Equip button (Action Bar)
-11. Drop button (Action Bar)
-12. Compare button (Action Bar)
-13. Close button (Action Bar)
-→ Cycles back to Back button
+[例：
+1. 返回按钮（头部）
+2. 选项按钮（头部）
+3. 分类标签 1——武器
+4. 分类标签 2——防具
+5. 分类标签 3——消耗品
+6. 分类标签 4——任务道具
+7. 物品槽位 [0,0]
+8. 物品槽位 [0,1] ...（网格从左到右、从上到下遍历）
+9. 最后一个物品槽位
+10. 装备按钮（操作栏）
+11. 丢弃按钮（操作栏）
+12. 对比按钮（操作栏）
+13. 关闭按钮（操作栏）
+→ 循环回返回按钮
 
-Focus does not enter the Detail Panel — it is a display panel driven by item focus, not independently navigable.]
+焦点不进入详情面板——详情面板由物品焦点驱动，不独立导航。]
 
-**Screen reader announcements for key state changes**:
+**关键状态变化的屏幕阅读器播报**：
 
-| State Change | Announcement Text | Announcement Timing |
-|--------------|------------------|---------------------|
-| [Screen opens] | ["Inventory screen. [N] items. [Active category] selected."] | [On screen focus settle] |
-| [Player focuses an item slot] | ["[Item name]. [Category]. [Rarity]. [Key stats summary]. [Equipped / Not equipped]."] | [On focus arrival] |
-| [Player equips an item] | ["[Item name] equipped to [slot name]."] | [After EquipmentChanged event confirmed] |
-| [Player drops an item] | ["[Item name] dropped."] | [After InventoryChanged event confirmed] |
-| [Category changes] | ["[Category name]. [N] items."] | [On category tab focus] |
-| [Empty state shown] | ["No items in [category name]."] | [When empty state renders] |
+| 状态变化 | 播报文字 | 播报时机 |
+|---------|---------|---------|
+| [界面打开] | ["背包界面。[N] 件物品。已选[当前分类]。"] | [界面焦点稳定后] |
+| [玩家聚焦某物品槽位] | ["[物品名称]。[分类]。[稀有度]。[关键属性摘要]。[已装备 / 未装备]。"] | [焦点到达时] |
+| [玩家装备物品] | ["[物品名称]已装备到[槽位名称]。"] | [EquipmentChanged 事件确认后] |
+| [玩家丢弃物品] | ["[物品名称]已丢弃。"] | [InventoryChanged 事件确认后] |
+| [分类切换] | ["[分类名称]。[N] 件物品。"] | [分类标签聚焦时] |
+| [空状态显示] | ["[分类名称]中没有物品。"] | [空状态渲染时] |
 
-**Cognitive load assessment**:
+**认知负荷评估**：
 
-[Estimate the number of information streams the player is simultaneously tracking while
-using this screen. For this screen: (1) item grid position, (2) item detail stats,
-(3) current equipment loadout for comparison, (4) available actions, (5) item category.
-That is 5 concurrent streams — within the standard 7±2 limit, but at the higher end.
-Mitigation: detail panel auto-updates on navigation so the player never needs to
-manually retrieve item info. Reduce active decisions by surfacing stat comparison
-automatically.]
+[估算玩家使用本界面时同时追踪的信息流数量。本界面：(1) 物品网格位置，(2) 物品详情属性，(3) 当前装备对比，(4) 可用操作，(5) 物品分类。共 5 个并发信息流——在标准的 7±2 限制内，但偏高端。缓解措施：详情面板在导航时自动更新，玩家无需手动获取物品信息。通过自动展示属性对比来减少主动决策数量。]
 
 ---
 
-## 13. Localization Considerations
+## 13. 本地化注意事项
 
-> **Why this section exists**: UI built without localization in mind breaks on first
-> translation. German text is typically 30–40% longer than English. Arabic and Hebrew
-> require right-to-left layout mirroring. Japanese and Chinese text may be significantly
-> shorter than English, creating awkward whitespace. These issues are cheap to plan for
-> and expensive to fix after a layout is built and shipped. Every text element should
-> have an explicit max-character count and a plan for overflow.
+> **本章节存在的原因**：未考虑本地化而构建的 UI 在首次翻译时就会出问题。德语文本通常比英语长 30–40%。阿拉伯语和希伯来语需要从右到左的布局镜像。日文和中文可能比英文短得多，导致布局出现难看的空白。这些问题在规划阶段处理成本低廉，在布局构建并发布后修复则代价昂贵。每个文字元素都应有明确的最大字符数和溢出处理方案。
 
-**General rules for this screen**:
-- All text elements must tolerate a minimum of 40% expansion from English baseline
-- RTL layout (Arabic, Hebrew): mirrored layout required — document which elements mirror and which do not
-- CJK languages (Japanese, Korean, Chinese): text may be 20-30% shorter — verify layouts do not look broken with less text
-- Do not use text in images — all text must be from localization strings
+**本界面的通用规则**：
+- 所有文字元素必须能够容纳至少比英文基准多 40% 的扩展
+- RTL 布局（阿拉伯语、希伯来语）：需要镜像布局——记录哪些元素镜像、哪些不镜像
+- CJK 语言（日语、韩语、中文）：文字可能短 20–30%——验证布局在文字较少时不显示异常
+- 不在图片中使用文字——所有文字必须来自本地化字符串
 
-| Text Element | English Baseline Length | Max Characters | Expansion Budget | RTL Behavior | Overflow Behavior | Risk |
-|--------------|------------------------|----------------|-----------------|--------------|-------------------|------|
-| [e.g., Screen title "INVENTORY"] | [9 chars] | [16 chars] | [78%] | [Mirror to right, or center — acceptable] | [Truncate with ellipsis — title is not critical content] | [Low] |
-| [e.g., Item name] | [~15 chars avg, max ~35 "Enchanted Dragon Scale Gauntlets"] | [50 chars] | [43%] | [Right-align in RTL layouts] | [Truncate with tooltip showing full name on hover/focus] | [Medium — long fantasy item names are common] |
-| [e.g., Item description] | [~80–120 chars] | [200 chars] | [67%] | [Right-align, wrap normally] | [Scroll within Detail Panel — no truncation] | [Low — panel is scrollable] |
-| [e.g., Action button "Equip"] | [5 chars] | [14 chars] | [180%] | [Button layout mirrors; text right-aligns] | [Shrink font to 90% minimum, then truncate] | [Medium — "Ausrüsten" in German is 9 chars] |
-| [e.g., Category tab "Consumables"] | [11 chars] | [18 chars] | [64%] | [Mirror tab position] | [Abbreviate: "Consum." — define abbreviations per language in loc file] | [High — long localized tab labels are a known problem] |
+| 文字元素 | 英文基准长度 | 最大字符数 | 扩展预算 | RTL 行为 | 溢出处理 | 风险 |
+|---------|-----------|---------|---------|---------|---------|------|
+| [例：界面标题"INVENTORY"] | [9 字符] | [16 字符] | [78%] | [镜像到右侧，或居中——可接受] | [加省略号截断——标题不是关键内容] | [低] |
+| [例：物品名称] | [平均约 15 字符，最长约 35 "Enchanted Dragon Scale Gauntlets"] | [50 字符] | [43%] | [RTL 布局中右对齐] | [截断并在悬停/聚焦时用提示框显示全名] | [中——长幻想物品名称很常见] |
+| [例：物品描述] | [约 80–120 字符] | [200 字符] | [67%] | [右对齐，正常换行] | [在详情面板内滚动——不截断] | [低——面板可滚动] |
+| [例：操作按钮"Equip"装备] | [5 字符] | [14 字符] | [180%] | [按钮布局镜像；文字右对齐] | [字体缩小至 90% 最小值，然后截断] | [中——德语"Ausrüsten"为 9 字符] |
+| [例：分类标签"Consumables"消耗品] | [11 字符] | [18 字符] | [64%] | [镜像标签位置] | [缩写：在本地化文件中按语言定义缩写规则] | [高——长本地化标签名是已知问题] |
 
 ---
 
-## 14. Acceptance Criteria
+## 14. 验收标准
 
-> **Why this section exists**: Acceptance criteria are the contractual definition of
-> "done." Without them, implementation is complete when the developer says it is.
-> With them, implementation is complete when a QA tester can verify every item on
-> this list. Write criteria that a tester can verify independently, without asking the
-> designer what they meant. Every criterion should be binary — pass or fail, not
-> subjective.
+> **本章节存在的原因**：验收标准是"完成"的契约定义。没有它们，实现在开发者认为完成时就算完成了。有了它们，实现在 QA 测试人员能验证清单上每一项时才算完成。编写测试人员无需询问设计师含义即可独立验证的标准。每个标准应是二元的——通过或不通过，不可主观。
 
-**Performance**
-- [ ] Screen opens (first frame visible) within 200ms of trigger on minimum-spec hardware
-- [ ] Screen is fully interactive (all data loaded) within 500ms of trigger on minimum-spec hardware
-- [ ] Navigation between items produces no perceptible frame drop (maintain target framerate ±5fps)
+**性能**
+- [ ] 界面在最低规格硬件上从触发到第一帧可见不超过 200ms
+- [ ] 界面在最低规格硬件上从触发到完全可交互（所有数据已加载）不超过 500ms
+- [ ] 物品间导航不产生明显帧率下降（维持目标帧率 ±5fps）
 
-**Layout & Rendering**
-- [ ] Screen displays correctly (no overlap, no cutoff, no overflow) at minimum supported resolution [specify]
-- [ ] Screen displays correctly at maximum supported resolution [specify]
-- [ ] Screen displays correctly at 4:3, 16:9, 16:10, and 21:9 aspect ratios if targeting PC
-- [ ] No text overflow or truncation in English within defined max-character bounds
-- [ ] No text overflow or truncation in the longest-translation language [specify — typically German]
-- [ ] All states (Loading, Empty, Populated, Error, Confirmation) render correctly
-- [ ] Item grid scrolls smoothly without frame drops when all item slots are populated
+**布局与渲染**
+- [ ] 界面在最低支持分辨率下正确显示（无重叠、无截断、无溢出）[请注明]
+- [ ] 界面在最高支持分辨率下正确显示 [请注明]
+- [ ] 若面向 PC，界面在 4:3、16:9、16:10 和 21:9 宽高比下正确显示
+- [ ] 英文不在定义的最大字符数范围内产生文字溢出或截断
+- [ ] 最长翻译语言不产生文字溢出或截断 [请注明——通常为德语]
+- [ ] 所有状态（加载中、空状态、有内容、错误、确认）渲染正确
+- [ ] 所有物品槽位填满时，物品网格滚动流畅无帧率下降
 
-**Input**
-- [ ] All interactive elements reachable by keyboard using Tab and arrow keys only
-- [ ] All interactive elements reachable by gamepad using D-Pad and face buttons only
-- [ ] All interactive elements reachable by mouse without keyboard
-- [ ] No action requires simultaneous input that is not documented in Section 7
-- [ ] Focus is visible at all times on keyboard and gamepad navigation
-- [ ] Focus does not escape the screen while it is open
+**输入**
+- [ ] 所有可交互元素仅用键盘 Tab 和方向键即可到达
+- [ ] 所有可交互元素仅用手柄 D-Pad 和面部按键即可到达
+- [ ] 所有可交互元素仅用鼠标即可到达（无需键盘）
+- [ ] 无需要第 7 节未记录的同时输入的操作
+- [ ] 键盘和手柄导航时焦点始终可见
+- [ ] 界面打开时焦点不离开界面
 
-**Events & Data**
-- [ ] All events in Section 9 fire with correct payloads on all exit paths (verify with debug logging)
-- [ ] Screen does not write directly to any game system (verify: no direct state mutation calls)
-- [ ] Inventory changes persist correctly after screen is closed and reopened
-- [ ] Screen handles InventoryChanged events fired by other systems while it is open without crashing
+**事件与数据**
+- [ ] 第 9 节中所有事件在所有退出路径上以正确载荷触发（通过调试日志验证）
+- [ ] 界面不直接写入任何游戏系统（验证：无直接状态变更调用）
+- [ ] 背包变更在界面关闭和重新打开后正确持久化
+- [ ] 界面打开时能处理其他系统触发的 InventoryChanged 事件，不崩溃
 
-**Accessibility**
-- [ ] All text passes minimum contrast ratios specified in Section 12
-- [ ] Stat comparison does not rely on color alone as the sole differentiator
-- [ ] Screen reader announces item name and key stats on focus (verify with platform screen reader)
-- [ ] Reduced motion setting results in instant transitions (no animated transitions)
-- [ ] High contrast mode (if applicable to Accessibility Tier) renders without visual breakage
+**无障碍**
+- [ ] 所有文字通过第 12 节规定的最低对比度比例
+- [ ] 属性对比不仅依赖颜色作为唯一区分器
+- [ ] 屏幕阅读器在聚焦时播报物品名称和关键属性（用平台屏幕阅读器验证）
+- [ ] 减少动效设置生效后所有过渡动画变为即时（无动效过渡）
+- [ ] 高对比度模式（如适用于无障碍等级）渲染无视觉破损
 
-**Localization**
-- [ ] No text element overflows its container in any supported language
-- [ ] RTL layout renders correctly (if RTL is a target language)
-- [ ] All text elements are driven by localization strings — no hardcoded display text
+**本地化**
+- [ ] 任何受支持语言中没有文字元素溢出其容器
+- [ ] RTL 布局渲染正确（如 RTL 为目标语言）
+- [ ] 所有文字元素由本地化字符串驱动——无硬编码显示文字
 
 ---
 
-## 15. Open Questions
+## 15. 未解决问题
 
-> Track unresolved design questions here. Each question should have a clear owner
-> and a deadline. An Approved spec must have zero open questions — move to a decision
-> or explicitly document the deferral rationale.
+> 在此追踪尚未解决的设计问题。每个问题都应有明确的负责人和截止日期。已批准的规范必须没有未解决问题——要么得出决策，要么明确记录推迟的理由。
 
-| Question | Owner | Deadline | Resolution |
-|----------|-------|----------|-----------|
-| [e.g., Should item comparison be automatic (always showing equipped stats) or player-triggered (press Compare)?] | [ui-designer] | [Sprint 4, Day 3] | [Pending] |
-| [e.g., Do we support controller cursor (free aim) in the item grid, or d-pad-only grid navigation?] | [lead-programmer + ui-designer] | [Sprint 4, Day 3] | [Pending — depends on ADR-0015 input model decision] |
-| [e.g., What is the game's item drop policy — permanent loss or drop-to-world?] | [systems-designer] | [Requires GDD update] | [Blocked on inventory GDD Edge Cases section] |
-| [e.g., Maximum inventory size — does the grid have a hard cap or is it infinite-scroll?] | [economy-designer] | [Sprint 3, Day 5] | [Pending] |
+| 问题 | 负责人 | 截止日期 | 解决方案 |
+|------|-------|---------|---------|
+| [例：物品对比是自动的（始终显示已装备属性）还是玩家触发的（按对比键）？] | [ui-designer] | [Sprint 4，第 3 天] | [待定] |
+| [例：是否支持手柄光标（自由瞄准）在物品网格中操作，还是仅 D-Pad 网格导航？] | [lead-programmer + ui-designer] | [Sprint 4，第 3 天] | [待定——取决于 ADR-0015 输入模型决策] |
+| [例：游戏的物品丢弃策略——永久丢失还是掉落到世界中？] | [systems-designer] | [需更新 GDD] | [受阻——背包 GDD 边界情况章节尚未完成] |
+| [例：背包最大容量——网格有硬限制还是无限滚动？] | [economy-designer] | [Sprint 3，第 5 天] | [待定] |

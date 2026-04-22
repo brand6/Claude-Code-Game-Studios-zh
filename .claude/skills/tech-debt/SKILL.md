@@ -1,121 +1,122 @@
 ---
 name: tech-debt
-description: "Track, categorize, and prioritize technical debt across the codebase. Scans for debt indicators, maintains a debt register, and recommends repayment scheduling."
+description: "跨代码库追踪、分类并优先排序技术债务。扫描债务指标，维护债务登记表，并推荐还债排期。"
 argument-hint: "[scan|add|prioritize|report]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write
 ---
 
-## Phase 1: Parse Subcommand
+## 阶段 1：解析子命令
 
-Determine the mode from the argument:
+从参数中确定模式：
 
-- `scan` — Scan the codebase for tech debt indicators
-- `add` — Add a new tech debt entry manually
-- `prioritize` — Re-prioritize the existing debt register
-- `report` — Generate a summary report of current debt status
+- `scan` — 扫描代码库中的技术债务指标
+- `add` — 手动添加新的技术债务条目
+- `prioritize` — 对现有债务登记表重新排优先级
+- `report` — 生成当前债务状态的摘要报告
 
-If no subcommand is provided, output usage and stop. Verdict: **FAIL** — missing required subcommand.
-
----
-
-## Phase 2A: Scan Mode
-
-Search the codebase for debt indicators:
-
-- `TODO` comments (count and categorize)
-- `FIXME` comments (these are bugs disguised as debt)
-- `HACK` comments (workarounds that need proper solutions)
-- `@deprecated` markers
-- Duplicated code blocks (similar patterns in multiple files)
-- Files over 500 lines (potential god objects)
-- Functions over 50 lines (potential complexity)
-
-Categorize each finding:
-
-- **Architecture Debt**: Wrong abstractions, missing patterns, coupling issues
-- **Code Quality Debt**: Duplication, complexity, naming, missing types
-- **Test Debt**: Missing tests, flaky tests, untested edge cases
-- **Documentation Debt**: Missing docs, outdated docs, undocumented APIs
-- **Dependency Debt**: Outdated packages, deprecated APIs, version conflicts
-- **Performance Debt**: Known slow paths, unoptimized queries, memory issues
-
-Present the findings to the user.
-
-Ask: "May I write these findings to `docs/tech-debt-register.md`?"
-
-If yes, update the register (append new entries, do not overwrite existing ones). Verdict: **COMPLETE** — scan findings written to register.
-
-If no, stop here. Verdict: **BLOCKED** — user declined write.
+若未提供子命令，输出使用说明并停止。结论：**FAIL** — 缺少必填子命令。
 
 ---
 
-## Phase 2B: Add Mode
+## 阶段 2A：扫描模式
 
-Prompt for: description, category, affected files, estimated fix effort, impact if left unfixed.
+搜索代码库中的债务指标：
 
-Present the new entry to the user.
+- `TODO` 注释（统计并分类）
+- `FIXME` 注释（这些是伪装成债务的缺陷）
+- `HACK` 注释（需要正式解决方案的临时变通方法）
+- `@deprecated` 标记
+- 重复代码块（多个文件中的相似模式）
+- 超过 500 行的文件（潜在的上帝对象）
+- 超过 50 行的函数（潜在的复杂度问题）
 
-Ask: "May I append this entry to `docs/tech-debt-register.md`?"
+对每项发现进行分类：
 
-If yes, append the entry. Verdict: **COMPLETE** — entry added to register.
+- **架构债务**：错误的抽象、缺失模式、耦合问题
+- **代码质量债务**：重复、复杂度、命名、缺少类型
+- **测试债务**：缺少测试、不稳定测试、未测试的边界情况
+- **文档债务**：缺少文档、过时文档、未记录的 API
+- **依赖债务**：过时的包、已弃用的 API、版本冲突
+- **性能债务**：已知慢路径、未优化的查询、内存问题
 
-If no, stop here. Verdict: **BLOCKED** — user declined write.
+将发现结果呈现给用户。
 
----
+询问："我可以将这些发现写入 `docs/tech-debt-register.md` 吗？"
 
-## Phase 2C: Prioritize Mode
+若是，更新登记表（追加新条目，不覆盖现有条目）。结论：**COMPLETE** — 扫描发现已写入登记表。
 
-Read the debt register at `docs/tech-debt-register.md`.
-
-Score each item by: `(impact_if_unfixed × frequency_of_encounter) / fix_effort`
-
-Re-sort the register by priority score and recommend which items to include in the next sprint.
-
-Present the re-prioritized register to the user.
-
-Ask: "May I write the re-prioritized register back to `docs/tech-debt-register.md`?"
-
-If yes, write the updated file. Verdict: **COMPLETE** — register re-prioritized and saved.
-
-If no, stop here. Verdict: **BLOCKED** — user declined write.
-
----
-
-## Phase 2D: Report Mode
-
-Read the debt register. Generate summary statistics:
-
-- Total items by category
-- Total estimated fix effort
-- Items added vs resolved since last report
-- Trending direction (growing / stable / shrinking)
-
-Flag any items that have been in the register for more than 3 sprints.
-
-Output the report to the user. This mode is read-only — no files are written. Verdict: **COMPLETE** — debt report generated.
+若否，在此停止。结论：**BLOCKED** — 用户拒绝写入。
 
 ---
 
-## Phase 3: Next Steps
+## 阶段 2B：添加模式
 
-- Run `/sprint-plan` to schedule high-priority debt items into the next sprint.
-- Run `/tech-debt report` at the start of each sprint to track debt trends over time.
+提示输入：描述、分类、受影响文件、估计修复工作量、不修复的影响。
 
-### Debt Register Format
+将新条目呈现给用户。
+
+询问："我可以将此条目追加到 `docs/tech-debt-register.md` 吗？"
+
+若是，追加条目。结论：**COMPLETE** — 条目已添加到登记表。
+
+若否，在此停止。结论：**BLOCKED** — 用户拒绝写入。
+
+---
+
+## 阶段 2C：优先排序模式
+
+读取 `docs/tech-debt-register.md` 中的债务登记表。
+
+按以下公式对每项评分：`(不修复的影响 × 遇到频率) / 修复工作量`
+
+按优先级分数重新排序登记表，并推荐下一冲刺应包含的条目。
+
+将重新排序后的登记表呈现给用户。
+
+询问："我可以将重新排序后的登记表写回 `docs/tech-debt-register.md` 吗？"
+
+若是，写入更新后的文件。结论：**COMPLETE** — 登记表已重新排序并保存。
+
+若否，在此停止。结论：**BLOCKED** — 用户拒绝写入。
+
+---
+
+## 阶段 2D：报告模式
+
+读取债务登记表。生成摘要统计：
+
+- 各分类的条目总数
+- 估计的总修复工作量
+- 自上次报告以来新增与已解决的条目
+- 趋势方向（增加中 / 稳定 / 减少中）
+
+标记在登记表中存在超过 3 个冲刺的条目。
+
+将报告输出给用户。此模式为只读——不写入任何文件。结论：**COMPLETE** — 债务报告已生成。
+
+---
+
+## 阶段 3：下一步
+
+- 运行 `/sprint-plan` 将高优先级债务项排入下一冲刺。
+- 在每个冲刺开始时运行 `/tech-debt report` 跟踪债务趋势。
+
+### 债务登记表格式
 
 ```markdown
-## Technical Debt Register
-Last updated: [Date]
-Total items: [N] | Estimated total effort: [T-shirt sizes summed]
+## 技术债务登记表
+最后更新：[日期]
+条目总数：[N] | 估计总工作量：[T恤尺码汇总]
 
-| ID | Category | Description | Files | Effort | Impact | Priority | Added | Sprint |
-|----|----------|-------------|-------|--------|--------|----------|-------|--------|
-| TD-001 | [Cat] | [Description] | [files] | [S/M/L/XL] | [Low/Med/High/Critical] | [Score] | [Date] | [Sprint to fix or "Backlog"] |
+| ID | 分类 | 描述 | 文件 | 工作量 | 影响 | 优先级 | 添加日期 | 冲刺 |
+|----|------|------|------|--------|------|--------|---------|------|
+| TD-001 | [分类] | [描述] | [文件] | [S/M/L/XL] | [低/中/高/严重] | [分数] | [日期] | [修复冲刺或"积压"] |
 ```
 
-### Rules
-- Tech debt is not inherently bad — it is a tool. The register tracks conscious decisions.
-- Every debt entry must explain WHY it was accepted (deadline, prototype, missing info)
-- "Scan" should run at least once per sprint to catch new debt
-- Items older than 3 sprints without action should either be fixed or consciously accepted with a documented reason
+### 规则
+
+- 技术债务本身并非坏事——它是一种工具。登记表追踪的是有意识的决策。
+- 每个债务条目必须说明为何接受该债务（截止日期、原型、信息缺失）
+- `scan` 应至少每个冲刺运行一次以发现新债务
+- 超过 3 个冲刺未处理的条目应当被修复，或在有文档化理由的前提下有意识地接受

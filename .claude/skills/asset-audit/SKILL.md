@@ -1,94 +1,204 @@
 ---
 name: asset-audit
-description: "Audits game assets for compliance with naming conventions, file size budgets, format standards, and pipeline requirements. Identifies orphaned assets, missing references, and standard violations."
-argument-hint: "[category|all]"
+description: "审计游戏资产的命名规范合规性、文件大小预算、格式标准及流水线要求。识别孤立资产、缺失引用和标准违规项。"
+argument-hint: "[scope: all|textures|audio|models|ui|data] [fix: report|auto-rename]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep
-# Read-only diagnostic skill — no specialist agent delegation needed
 ---
 
-## Phase 1: Read Standards
+# 资产审计
 
-Read the art bible or asset standards from the relevant design docs and the CLAUDE.md naming conventions.
-
----
-
-## Phase 2: Scan Asset Directories
-
-Scan the target asset directory using Glob:
-
-- `assets/art/**/*` for art assets
-- `assets/audio/**/*` for audio assets
-- `assets/vfx/**/*` for VFX assets
-- `assets/shaders/**/*` for shaders
-- `assets/data/**/*` for data files
+资产审计扫描所有游戏资产目录，以对照已记录的标准——来自美术圣经和技术偏好——识别违规项、孤立文件和引用问题。
 
 ---
 
-## Phase 3: Run Compliance Checks
+## 阶段 1：读取标准
 
-**Naming conventions:**
-- Art: `[category]_[name]_[variant]_[size].[ext]`
-- Audio: `[category]_[context]_[name]_[variant].[ext]`
-- All files must be lowercase with underscores
+读取以下文件：
+- `design/art/art-bible.md`——命名规范和格式标准（第 8 章节）
+- `.claude/docs/technical-preferences.md`——每类资产的文件大小预算和格式要求
 
-**File standards:**
-- Textures: Power-of-two dimensions, correct format (PNG for UI, compressed for 3D), within size budget
-- Audio: Correct sample rate, format (OGG for SFX, OGG/MP3 for music), within duration limits
-- Data: Valid JSON/YAML, schema-compliant
+若两个文件均不存在，报告：
+> "未找到资产标准。请先运行 `/art-bible` 并配置技术偏好，然后再进行资产审计。"
 
-**Orphaned assets:** Search code for references to each asset file. Flag any with no references.
+提取并建立标准表：
 
-**Missing assets:** Search code for asset references and verify the files exist.
-
----
-
-## Phase 4: Output Audit Report
-
-```markdown
-# Asset Audit Report -- [Category] -- [Date]
-
-## Summary
-- **Total assets scanned**: [N]
-- **Naming violations**: [N]
-- **Size violations**: [N]
-- **Format violations**: [N]
-- **Orphaned assets**: [N]
-- **Missing assets**: [N]
-- **Overall health**: [CLEAN / MINOR ISSUES / NEEDS ATTENTION]
-
-## Naming Violations
-| File | Expected Pattern | Issue |
-|------|-----------------|-------|
-
-## Size Violations
-| File | Budget | Actual | Overage |
-|------|--------|--------|---------|
-
-## Format Violations
-| File | Expected Format | Actual Format |
-|------|----------------|---------------|
-
-## Orphaned Assets (no code references found)
-| File | Last Modified | Size | Recommendation |
-|------|-------------|------|---------------|
-
-## Missing Assets (referenced but not found)
-| Reference Location | Expected Path |
-|-------------------|---------------|
-
-## Recommendations
-[Prioritized list of fixes]
-
-## Verdict: [COMPLIANT / WARNINGS / NON-COMPLIANT]
+```
+类别       | 允许的格式 | 命名模式         | 最大文件大小
+-----------|-----------|-----------------|-------------
+纹理       | PNG, WebP  | type_name_res   | 2MB（移动）/ 8MB（PC）
+音频 SFX   | OGG        | sfx_action_var  | 500KB
+音频音乐   | OGG        | music_area_mood | 10MB
+3D 模型    | GLTF, GLB  | type_name_lod   | 1MB
+UI 精灵图  | PNG        | ui_element_state| 256KB
+数据文件   | JSON, YAML  | system_name     | 100KB
 ```
 
-This skill is read-only — it produces a report but does not write files.
+（根据美术圣经和技术偏好中记录的实际标准填充。）
 
 ---
 
-## Phase 5: Next Steps
+## 阶段 2：扫描资产目录
 
-- Fix naming violations using the patterns defined in CLAUDE.md.
-- Delete confirmed orphaned assets after manual review.
-- Run `/content-audit` to cross-check asset counts against GDD-specified requirements.
+Glob 以下目录中的所有文件：
+
+```
+assets/textures/**/*.*
+assets/audio/**/*.*
+assets/models/**/*.*
+assets/ui/**/*.*
+assets/data/**/*.*
+```
+
+对每个文件记录：
+- 文件路径
+- 文件扩展名
+- 推断的文件大小（基于扩展名/类别——实际大小需要文件系统访问，若工具不支持则标注"未知"）
+- 推断的资产类别（基于目录路径）
+
+建立完整资产清单。
+
+---
+
+## 阶段 3：合规性检查
+
+对每个资产，检查以下维度：
+
+### 3a — 命名规范
+
+对照阶段 1 中提取的该类别命名模式，验证文件名。
+
+违规案例：
+- `TexturePlayer.png`（大写，无下划线分隔）→ 应为 `char_player_diffuse.png`
+- `sfx1.ogg`（无描述性名称）→ 应为 `sfx_jump_start.ogg`
+- `icon copy 2.png`（包含空格和"copy"）→ 明确的临时文件
+
+每个命名违规标记为：`❌ 命名: [文件路径] → 建议: [corrected_name]`
+
+### 3b — 文件格式标准
+
+检查文件扩展名是否与该类别的允许格式匹配。
+
+违规案例：
+- `assets/textures/ground.bmp`（BMP 不允许）→ 应导出为 PNG
+- `assets/audio/theme.mp3`（MP3 不在允许列表）→ 应转换为 OGG
+
+每个格式违规标记为：`❌ 格式: [文件路径] — 使用了 [格式]，该类别要求 [允许格式]`
+
+### 3c — 孤立资产检测
+
+在源代码中搜索每个资产文件名（去除扩展名）的引用：
+```
+Grep pattern="[资产名称（不含扩展名）]" glob="src/**/*.{gd,cs,cpp,json,tscn,tres,scene,prefab}"
+```
+
+若无引用：将该资产标记为疑似孤立。
+
+附加说明：
+- 新创建的文件可能是合法的（未集成），但仍应标记
+- `_temp`、`_wip`、`_old`、`_backup` 后缀强烈提示为孤立文件
+
+每个孤立资产标记为：`⚠️ 孤立: [文件路径] — 源代码中未找到引用`
+
+### 3d — 缺失资产检测
+
+在源代码中搜索资产引用，但在资产目录中找不到对应文件：
+```
+Grep pattern="(load|preload|require|import)\s*\([\"'].*assets/" glob="src/**/*.{gd,cs,cpp}"
+```
+
+提取所有被引用的资产路径，检查文件是否实际存在。
+
+若引用了不存在的资产：
+`❌ 缺失: [资产路径] — 被 [源文件:行号] 引用但不存在`
+
+---
+
+## 阶段 4：输出审计报告
+
+生成结构化报告并写入 `production/qa/asset-audit-[date].md`：
+
+```markdown
+# 资产审计报告
+日期：[日期]
+扫描范围：[all / 特定类别]
+标准来源：art-bible.md 第 8 章节 + technical-preferences.md
+
+---
+
+## 摘要
+
+| 类别    | 总计 | 通过 | ❌ 命名 | ❌ 格式 | ⚠️ 孤立 | ❌ 缺失 |
+|---------|------|------|---------|---------|---------|---------|
+| 纹理    | 142  | 128  | 8       | 2       | 4       | 0       |
+| 音频    | 87   | 81   | 3       | 1       | 2       | 0       |
+| 3D 模型 | 34   | 32   | 1       | 0       | 1       | 0       |
+| UI      | 56   | 54   | 2       | 0       | 0       | 0       |
+| 数据    | 23   | 23   | 0       | 0       | 0       | 0       |
+| **合计**| 342  | 318  | 14      | 3       | 7       | 0       |
+
+合规率：[N]%
+
+---
+
+## 命名违规（[N] 个）
+
+[所有 ❌ 命名条目列表，附建议名称]
+
+---
+
+## 尺寸违规（[N] 个）
+
+| 文件 | 预算 | 实际大小 | 超出量 |
+|------|------|---------|--------|
+
+---
+
+## 格式违规（[N] 个）
+
+[所有 ❌ 格式条目列表]
+
+---
+
+## 疑似孤立资产（[N] 个）
+
+[所有 ⚠️ 孤立条目列表]
+
+> **注意**：孤立资产可能是合法的未集成内容，但应由对应系统负责人确认。
+
+---
+
+## 缺失引用（[N] 个）
+
+[所有 ❌ 缺失条目列表]
+
+> **阻塞性**：这些引用在运行时会导致加载错误。必须在发布前修复。
+
+---
+
+## 建议操作
+
+优先级 1（阻塞性）：
+- 补齐所有缺失资产或移除失效引用
+
+优先级 2（高）：
+- 重命名格式违规资产（格式不符的资产无法通过标准导入流水线处理）
+
+优先级 3（中）：
+- 修复命名违规（影响流水线自动化和资产搜索）
+
+优先级 4（低）：
+- 审查孤立资产——由各系统负责人确认后删除或集成
+
+---
+
+## 评定：[COMPLIANT / WARNINGS / NON-COMPLIANT]
+
+---
+
+## 下一步
+
+- 运行 `/asset-spec` — 为缺失的规格生成资产视觉规格
+- 提交报告给美术总监审查孤立资产
+- 运行 `/content-audit` — 对照 GDD 规定的需求交叉核查资产数量
+```

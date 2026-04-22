@@ -1,130 +1,128 @@
-# Economy Model: [System Name]
+# 经济模型：[系统名称]
 
-*Created: [Date]*
-*Owner: economy-designer*
-*Status: [Draft / Balanced / Live]*
-
----
-
-## Overview
-
-[What resources, currencies, and exchange systems does this economy cover?
-What player behaviors does it incentivize?]
+*创建日期：[日期]*
+*负责人：economy-designer*
+*状态：[草稿 / 已平衡 / 已上线]*
 
 ---
 
-## Currencies
+## 概述
 
-| Currency | Type | Earn Rate | Sink Rate | Cap | Notes |
+[本经济系统涵盖哪些资源、货币和兑换系统？它激励了哪些玩家行为？]
+
+---
+
+## 货币
+
+| 货币 | 类型 | 获取速率 | 消耗速率 | 上限 | 备注 |
 | ---- | ---- | ---- | ---- | ---- | ---- |
-| [Gold] | Soft | [per hour] | [per hour] | [max or none] | [Primary transaction currency] |
-| [Gems] | Premium | [per day F2P] | [varies] | [max] | [Premium currency, purchasable] |
-| [XP] | Progression | [per action] | [level-up cost] | [none] | [Cannot be traded] |
+| [金币] | 软货币 | [每小时] | [每小时] | [最大值或无限] | [主要交易货币] |
+| [宝石] | 高级货币 | [F2P每日] | [不定] | [最大值] | [高级货币，可购买] |
+| [经验值] | 成长货币 | [每次行动] | [升级消耗] | [无限] | [不可交易] |
 
-### Currency Rules
-- [Rule 1 — e.g., "Soft currency has no cap but inflation is controlled via sinks"]
-- [Rule 2 — e.g., "Premium currency cannot be converted back to real money"]
-- [Rule 3]
+### 货币规则
+- [规则1——例如："软货币无上限，但通过消耗机制控制通货膨胀"]
+- [规则2——例如："高级货币不可兑换回真实货币"]
+- [规则3]
 
 ---
 
-## Sources (Faucets)
+## 来源（水龙头）
 
-| Source | Currency | Amount | Frequency | Conditions |
+| 来源 | 货币 | 数量 | 频率 | 条件 |
 | ---- | ---- | ---- | ---- | ---- |
-| [Quest completion] | Gold | [50-200] | [per quest] | [Scales with quest difficulty] |
-| [Enemy drops] | Gold | [1-10] | [per kill] | [Modified by luck stat] |
-| [Daily login] | Gems | [5] | [daily] | [Streak bonus: +1 per consecutive day] |
-| [Achievement] | XP | [100-500] | [one-time] | [Per achievement tier] |
+| [完成任务] | 金币 | [50-200] | [每任务] | [按任务难度缩放] |
+| [敌人掉落] | 金币 | [1-10] | [每击杀] | [受幸运属性影响] |
+| [每日登录] | 宝石 | [5] | [每日] | [连续签到奖励：每连续天+1] |
+| [成就奖励] | 经验值 | [100-500] | [一次性] | [按成就等级] |
 
 ---
 
-## Sinks (Drains)
+## 消耗（排水口）
 
-| Sink | Currency | Cost | Frequency | Purpose |
+| 消耗途径 | 货币 | 费用 | 频率 | 目的 |
 | ---- | ---- | ---- | ---- | ---- |
-| [Equipment purchase] | Gold | [100-5000] | [as needed] | [Power progression] |
-| [Repair costs] | Gold | [10-100] | [per death] | [Death penalty, gold drain] |
-| [Cosmetic shop] | Gems | [50-500] | [optional] | [Vanity, premium sink] |
-| [Respec] | Gold | [1000] | [rare] | [Build experimentation tax] |
+| [购买装备] | 金币 | [100-5000] | [按需] | [力量成长] |
+| [修理费用] | 金币 | [10-100] | [每次死亡] | [死亡惩罚，金币消耗] |
+| [外观商店] | 宝石 | [50-500] | [可选] | [外观，高级消耗] |
+| [重置属性] | 金币 | [1000] | [偶尔] | [Build实验税] |
 
 ---
 
-## Balance Targets
+## 平衡目标
 
-| Metric | Target | Rationale |
+| 指标 | 目标值 | 理由 |
 | ---- | ---- | ---- |
-| Time to first meaningful purchase | [X minutes] | [Player should feel spending power early] |
-| Hourly gold earn rate (mid-game) | [X gold/hr] | [Based on session length and purchase cadence] |
-| Days to max level (F2P) | [X days] | [Enough to retain, not so long it frustrates] |
-| Sink-to-source ratio | [0.7-0.9] | [Slight surplus keeps players feeling wealthy] |
-| Premium currency F2P earn rate | [X/week] | [Enough to buy something monthly, not everything] |
+| 首次有意义消费时间 | [X分钟] | [玩家应尽早感受到消费能力] |
+| 每小时金币获取（中期） | [X金币/小时] | [基于游戏时长和购买节奏] |
+| F2P升满等级所需天数 | [X天] | [足够留存，不过于挫败玩家] |
+| 消耗/来源比 | [0.7-0.9] | [轻微盈余让玩家感到富足] |
+| 高级货币F2P获取速率 | [X/周] | [足够每月购买某样东西，但不是一切] |
 
 ---
 
-## Progression Curves
+## 成长曲线
 
-### Level XP Requirements
-| Level | XP Required | Cumulative XP | Estimated Time |
+### 升级经验需求
+| 等级 | 所需经验 | 累计经验 | 预计时间 |
 | ---- | ---- | ---- | ---- |
-| 1→2 | [100] | [100] | [10 min] |
-| 5→6 | [500] | [1,500] | [2 hrs] |
-| 10→11 | [1,500] | [7,500] | [8 hrs] |
-| 20→21 | [5,000] | [50,000] | [40 hrs] |
+| 1→2 | [100] | [100] | [10分钟] |
+| 5→6 | [500] | [1,500] | [2小时] |
+| 10→11 | [1,500] | [7,500] | [8小时] |
+| 20→21 | [5,000] | [50,000] | [40小时] |
 
-*Formula*: `XP(n) = [formula, e.g., 100 * n^1.5]`
+*公式*：`XP(n) = [公式，例如：100 * n^1.5]`
 
-### Item Price Scaling
-*Formula*: `Price(tier) = [formula, e.g., base_price * 2^(tier-1)]`
+### 物品价格缩放
+*公式*：`价格(阶级) = [公式，例如：base_price * 2^(阶级-1)]`
 
 ---
 
-## Loot Tables
+## 掉落表
 
-### [Drop Source Name]
-| Item | Rarity | Drop Rate | Pity Timer | Notes |
+### [掉落来源名称]
+| 物品 | 稀有度 | 掉落率 | 保底计时器 | 备注 |
 | ---- | ---- | ---- | ---- | ---- |
-| [Common item] | Common | [60%] | [N/A] | [Always useful, never feels bad] |
-| [Uncommon item] | Uncommon | [25%] | [N/A] | [Noticeable upgrade] |
-| [Rare item] | Rare | [12%] | [10 drops] | [Exciting, build-defining] |
-| [Legendary item] | Legendary | [3%] | [30 drops] | [Game-changing, celebration moment] |
+| [普通物品] | 普通 | [60%] | [无] | [始终有用，永不令人失望] |
+| [非普通物品] | 非普通 | [25%] | [无] | [明显升级] |
+| [稀有物品] | 稀有 | [12%] | [10次] | [令人兴奋，定义Build] |
+| [传奇物品] | 传奇 | [3%] | [30次] | [改变游戏，值得庆祝的时刻] |
 
-### Pity System
-[Describe how the pity system works to prevent extreme bad luck streaks.]
+### 保底系统
+[描述保底系统如何运作，以防止极端的坏运气连续发生。]
 
 ---
 
-## Economy Health Metrics
+## 经济健康指标
 
-| Metric | Healthy Range | Warning Threshold | Action if Breached |
+| 指标 | 健康区间 | 警告阈值 | 突破时的应对 |
 | ---- | ---- | ---- | ---- |
-| Average player gold | [X-Y at level Z] | [>Y or <X] | [Adjust faucets/sinks] |
-| Gold Gini coefficient | [<0.4] | [>0.5] | [Wealth too concentrated] |
-| % players hitting currency cap | [<5%] | [>10%] | [Raise cap or add sinks] |
-| Premium conversion rate | [2-5%] | [<1% or >10%] | [Rebalance F2P earn rate] |
-| Average time between purchases | [X minutes] | [>Y minutes] | [Nothing worth buying] |
+| 玩家平均金币 | [Z等级时X-Y] | [>Y或<X] | [调整水龙头/排水口] |
+| 金币基尼系数 | [<0.4] | [>0.5] | [财富过度集中] |
+| 达到货币上限的玩家% | [<5%] | [>10%] | [提高上限或增加消耗途径] |
+| 高级货币付费转化率 | [2-5%] | [<1%或>10%] | [重新平衡F2P获取速率] |
+| 两次购买之间的平均时间 | [X分钟] | [>Y分钟] | [没有值得购买的东西] |
 
 ---
 
-## Ethical Guardrails
+## 伦理护栏
 
-- [No pay-to-win: premium currency cannot buy gameplay power advantages]
-- [Pity timers on all random drops: guaranteed outcome within X attempts]
-- [Transparent drop rates displayed to players]
-- [Spending limits for minor accounts]
-- [No artificial scarcity pressure (FOMO timers) on essential items]
-
----
-
-## Simulation Results
-
-[Include results from economy simulations if available: player wealth
-distribution over time, sink effectiveness, inflation rate, etc.]
+- [无付费赢游戏：高级货币不可购买游戏力量优势]
+- [所有随机掉落设置保底：在X次尝试内保证获得]
+- [向玩家公开展示掉落率]
+- [未成年账户的消费限制]
+- [不对核心物品施加人为稀缺压力（FOMO计时器）]
 
 ---
 
-## Dependencies
+## 模拟结果
 
-- Depends on: [combat balance, quest design, crafting system]
-- Affects: [difficulty curve, player retention, monetization]
-- Must coordinate with: `game-designer`, `live-ops-designer`, `analytics-engineer`
+[如有经济模拟结果，在此处附上：玩家财富随时间的分布、消耗有效性、通货膨胀率等。]
+
+---
+
+## 依赖关系
+
+- 依赖于：[战斗平衡、任务设计、制作系统]
+- 影响：[难度曲线、玩家留存、变现]
+- 必须与以下人员协调：`game-designer`、`live-ops-designer`、`analytics-engineer`

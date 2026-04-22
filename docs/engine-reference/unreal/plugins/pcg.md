@@ -1,356 +1,354 @@
-# Unreal Engine 5.7 — PCG (Procedural Content Generation)
+# Unreal Engine 5.7 — PCG（程序化内容生成）
 
-**Last verified:** 2026-02-13
-**Status:** Production-Ready (as of UE 5.7)
-**Plugin:** `PCG` (built-in, enable in Plugins)
-
----
-
-## Overview
-
-**Procedural Content Generation (PCG)** is Unreal's node-based framework for generating
-procedural content at massive scale. It's designed for populating large open worlds with
-foliage, rocks, props, buildings, and other environmental detail.
-
-**Use PCG for:**
-- Procedural foliage placement (trees, grass, rocks)
-- Biome-based environment generation
-- Road/path generation
-- Building/structure placement
-- World detail population (props, clutter)
-
-**DON'T use PCG for:**
-- Gameplay logic (use Blueprints/C++)
-- One-off manual placement (use editor tools)
-
-**⚠️ Note:** PCG was experimental in UE 5.0-5.6, became production-ready in UE 5.7.
+**最后验证：** 2026-02-13
+**状态：** 生产就绪（UE 5.7 起）
+**插件：** `PCG`（内置，在 Plugins 中启用）
 
 ---
 
-## Core Concepts
+## 概述
 
-### 1. **PCG Graph**
-- Node-based graph (similar to Material Editor)
-- Defines generation rules
+**程序化内容生成（PCG）** 是 Unreal 的节点式框架，用于大规模程序化生成内容。专为在广阔开放世界中填充植被、岩石、道具、建筑和其他环境细节而设计。
 
-### 2. **PCG Component**
-- Placed in level, executes PCG Graph
-- Generates content in defined volume
+**以下场景使用 PCG：**
+- 程序化植被放置（树木、草地、岩石）
+- 基于生物群系的环境生成
+- 道路/路径生成
+- 建筑/结构放置
+- 世界细节填充（道具、杂物）
 
-### 3. **PCG Data**
-- Point data (positions, rotations, scales)
-- Spline data (paths, roads, rivers)
-- Volume data (density, biome masks)
+**以下场景不要使用 PCG：**
+- 游戏逻辑（使用 Blueprint/C++）
+- 需要手动精确摆放的单个物件（使用编辑器工具）
 
-### 4. **Nodes**
-- **Samplers**: Generate points (Grid, Poisson, Surface)
-- **Filters**: Remove points based on rules (Density, Tag, Bounds)
-- **Modifiers**: Transform points (Offset, Rotate, Scale)
-- **Spawners**: Instantiate meshes/actors at points
+**⚠️ 说明：** PCG 在 UE 5.0-5.6 中为实验性功能，UE 5.7 起正式进入生产就绪状态。
 
 ---
 
-## Setup
+## 核心概念
 
-### 1. Enable Plugin
+### 1. **PCG 图（PCG Graph）**
+- 节点式图（类似材质编辑器）
+- 定义生成规则
+
+### 2. **PCG 组件（PCG Component）**
+- 放置在关卡中，执行 PCG 图
+- 在指定体积范围内生成内容
+
+### 3. **PCG 数据（PCG Data）**
+- 点数据（位置、旋转、缩放）
+- 样条数据（路径、道路、河流）
+- 体积数据（密度、生物群系蒙版）
+
+### 4. **节点（Nodes）**
+- **采样器（Samplers）**：生成点（网格、泊松、表面）
+- **过滤器（Filters）**：按规则删除点（密度、标签、边界）
+- **修改器（Modifiers）**：变换点（偏移、旋转、缩放）
+- **生成器（Spawners）**：在点处实例化网格体/Actor
+
+---
+
+## 配置
+
+### 1. 启用插件
 
 `Edit > Plugins > PCG > Enabled > Restart`
 
-### 2. Create PCG Volume
+### 2. 创建 PCG 体积
 
 1. Place Actors > Volumes > PCG Volume
-2. Scale volume to desired generation area
+2. 缩放体积到所需生成区域
 
-### 3. Create PCG Graph
+### 3. 创建 PCG 图
 
 1. Content Browser > PCG > PCG Graph
-2. Open PCG Graph Editor
+2. 打开 PCG 图编辑器
 
 ---
 
-## Basic Workflow
+## 基础工作流
 
-### Example: Forest Generation
+### 示例：森林生成
 
-#### 1. Create PCG Graph
+#### 1. 创建 PCG 图
 
-**Node Setup:**
+**节点设置：**
 ```
-Input (Volume)
+输入（体积）
   ↓
-Surface Sampler (sample volume surface, points per m²: 0.5)
+表面采样器（采样体积表面，每平方米点数：0.5）
   ↓
-Density Filter (use texture mask or noise)
+密度过滤器（使用贴图蒙版或噪声）
   ↓
-Static Mesh Spawner (tree meshes)
+静态网格体生成器（树木网格体）
   ↓
-Output
+输出
 ```
 
-#### 2. Assign Graph to Volume
+#### 2. 将图指定给体积
 
-1. Select PCG Volume
-2. Details Panel > PCG Component > Graph = Your PCG Graph
-3. Click "Generate" button
-
----
-
-## Key Node Types
-
-### Samplers (Point Generation)
-
-#### Grid Sampler
-- Regular grid of points
-- Configure:
-  - **Grid Size**: Distance between points
-  - **Offset**: Random offset per point
-
-#### Poisson Disk Sampler
-- Random points with minimum distance
-- Configure:
-  - **Points Per m²**: Density
-  - **Min Distance**: Spacing between points
-
-#### Surface Sampler
-- Points on mesh surfaces or landscape
-- Configure:
-  - **Points Per m²**: Density
-  - **Surface Only**: Only surface, not volume
+1. 选择 PCG 体积
+2. Details Panel > PCG Component > Graph = 你的 PCG 图
+3. 点击 "Generate" 按钮
 
 ---
 
-### Filters (Point Removal)
+## 主要节点类型
 
-#### Density Filter
-- Remove points based on density value
-- Input: Texture or noise
-- Use for: Biome masks, clearings, paths
+### 采样器（点生成）
 
-#### Tag Filter
-- Filter points by tag
-- Use for: Conditional spawning
+#### 网格采样器
+- 规则网格排列的点
+- 配置：
+  - **网格大小（Grid Size）**：点与点之间的距离
+  - **偏移（Offset）**：每个点的随机偏移
 
-#### Bounds Filter
-- Keep only points within bounds
-- Use for: Limiting generation to specific areas
+#### 泊松盘采样器
+- 具有最小间距的随机点
+- 配置：
+  - **每平方米点数（Points Per m²）**：密度
+  - **最小距离（Min Distance）**：点与点之间的间距
 
----
-
-### Modifiers (Point Transformation)
-
-#### Rotate
-- Randomize point rotation
-- Configure:
-  - **Min/Max Rotation**: Rotation range per axis
-
-#### Scale
-- Randomize point scale
-- Configure:
-  - **Min/Max Scale**: Scale range
-
-#### Project to Ground
-- Snap points to landscape surface
+#### 表面采样器
+- 网格体表面或地形上的点
+- 配置：
+  - **每平方米点数（Points Per m²）**：密度
+  - **仅表面（Surface Only）**：仅在表面，不含体积内部
 
 ---
 
-### Spawners (Mesh/Actor Instantiation)
+### 过滤器（点移除）
 
-#### Static Mesh Spawner
-- Spawn static meshes at points
-- Configure:
-  - **Mesh List**: Array of meshes (random selection)
-  - **Culling Distance**: LOD/culling settings
+#### 密度过滤器
+- 根据密度值移除点
+- 输入：贴图或噪声
+- 用途：生物群系蒙版、空地、路径
 
-#### Actor Spawner
-- Spawn Blueprint actors at points
-- Use for: Gameplay actors, interactive objects
+#### 标签过滤器
+- 按标签过滤点
+- 用途：条件性生成
 
----
-
-## Data Sources
-
-### Landscape
-- Use landscape as input for sampling
-- Automatically projects to landscape height
-
-### Splines
-- Generate content along splines (roads, rivers, paths)
-- Example: Trees along path
-
-### Textures
-- Use textures as density masks
-- Paint biomes, clearings, areas
+#### 边界过滤器
+- 仅保留边界范围内的点
+- 用途：将生成限制在特定区域
 
 ---
 
-## Biome Example (Mixed Forest)
+### 修改器（点变换）
 
-### Graph Setup
+#### 旋转
+- 随机化点的旋转
+- 配置：
+  - **最小/最大旋转（Min/Max Rotation）**：每个轴的旋转范围
+
+#### 缩放
+- 随机化点的缩放
+- 配置：
+  - **最小/最大缩放（Min/Max Scale）**：缩放范围
+
+#### 投影到地面
+- 将点吸附到地形表面
+
+---
+
+### 生成器（网格体/Actor 实例化）
+
+#### 静态网格体生成器
+- 在点处生成静态网格体
+- 配置：
+  - **网格体列表（Mesh List）**：网格体数组（随机选取）
+  - **裁剪距离（Culling Distance）**：LOD/裁剪设置
+
+#### Actor 生成器
+- 在点处生成 Blueprint Actor
+- 用途：游戏逻辑 Actor、可交互对象
+
+---
+
+## 数据源
+
+### 地形（Landscape）
+- 以地形作为采样输入
+- 自动投影到地形高度
+
+### 样条线（Splines）
+- 沿样条线生成内容（道路、河流、路径）
+- 示例：沿路径种树
+
+### 贴图（Textures）
+- 以贴图作为密度蒙版
+- 绘制生物群系、空地、区域
+
+---
+
+## 生物群系示例（混合森林）
+
+### 图设置
 
 ```
-Input (Landscape)
+输入（地形）
   ↓
-Surface Sampler (density: 1.0)
+表面采样器（密度：1.0）
   ↓
 ┌─────────────────┬─────────────────┐
-│ Tree Biome      │ Rock Biome      │
-│ (density > 0.5) │ (density < 0.5) │
+│ 树木生物群系      │ 岩石生物群系      │
+│ （密度 > 0.5）   │ （密度 < 0.5）   │
 ├─────────────────┼─────────────────┤
-│ Tree Spawner    │ Rock Spawner    │
+│ 树木生成器        │ 岩石生成器        │
 └─────────────────┴─────────────────┘
   ↓
-Merge
+合并
   ↓
-Output
+输出
 ```
 
 ---
 
-## Spline-Based Generation (Road with Trees)
+## 基于样条线的生成（带树木的道路）
 
-### 1. Create PCG Graph
+### 1. 创建 PCG 图
 
 ```
-Spline Input
+样条线输入
   ↓
-Spline Sampler (sample along spline)
+样条线采样器（沿样条线采样）
   ↓
-Offset (offset from spline path)
+偏移（从样条线路径侧移）
   ↓
-Tree Spawner
+树木生成器
   ↓
-Output
+输出
 ```
 
-### 2. Add Spline Component to PCG Volume
+### 2. 为 PCG 体积添加样条线组件
 
 1. PCG Volume > Add Component > Spline
-2. Draw spline path
-3. PCG Graph reads spline data
+2. 绘制样条线路径
+3. PCG 图读取样条线数据
 
 ---
 
-## Runtime Generation
+## 运行时生成
 
-### Trigger Generation from C++
+### 通过 C++ 触发生成
 
 ```cpp
 #include "PCGComponent.h"
 
-UPCGComponent* PCGComp = /* Get PCG Component */;
-PCGComp->Generate(); // Execute PCG graph
+UPCGComponent* PCGComp = /* 获取 PCG 组件 */;
+PCGComp->Generate(); // 执行 PCG 图
 ```
 
-### Stream Generation (Large Worlds)
+### 流式生成（大型世界）
 
-- PCG automatically streams with World Partition
-- Only generates content in loaded cells
+- PCG 与 World Partition 自动流式加载
+- 仅在已加载的分区格中生成内容
 
 ---
 
-## Performance
+## 性能
 
-### Optimization Tips
+### 优化建议
 
-- Use **culling distance** on spawned meshes (LOD)
-- Limit **density** (fewer points = better performance)
-- Use **Hierarchical Instanced Static Meshes (HISM)** for repeated meshes
-- Enable **streaming** for large worlds
+- 为生成的网格体设置**裁剪距离**（LOD）
+- 限制**密度**（点越少性能越好）
+- 对重复网格体使用**层级实例化静态网格体（HISM）**
+- 为大型世界启用**流式加载**
 
-### Debug Performance
+### 调试性能
 
 ```cpp
-// Console commands:
-// pcg.graph.debug 1 - Show PCG debug info
-// stat pcg - Show PCG performance stats
+// 控制台命令：
+// pcg.graph.debug 1 - 显示 PCG 调试信息
+// stat pcg - 显示 PCG 性能统计
 ```
 
 ---
 
-## Common Patterns
+## 常用模式
 
-### Forest with Clearings
-
-```
-Surface Sampler
-  ↓
-Density Filter (noise texture with clearings)
-  ↓
-Tree Spawner (pine, oak, birch)
-```
-
----
-
-### Rocks on Steep Slopes
+### 带空地的森林
 
 ```
-Landscape Input
+表面采样器
   ↓
-Surface Sampler
+密度过滤器（带空地的噪声贴图）
   ↓
-Slope Filter (angle > 30°)
-  ↓
-Rock Spawner
+树木生成器（松树、橡树、桦树）
 ```
 
 ---
 
-### Props Along Road
+### 陡坡上的岩石
 
 ```
-Spline Input (road spline)
+地形输入
   ↓
-Spline Sampler
+表面采样器
   ↓
-Offset (side of road)
+坡度过滤器（角度 > 30°）
   ↓
-Street Light Spawner
+岩石生成器
 ```
 
 ---
 
-## Debugging
+### 道路旁的道具
 
-### PCG Debug Visualization
+```
+样条线输入（道路样条线）
+  ↓
+样条线采样器
+  ↓
+偏移（路边）
+  ↓
+路灯生成器
+```
+
+---
+
+## 调试
+
+### PCG 调试可视化
 
 ```cpp
-// Console commands:
-// pcg.debug.display 1 - Show points and generation bounds
-// pcg.debug.colormode points - Color-code points
+// 控制台命令：
+// pcg.debug.display 1 - 显示点和生成边界
+// pcg.debug.colormode points - 对点进行颜色编码
 ```
 
-### Graph Debugging
+### 图调试
 
-- PCG Graph Editor > Debug > Show Debug Points
-- Visualize points at each node in the graph
+- PCG 图编辑器 > Debug > Show Debug Points
+- 在图中每个节点处可视化点的分布
 
 ---
 
-## Migration from UE 5.6 (Experimental) to 5.7 (Production)
+## 从 UE 5.6（实验性）迁移到 5.7（生产就绪）
 
-### API Changes
+### API 变更
 
 ```cpp
-// ❌ OLD (5.6 experimental API):
-// Some nodes renamed, API unstable
+// ❌ 旧版（5.6 实验性 API）：
+// 部分节点已重命名，API 不稳定
 
-// ✅ NEW (5.7 production API):
-// Stable node types, documented API
+// ✅ 新版（5.7 生产 API）：
+// 稳定的节点类型，有完整文档
 ```
 
-**Migration:** Rebuild PCG graphs using stable 5.7 nodes. Test thoroughly.
+**迁移说明：** 使用 5.7 的稳定节点重建 PCG 图，并进行充分测试。
 
 ---
 
-## Limitations
+## 局限性
 
-- **Not for gameplay logic**: Use Blueprints/C++ for game rules
-- **Large graphs can be slow**: Optimize with filters and density reduction
-- **Runtime generation overhead**: Pre-generate when possible
+- **不适用于游戏逻辑**：游戏规则请使用 Blueprint/C++
+- **大型图可能较慢**：使用过滤器和降低密度来优化
+- **运行时生成有开销**：尽可能预先生成
 
 ---
 
-## Sources
+## 参考资料
 - https://docs.unrealengine.com/5.7/en-US/procedural-content-generation-in-unreal-engine/
 - https://docs.unrealengine.com/5.7/en-US/pcg-quick-start-in-unreal-engine/
-- UE 5.7 Release Notes (PCG Production-Ready announcement)
+- UE 5.7 Release Notes（PCG 生产就绪公告）

@@ -1,173 +1,174 @@
-# Skill Test Spec: /hotfix
+# 技能测试规范：/hotfix
 
-## Skill Summary
+## 技能概要
 
-`/hotfix` manages an emergency fix workflow: it creates a hotfix branch from
-main, applies a targeted fix to the identified file(s), runs `/smoke-check` to
-validate the fix doesn't introduce regressions, and prompts the user to confirm
-merge back to main. Each code change requires a "May I write to [filepath]?" ask.
-Git operations (branch creation, merge) are presented as Bash commands for user
-confirmation before execution.
+`/hotfix` 是一个绕过正常冲刺流程的紧急修复工作流，同时保留完整的审计跟踪。
+它从主分支创建 hotfix 分支，应用针对性修复，
+运行 `/smoke-check` 以验证不发生回归，然后提示用户确认合并回主分支。
 
-The skill is time-sensitive — director review is optional post-hoc, not a
-blocking gate. Verdicts: HOTFIX COMPLETE (fix applied, smoke check passed, merged)
-or HOTFIX BLOCKED (fix introduced regression or user declined).
-
----
-
-## Static Assertions (Structural)
-
-Verified automatically by `/skill-test static` — no fixture needed.
-
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: HOTFIX COMPLETE, HOTFIX BLOCKED
-- [ ] Contains "May I write" language for code changes
-- [ ] Has a next-step handoff (e.g., `/bug-report` to document the issue, or version bump)
+每次代码修改均询问"May I write"。Git 操作以 Bash 命令形式展示，
+供用户在对话中确认后再在自己的终端执行。技能将修复后的版本标记为
+补丁版本升级（例如 v1.0.0 → v1.0.1）。
+不适用 director 门控——紧急修复不等待门控批准。
+判决为 HOTFIX COMPLETE（smoke 通过）或 HOTFIX BLOCKED（smoke 失败）。
 
 ---
 
-## Director Gate Checks
+## 静态断言（结构性）
 
-None. Hotfixes are time-critical. Director review may follow separately as a
-post-hoc step. No gate is invoked within this skill.
+由 `/skill-test static` 自动验证——无需夹具。
 
----
-
-## Test Cases
-
-### Case 1: Happy Path — Critical crash bug fixed, smoke check passes
-
-**Fixture:**
-- `main` branch is clean
-- Bug is identified in `src/gameplay/arena.gd` (crash on boss arena entry)
-- Repro steps are provided by user
-
-**Input:** `/hotfix` (user describes the crash and affected file)
-
-**Expected behavior:**
-1. Skill proposes creating a hotfix branch: `hotfix/boss-arena-crash`
-2. User confirms; Bash command for branch creation is shown and confirmed
-3. Skill identifies the fix location in `arena.gd` and drafts the change
-4. Skill asks "May I write to `src/gameplay/arena.gd`?" and applies fix on approval
-5. Skill runs `/smoke-check` — PASS
-6. Skill presents the merge command and asks user to confirm merge to `main`
-7. User confirms; merge executes; verdict is HOTFIX COMPLETE
-
-**Assertions:**
-- [ ] Hotfix branch is created before any code changes
-- [ ] "May I write" is asked before modifying any source file
-- [ ] `/smoke-check` runs after the fix is applied
-- [ ] Merge requires explicit user confirmation (not automatic)
-- [ ] Verdict is HOTFIX COMPLETE after successful merge
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含至少 2 个阶段标题
+- [ ] 包含判决关键词：HOTFIX COMPLETE、HOTFIX BLOCKED
+- [ ] 代码修改前包含"May I write"协作协议语言
+- [ ] git 操作以 Bash 代码块展示（供用户确认后在终端执行）
+- [ ] 包含下一步交接（例如，用 `/bug-report` 记录问题，或版本号升级）
 
 ---
 
-### Case 2: Smoke Check Fails — HOTFIX BLOCKED
+## Director 门控检查
 
-**Fixture:**
-- Fix has been applied to `src/gameplay/arena.gd`
-- `/smoke-check` returns FAIL: "Player health clamping regression detected"
-
-**Input:** `/hotfix`
-
-**Expected behavior:**
-1. Skill applies the fix and runs `/smoke-check`
-2. Smoke check returns FAIL with specific regression identified
-3. Skill reports: "HOTFIX BLOCKED — smoke check failed: [regression detail]"
-4. Skill presents options: attempt revised fix, revert changes, or merge with
-   known regression (user acknowledges risk)
-5. No automatic merge occurs when smoke check fails
-
-**Assertions:**
-- [ ] Verdict is HOTFIX BLOCKED
-- [ ] Smoke check failure is shown verbatim to user
-- [ ] Merge is NOT performed automatically when smoke check fails
-- [ ] User is given explicit options for how to proceed
+无。`/hotfix` 是紧急运营技能。不适用 director 门控。
 
 ---
 
-### Case 3: Fix to Already-Released Build — Version tag noted, patch bump prompted
+## 测试用例
 
-**Fixture:**
-- Latest git tag is `v1.2.0`
-- Hotfix targets a bug in the v1.2.0 release
+### 用例 1：正常路径——崩溃缺陷，smoke 检查通过，HOTFIX COMPLETE
 
-**Input:** `/hotfix`
+**夹具：**
+- `production/bugs/bug-2026-04-06-crash-boss-arena.md` 已存在（CRITICAL 严重程度）
+- 当前 git 主分支版本为 v1.0.0
+- Smoke 检查通过（无测试失败）
 
-**Expected behavior:**
-1. Skill detects that the current HEAD is a tagged release (v1.2.0)
-2. Skill notes: "Hotfix targeting tagged release v1.2.0"
-3. After smoke check passes, skill prompts: "Should version be bumped to v1.2.1?"
-4. If user confirms version bump: skill asks "May I write to VERSION or equivalent?"
-5. After version update and merge: verdict is HOTFIX COMPLETE with version noted
+**输入：** `/hotfix`（引用缺陷 slug 或 ID）
 
-**Assertions:**
-- [ ] Version tag context is detected and surfaced to user
-- [ ] Patch version bump is suggested (not required) after merge
-- [ ] Version bump requires its own "May I write" confirmation
-- [ ] Verdict is HOTFIX COMPLETE
+**预期行为：**
+1. 技能读取缺陷报告并提取问题描述
+2. 技能展示以下 Bash 命令以供用户确认：
+   `git checkout -b hotfix/crash-boss-arena`
+3. 用户确认执行 git 命令
+4. 技能分析并提出针对性修复（询问"May I write [修复的文件]?"）
+5. 用户批准；修复被写入
+6. 技能运行 `/smoke-check`；smoke 检查通过
+7. 技能展示合并和版本升级命令：
+   `git tag v1.0.1`；`git merge hotfix/crash-boss-arena`
+8. 判决为 HOTFIX COMPLETE
 
----
-
-### Case 4: No Repro Steps — Skill Asks Before Applying Fix
-
-**Fixture:**
-- User invokes `/hotfix` with a vague description: "something is broken on level 3"
-- No repro steps provided
-
-**Input:** `/hotfix` (vague description)
-
-**Expected behavior:**
-1. Skill detects insufficient information to identify the fix location
-2. Skill asks: "Please provide reproduction steps and the affected file or system"
-3. Skill does NOT create a branch or modify any file until repro steps are provided
-4. After user provides repro steps: normal hotfix flow begins
-
-**Assertions:**
-- [ ] No branch is created without repro steps
-- [ ] No code changes are made without a clearly identified fix location
-- [ ] Repro step request is specific (not a generic "please provide more info")
-- [ ] Normal hotfix flow resumes after user provides repro steps
+**断言：**
+- [ ] Git 命令以 Bash 代码块展示（不直接执行）
+- [ ] 分支名称与缺陷 slug 相符
+- [ ] 修复前询问"May I write"
+- [ ] Smoke 检查通过后版本标签从 v1.0.0 升级至 v1.0.1
+- [ ] 判决为 HOTFIX COMPLETE
 
 ---
 
-### Case 5: Director Gate Check — No gate; hotfixes are time-critical
+### 用例 2：Smoke 检查失败——HOTFIX BLOCKED，不合并
 
-**Fixture:**
-- Critical bug with repro steps identified
+**夹具：**
+- 与用例 1 相同的缺陷
+- Smoke 检查失败：2 个测试失败，与 hotfix 相关
 
-**Input:** `/hotfix`
+**输入：** `/hotfix`
 
-**Expected behavior:**
-1. Skill completes the hotfix workflow
-2. No director agents are spawned during execution
-3. No gate IDs appear in output
-4. Post-hoc director review (if needed) is a manual follow-up, not invoked here
+**预期行为：**
+1. 技能应用修复
+2. 技能运行 `/smoke-check`；smoke 检查失败（2 个测试失败）
+3. 技能报告失败信息并显示失败的测试
+4. 技能不展示合并命令
+5. 技能提示用户在再次运行 smoke 检查前调查回归问题
+6. 判决为 HOTFIX BLOCKED
 
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No gate skip messages appear
-- [ ] Verdict is HOTFIX COMPLETE or HOTFIX BLOCKED — no gate verdict
-
----
-
-## Protocol Compliance
-
-- [ ] Creates hotfix branch before making any code changes
-- [ ] Asks "May I write" before modifying any source files
-- [ ] Runs `/smoke-check` after applying the fix
-- [ ] Requires explicit user confirmation before merging
-- [ ] HOTFIX BLOCKED when smoke check fails — no automatic merge
-- [ ] Verdict is HOTFIX COMPLETE or HOTFIX BLOCKED
+**断言：**
+- [ ] Smoke 检查失败后不展示合并命令
+- [ ] 判决为 HOTFIX BLOCKED
+- [ ] 失败的测试名称/详情呈现给用户
+- [ ] 明确提示先解决回归问题再继续
 
 ---
 
-## Coverage Notes
+### 用例 3：已发布版本——标记补丁版本升级
 
-- The case where multiple files need to be modified for one fix follows the same
-  "May I write" per-file pattern and is not separately tested.
-- The post-hotfix steps (create bug report, update changelog) are suggested in
-  the handoff but not tested as part of this skill's execution.
-- Conflict resolution during the merge (if main has diverged) is not tested;
-  the skill would surface the conflict and ask the user to resolve it manually.
+**夹具：**
+- 当前 git 标签为 v2.3.0（发布版本）
+- 需要修复的缺陷严重程度为 HIGH（非崩溃级，但影响显著）
+
+**输入：** `/hotfix`
+
+**预期行为：**
+1. 技能识别当前标签为 v2.3.0
+2. 技能展示 hotfix 分支创建命令（`hotfix/[issue-slug]`）
+3. 修复完成并通过 smoke 检查后，技能展示版本升级命令：
+   v2.3.0 → v2.3.1
+4. 技能将版本升级展示为 Bash 代码块，供用户确认后执行
+5. 判决为 HOTFIX COMPLETE
+
+**断言：**
+- [ ] 补丁版本编号从 v2.3.0 正确升级至 v2.3.1（不升级次版本）
+- [ ] 版本升级命令以 Bash 代码块展示
+- [ ] 判决为 HOTFIX COMPLETE
+
+---
+
+### 用例 4：缺陷报告无复现步骤——先询问，再开始修复
+
+**夹具：**
+- 缺陷报告存在，但复现步骤为"步骤不详"
+
+**输入：** `/hotfix`（引用该缺陷）
+
+**预期行为：**
+1. 技能读取缺陷报告并检测到复现步骤缺失
+2. 技能暂停，询问："This bug report has no reproduction steps.
+   Can you provide the steps to reproduce the issue?"
+3. 用户提供步骤
+4. 技能继续正常的 hotfix 工作流
+
+**断言：**
+- [ ] 复现步骤缺失时，不立即创建分支或实施修复
+- [ ] 技能以文字形式询问复现步骤
+- [ ] 用户提供步骤后工作流继续
+- [ ] 技能不将"步骤不详"作为 HOTFIX BLOCKED 处理——而是追问
+
+---
+
+### 用例 5：Director 门控检查——无门控；hotfix 为紧急工具
+
+**夹具：**
+- 存在未关闭的缺陷
+
+**输入：** `/hotfix`
+
+**预期行为：**
+1. 技能执行修复工作流
+2. 未调用任何 director agent
+3. 输出中无门控 ID
+
+**断言：**
+- [ ] 未调用 director 门控
+- [ ] 输出中无门控跳过消息
+- [ ] 技能在不经过任何门控检查的情况下达到 HOTFIX COMPLETE
+
+---
+
+## 协议合规
+
+- [ ] Git 操作以 Bash 代码块展示（不直接执行）
+- [ ] 代码修改前询问"May I write [文件路径]?"
+- [ ] 修复完成后运行 `/smoke-check`
+- [ ] Smoke 通过时展示版本升级和合并命令
+- [ ] Smoke 失败时判决为 HOTFIX BLOCKED，不展示合并命令
+- [ ] 补丁版本升级格式正确（vX.Y.Z → vX.Y.Z+1）
+
+---
+
+## 覆盖说明
+
+- 多文件修复（hotfix 涉及 3+ 个文件）与每个文件依次询问"May I write"
+  的情况不单独作为用例；此规范仅要求每次修改询问一次。
+- 向主分支的实际 git 合并在用户的终端中执行——
+  技能仅展示命令，不直接执行。
+- 需要重新测试（多次 smoke 失败-修复循环）的情况在此不测试；
+  用例 2 仅涵盖首次 smoke 失败的情况。

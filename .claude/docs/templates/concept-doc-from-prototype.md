@@ -1,304 +1,304 @@
-# [Prototype Name] — Concept Document
+# [原型名称] — 概念文档
 
 ---
-**Status**: Reverse-Documented from Prototype
-**Prototype Path**: `prototypes/[name]/`
-**Date**: [YYYY-MM-DD]
-**Creator**: [User name]
-**Outcome**: [Success | Partial Success | Failed | Needs More Testing]
+**状态**：Reverse-Documented from Prototype（从原型逆向记录）
+**原型路径**：`prototypes/[name]/`
+**日期**：[YYYY-MM-DD]
+**创作者**：[用户名]
+**结果**：[Success（成功）| Partial Success（部分成功）| Failed（失败）| Needs More Testing（需要更多测试）]
 ---
 
-> **⚠️ Reverse-Documentation Notice**
+> **⚠️ 逆向记录说明**
 >
-> This concept document was created **after** the prototype was built. It captures
-> the core mechanic, learnings, and design insights discovered through prototyping.
-> This is a formalization of experimental work, not a pre-planned design.
+> 本概念文档创建于**原型构建完成之后**。
+> 记录了通过原型制作发现的核心机制、经验教训和设计洞见。
+> 这是对实验性工作的正式化记录，而非预先规划的设计。
 
 ---
 
-## 1. Prototype Overview
+## 1. 原型概述
 
-**Original Hypothesis**:
-[What question or idea was this prototype testing?]
+**原始假设**：
+[本次原型在验证什么问题或想法？]
 
-**Approach**:
-[How was the prototype built? Quick and dirty? Focused on one mechanic?]
+**实现方式**：
+[原型是如何构建的？快速粗糙？聚焦于某一机制？]
 
-**Duration**:
-- Time spent: [X hours/days]
-- Complexity: [Throwaway | Could be production-ready | Needs full rewrite]
+**耗时**：
+- 投入时间：[X 小时/天]
+- 复杂度：[Throwaway（一次性） | Could be production-ready（可转化为生产版本）| Needs full rewrite（需要完整重写）]
 
-**Outcome** (clarified):
-- ✅ **Validated**: [What worked and should move forward]
-- ⚠️ **Needs Work**: [What showed promise but needs refinement]
-- ❌ **Invalidated**: [What didn't work and should be abandoned]
+**结果**（经澄清）：
+- ✅ **已验证**：[有效且应推进的内容]
+- ⚠️ **需改进**：[有潜力但需要优化的内容]
+- ❌ **已否定**：[不奏效、应放弃的内容]
 
 ---
 
-## 2. Core Mechanic
+## 2. 核心机制
 
-**What the Prototype Does**:
-[Describe the mechanic or system that was prototyped]
+**原型实现内容**：
+[描述已原型化的机制或系统]
 
-**How It Feels** (user feedback):
-- [Feeling 1 — e.g., "Satisfying", "Clunky", "Too complex"]
-- [Feeling 2 — e.g., "Intuitive", "Confusing", "Needs tutorial"]
-- [Feeling 3 — e.g., "Fun", "Boring", "Has potential"]
+**体感**（用户反馈）：
+- [感受 1——例如「令人满足」「笨拙」「过于复杂」]
+- [感受 2——例如「直觉友好」「令人困惑」「需要引导」]
+- [感受 3——例如「有趣」「无聊」「有潜力」]
 
-**Player Fantasy**:
-[What fantasy or experience does this mechanic create?]
+**玩家幻想**：
+[此机制创造了怎样的幻想或体验？]
 
-**Core Loop** (if applicable):
+**核心循环**（如适用）：
 ```
-[Action 1] → [Result 1] → [Action 2] → [Result 2] → [Repeat or Conclude]
+[动作 1] → [结果 1] → [动作 2] → [结果 2] → [循环或结束]
 ```
 
-**Emergent Behaviors** (unintended but interesting):
-- [Behavior 1]: [What players did that wasn't planned]
-- [Behavior 2]: [Unexpected strategy or interaction]
+**涌现行为**（意外但有趣的现象）：
+- [行为 1]：[玩家做了什么计划外的事情]
+- [行为 2]：[意外的策略或交互]
 
 ---
 
-## 3. What Worked
+## 3. 哪些有效
 
-### Mechanic Successes
+### 机制成功
 
-✅ **[Success 1]**: [What worked well]
-- **Why**: [What made this successful]
-- **Keep for Production**: [Should this be preserved?]
+✅ **[成功点 1]**：[有效的内容]
+- **原因**：[为何成功]
+- **保留至生产版本**：[是否应保留？]
 
-✅ **[Success 2]**: [What worked well]
-- **Why**: [What made this successful]
-- **Keep for Production**: [Should this be preserved?]
+✅ **[成功点 2]**：[有效的内容]
+- **原因**：[为何成功]
+- **保留至生产版本**：[是否应保留？]
 
-### Technical Successes
+### 技术成功
 
-✅ **[Technical win 1]**: [What technical approach worked]
-- **Lesson**: [What we learned]
-- **Reusable**: [Can this code/approach be used in production?]
+✅ **[技术亮点 1]**：[有效的技术方案]
+- **经验教训**：[我们学到了什么]
+- **可复用**：[代码/方案是否可用于生产版本？]
 
-✅ **[Technical win 2]**: [What worked]
-- **Lesson**: [What we learned]
-
----
-
-## 4. What Didn't Work
-
-### Mechanic Failures
-
-❌ **[Failure 1]**: [What didn't work]
-- **Why**: [Root cause]
-- **Could It Be Fixed**: [Is it salvageable or fundamentally flawed?]
-
-❌ **[Failure 2]**: [What didn't work]
-- **Why**: [Root cause]
-- **Could It Be Fixed**: [Yes/No + how]
-
-### Technical Failures
-
-❌ **[Technical issue 1]**: [What caused problems]
-- **Lesson**: [What to avoid in production]
-
-❌ **[Technical issue 2]**: [What caused problems]
-- **Lesson**: [What to avoid]
+✅ **[技术亮点 2]**：[有效内容]
+- **经验教训**：[我们学到了什么]
 
 ---
 
-## 5. What Needs Refinement
+## 4. 哪些无效
 
-⚠️ **[Element 1]**: [What showed promise but needs work]
-- **Issue**: [What's wrong with it currently]
-- **Path Forward**: [How to improve it]
-- **Effort**: [Small | Medium | Large refactor]
+### 机制失败
 
-⚠️ **[Element 2]**: [What needs refinement]
-- **Issue**: [Current problem]
-- **Path Forward**: [Improvement approach]
-- **Effort**: [Estimate]
+❌ **[失败点 1]**：[不奏效的内容]
+- **原因**：[根本原因]
+- **是否可修复**：[是否可挽救，还是存在根本性缺陷？]
 
----
+❌ **[失败点 2]**：[不奏效的内容]
+- **原因**：[根本原因]
+- **是否可修复**：[是/否 + 修复方式]
 
-## 6. Key Learnings
+### 技术失败
 
-### Design Insights
+❌ **[技术问题 1]**：[造成问题的原因]
+- **经验教训**：[生产版本中需避免的事项]
 
-💡 **[Insight 1]**: [What we learned about game design]
-- **Implication**: [How this affects future work]
-
-💡 **[Insight 2]**: [Design learning]
-- **Implication**: [Impact on GDD or other systems]
-
-### Technical Insights
-
-💡 **[Insight 3]**: [Technical learning]
-- **Implication**: [Architecture or implementation guidance]
-
-💡 **[Insight 4]**: [Technical learning]
-- **Implication**: [Future technical decisions]
-
-### Player Psychology Insights
-
-💡 **[Insight 5]**: [What we learned about player behavior]
-- **Implication**: [How this affects design philosophy]
+❌ **[技术问题 2]**：[造成问题的原因]
+- **经验教训**：[需避免的事项]
 
 ---
 
-## 7. Production Readiness Assessment
+## 5. 哪些需要改进
 
-**Should This Become a Full Feature?**: [Yes | No | Needs More Testing | Pivot to Different Approach]
+⚠️ **[元素 1]**：[有潜力但需要改进的内容]
+- **问题**：[目前存在的问题]
+- **改进方向**：[如何改进]
+- **工作量**：[Small（小）| Medium（中）| Large refactor（大幅重构）]
 
-**If Yes — Production Requirements**:
-- [ ] [Requirement 1 — e.g., "Rewrite for performance"]
-- [ ] [Requirement 2 — e.g., "Add proper UI"]
-- [ ] [Requirement 3 — e.g., "Design 10 more variations"]
-- [ ] [Requirement 4 — e.g., "Integrate with progression system"]
-
-**Estimated Production Effort**: [Small | Medium | Large]
-- Prototype reusability: [X%] of code can be kept
-- From-scratch effort: [X hours/days to production-ready]
-
-**If No — Why Not?**:
-- [Reason 1 — e.g., "Fun but doesn't fit game pillars"]
-- [Reason 2 — e.g., "Too complex for target audience"]
-- [Reason 3 — e.g., "Technically infeasible at scale"]
-
-**If Pivot — Suggested Direction**:
-- [Alternative approach 1]
-- [Alternative approach 2]
+⚠️ **[元素 2]**：[需要改进的内容]
+- **问题**：[当前问题]
+- **改进方向**：[改进方案]
+- **工作量**：[预估]
 
 ---
 
-## 8. Design Pillars Alignment
+## 6. 关键经验
 
-**How This Relates to Game Pillars** (if game pillars are defined):
+### 设计洞见
 
-| Pillar | Alignment | Notes |
-|--------|-----------|-------|
-| [Pillar 1] | ✅ Strong / ⚠️ Weak / ❌ Conflicts | [Explanation] |
-| [Pillar 2] | ✅ Strong / ⚠️ Weak / ❌ Conflicts | [Explanation] |
-| [Pillar 3] | ✅ Strong / ⚠️ Weak / ❌ Conflicts | [Explanation] |
+💡 **[洞见 1]**：[我们对游戏设计的了解]
+- **启示**：[对未来工作的影响]
 
-**Overall Pillar Fit**: [Does this belong in the game?]
+💡 **[洞见 2]**：[设计洞见]
+- **启示**：[对 GDD 或其他系统的影响]
 
----
+### 技术洞见
 
-## 9. Next Steps
+💡 **[洞见 3]**：[技术洞见]
+- **启示**：[架构或实现指导]
 
-### Immediate (If Moving Forward)
-1. **[Task 1]**: [e.g., "Create full design doc for this system"]
-2. **[Task 2]**: [e.g., "Write ADR for technical approach"]
-3. **[Task 3]**: [e.g., "Add to backlog for Sprint X"]
+💡 **[洞见 4]**：[技术洞见]
+- **启示**：[未来技术决策]
 
-### Before Production (If Needs More Work)
-1. **[Task 1]**: [e.g., "Build second prototype testing X variation"]
-2. **[Task 2]**: [e.g., "Playtest with 5+ people"]
-3. **[Task 3]**: [e.g., "Investigate technical feasibility of Y"]
+### 玩家心理洞见
 
-### If Abandoning
-1. **[Task 1]**: [e.g., "Archive prototype with this document"]
-2. **[Task 2]**: [e.g., "Extract reusable code/learnings"]
-3. **[Task 3]**: [e.g., "Update game pillars if this changed thinking"]
+💡 **[洞见 5]**：[我们对玩家行为的了解]
+- **启示**：[对设计理念的影响]
 
 ---
 
-## 10. Technical Notes
+## 7. 生产就绪评估
 
-**Prototype Implementation**:
-- Language/Engine: [What was used]
-- Architecture: [How it was structured]
-- Shortcuts taken: [What was hacky or throwaway]
+**是否应发展为完整特性？**：[Yes（是）| No（否）| Needs More Testing（需要更多测试）| Pivot to Different Approach（转向其他方案）]
 
-**Reusable Code** (if any):
-- `[file/path 1]`: [What it does, reusability]
-- `[file/path 2]`: [What it does, reusability]
+**如果是——生产需求**：
+- [ ] [需求 1——例如「为性能重写」]
+- [ ] [需求 2——例如「添加完整 UI」]
+- [ ] [需求 3——例如「设计 10 个以上变体」]
+- [ ] [需求 4——例如「与进度系统集成」]
 
-**Technical Debt** (if moving to production):
-- [Debt 1]: [What needs rewriting]
-- [Debt 2]: [What needs proper implementation]
+**预估生产工作量**：[Small（小）| Medium（中）| Large（大）]
+- 原型代码可复用率：[X%]
+- 从零构建工作量：[X 小时/天至可生产状态]
 
----
+**如果否——原因**：
+- [原因 1——例如「有趣但不符合游戏支柱」]
+- [原因 2——例如「对目标受众过于复杂」]
+- [原因 3——例如「规模化后技术上不可行」]
 
-## 11. Playtest Feedback
-
-*(If prototype was playtested)*
-
-**Testers**: [N people, [internal/external]]
-
-**Positive Feedback**:
-- "[Quote 1]" — [Tester name/role]
-- "[Quote 2]" — [Tester name/role]
-
-**Negative Feedback**:
-- "[Quote 1]" — [Tester name/role]
-- "[Quote 2]" — [Tester name/role]
-
-**Suggestions**:
-- "[Suggestion 1]" — [Tester name]
-- "[Suggestion 2]" — [Tester name]
-
-**Themes**:
-- [Theme 1]: [What multiple testers agreed on]
-- [Theme 2]: [Common feedback]
+**如果转向——建议方向**：
+- [备选方案 1]
+- [备选方案 2]
 
 ---
 
-## 12. Related Work
+## 8. 与游戏支柱的契合度
 
-**Inspired By** (games/mechanics this was influenced by):
-- [Game 1]: [What mechanic or feeling]
-- [Game 2]: [What was borrowed or adapted]
+**与游戏支柱的关系**（如已定义支柱）：
 
-**Differs From** (how this is unique or different):
-- [Difference 1]
-- [Difference 2]
+| 支柱 | 契合度 | 说明 |
+|------|--------|------|
+| [支柱 1] | ✅ 强 / ⚠️ 弱 / ❌ 冲突 | [说明] |
+| [支柱 2] | ✅ 强 / ⚠️ 弱 / ❌ 冲突 | [说明] |
+| [支柱 3] | ✅ 强 / ⚠️ 弱 / ❌ 冲突 | [说明] |
 
-**Integrates With** (existing game systems):
-- [System 1]: [How they would connect]
-- [System 2]: [How they would connect]
+**整体支柱契合度**：[这个原型属于这款游戏吗？]
 
 ---
 
-## 13. Open Questions
+## 9. 后续步骤
 
-**Design Questions**:
-1. **[Question 1]**: [What's still undecided about the design?]
-2. **[Question 2]**: [What needs playtesting or iteration?]
+### 立即执行（若推进）
+1. **[任务 1]**：[例如「为本系统创建完整设计文档」]
+2. **[任务 2]**：[例如「编写技术方案 ADR」]
+3. **[任务 3]**：[例如「添加到 Sprint X 的待办列表」]
 
-**Technical Questions**:
-3. **[Question 3]**: [What technical unknowns remain?]
-4. **[Question 4]**: [What needs feasibility testing?]
+### 生产前（若需更多工作）
+1. **[任务 1]**：[例如「构建第二个原型测试 X 变体」]
+2. **[任务 2]**：[例如「邀请 5+ 人进行游戏测试」]
+3. **[任务 3]**：[例如「评估 Y 的技术可行性」]
 
----
-
-## 14. Appendix: Prototype Assets
-
-**Code**:
-- Location: `prototypes/[name]/src/`
-- Status: [Archival | Partial reuse | Full reuse]
-
-**Art/Audio** (if any):
-- Location: `prototypes/[name]/assets/`
-- Status: [Placeholder | Production-ready | Needs replacement]
-
-**Documentation**:
-- README: [Exists | Missing]
-- Build instructions: [Exists | Missing]
+### 若放弃
+1. **[任务 1]**：[例如「连同本文档一起归档原型」]
+2. **[任务 2]**：[例如「提取可复用代码/经验教训」]
+3. **[任务 3]**：[例如「若本次原型改变了思路，更新游戏支柱文档」]
 
 ---
 
-## Version History
+## 10. 技术说明
 
-| Date | Author | Changes |
-|------|--------|---------|
-| [Date] | Claude (reverse-doc) | Initial concept doc from prototype analysis |
-| [Date] | [User] | Clarified outcomes, added playtest feedback |
+**原型实现**：
+- 语言/引擎：[使用内容]
+- 架构：[结构方式]
+- 妥协之处：[哪些部分是临时方案或一次性代码]
+
+**可复用代码**（如有）：
+- `[文件/路径 1]`：[功能说明，可复用程度]
+- `[文件/路径 2]`：[功能说明，可复用程度]
+
+**技术债务**（若转入生产）：
+- [债务 1]：[需要重写的内容]
+- [债务 2]：[需要完整实现的内容]
 
 ---
 
-**Final Recommendation**: [GO | NO-GO | PIVOT]
+## 11. 游戏测试反馈
 
-**Rationale**: [1-2 sentence summary of why]
+*（若原型经过游戏测试）*
+
+**测试者**：[N 人，[内部/外部]]
+
+**正面反馈**：
+- 「[引用 1]」— [测试者姓名/角色]
+- 「[引用 2]」— [测试者姓名/角色]
+
+**负面反馈**：
+- 「[引用 1]」— [测试者姓名/角色]
+- 「[引用 2]」— [测试者姓名/角色]
+
+**建议**：
+- 「[建议 1]」— [测试者姓名]
+- 「[建议 2]」— [测试者姓名]
+
+**主题**：
+- [主题 1]：[多位测试者的共识]
+- [主题 2]：[常见反馈]
 
 ---
 
-*This concept document was generated by `/reverse-document concept prototypes/[name]`*
+## 12. 相关内容
+
+**灵感来源**（影响本原型的游戏/机制）：
+- [游戏 1]：[借鉴的机制或感受]
+- [游戏 2]：[借鉴或改编的内容]
+
+**差异之处**（本原型的独特性）：
+- [差异 1]
+- [差异 2]
+
+**集成关系**（与现有游戏系统的关联）：
+- [系统 1]：[连接方式]
+- [系统 2]：[连接方式]
+
+---
+
+## 13. 待解决问题
+
+**设计问题**：
+1. **[问题 1]**：[设计上尚未决定的内容？]
+2. **[问题 2]**：[需要游戏测试或迭代的内容？]
+
+**技术问题**：
+3. **[问题 3]**：[哪些技术未知因素尚待解决？]
+4. **[问题 4]**：[哪些内容需要可行性测试？]
+
+---
+
+## 14. 附录：原型资产
+
+**代码**：
+- 位置：`prototypes/[name]/src/`
+- 状态：[Archival（归档）| Partial reuse（部分复用）| Full reuse（完全复用）]
+
+**美术/音频**（如有）：
+- 位置：`prototypes/[name]/assets/`
+- 状态：[Placeholder（占位）| Production-ready（生产就绪）| Needs replacement（需替换）]
+
+**文档**：
+- README：[存在 | 缺失]
+- 构建说明：[存在 | 缺失]
+
+---
+
+## 版本历史
+
+| 日期 | 作者 | 变更 |
+|------|------|------|
+| [日期] | Claude（逆向记录） | 从原型分析初始创建概念文档 |
+| [日期] | [用户] | 澄清结果，补充游戏测试反馈 |
+
+---
+
+**最终建议**：[GO（推进）| NO-GO（放弃）| PIVOT（转向）]
+
+**理由**：[1-2句话总结原因]
+
+---
+
+*此概念文档由 `/reverse-document concept prototypes/[name]` 生成*

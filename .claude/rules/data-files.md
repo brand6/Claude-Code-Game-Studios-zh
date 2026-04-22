@@ -3,20 +3,20 @@ paths:
   - "assets/data/**"
 ---
 
-# Data File Rules
+# 数据文件规则
 
-- All JSON files must be valid JSON — broken JSON blocks the entire build pipeline
-- File naming: lowercase with underscores only, following `[system]_[name].json` pattern
-- Every data file must have a documented schema (either JSON Schema or documented in the corresponding design doc)
-- Numeric values must include comments or companion docs explaining what the numbers mean
-- Use consistent key naming: camelCase for keys within JSON files
-- No orphaned data entries — every entry must be referenced by code or another data file
-- Version data files when making breaking schema changes
-- Include sensible defaults for all optional fields
+- 所有 JSON 文件必须是合法 JSON——格式损坏的 JSON 将阻断整个构建流水线
+- 文件命名：仅使用小写字母和下划线，遵循 `[系统]_[名称].json` 模式
+- 每个数据文件必须有已记录的 Schema（JSON Schema 或对应设计文档中的说明）
+- 数值必须附有注释或配套文档，说明各数值的含义
+- 使用统一的键命名规范：JSON 文件内的键使用驼峰命名（camelCase）
+- 不得存在孤立数据条目——每个条目必须被代码或其他数据文件引用
+- 进行破坏性 Schema 变更时，须为数据文件添加版本号
+- 所有可选字段必须包含合理的默认值
 
-## Examples
+## 示例
 
-**Correct** naming and structure (`combat_enemies.json`):
+**正确** 命名和结构（`combat_enemies.json`）：
 
 ```json
 {
@@ -35,7 +35,7 @@ paths:
 }
 ```
 
-**Incorrect** (`EnemyData.json`):
+**错误** （`EnemyData.json`）：
 
 ```json
 {
@@ -43,4 +43,4 @@ paths:
 }
 ```
 
-Violations: uppercase filename, uppercase key, no `[system]_[name]` pattern, missing required fields.
+违规说明：文件名含大写、键名含大写、不符合 `[系统]_[名称]` 模式、缺少必填字段。

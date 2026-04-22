@@ -1,128 +1,129 @@
-# Unity 6.3 — Physics Module Reference
+# Unity 6.3 — 物理模块参考
 
-**Last verified:** 2026-02-13
-**Knowledge Gap:** Unity 6 physics improvements, solver changes
-
----
-
-## Overview
-
-Unity 6.3 uses **PhysX 5.1** (improved from PhysX 4.x in 2022 LTS):
-- Better solver stability
-- Improved performance
-- Enhanced collision detection
+**最后验证：** 2026-02-13
+**知识空白：** Unity 6 物理改进、求解器变更
 
 ---
 
-## Key Changes from 2022 LTS
+## 概述
 
-### Default Solver Iterations Increased
-Unity 6 increased default solver iterations for better stability:
+Unity 6.3 使用 **PhysX 5.1**（相较 2022 LTS 的 PhysX 4.x 有改进）：
+- 更好的求解器稳定性
+- 性能提升
+- 增强的碰撞检测
+
+---
+
+## 与 2022 LTS 的主要变更
+
+### 默认求解器迭代次数增加
+
+Unity 6 提高了默认求解器迭代次数以提升稳定性：
 
 ```csharp
-// Default changed from 6 to 8 iterations
-Physics.defaultSolverIterations = 8; // Check if relying on old behavior
+// 默认由 6 次改为 8 次迭代
+Physics.defaultSolverIterations = 8; // 如有依赖旧行为需检查
 ```
 
-### Enhanced Collision Detection
+### 增强的碰撞检测
 
 ```csharp
-// ✅ Unity 6: Improved Continuous Collision Detection (CCD)
+// ✅ Unity 6：改进的连续碰撞检测 (CCD)
 rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-// Better handling of fast-moving objects
+// 更好地处理高速运动物体
 ```
 
 ---
 
-## Core Physics Components
+## 核心物理组件
 
 ### Rigidbody
 
 ```csharp
-// ✅ Best practice: Use AddForce, not direct velocity writes
+// ✅ 最佳实践：使用 AddForce，不要直接写速度
 Rigidbody rb = GetComponent<Rigidbody>();
 rb.AddForce(Vector3.forward * 10f, ForceMode.Impulse);
 
-// ❌ Avoid: Direct velocity assignment (can cause instability)
-rb.velocity = new Vector3(0, 10, 0); // Only use when necessary
+// ❌ 避免：直接赋值速度（可能导致不稳定）
+rb.velocity = new Vector3(0, 10, 0); // 仅在必要时使用
 ```
 
-### Colliders
+### 碰撞体
 
 ```csharp
-// Primitive colliders: Box, Sphere, Capsule (cheapest)
-// Mesh colliders: Expensive, use only for static geometry
+// 基础碰撞体：Box、Sphere、Capsule（最低开销）
+// 网格碰撞体：开销大，仅用于静态几何体
 
-// ✅ Compound colliders (multiple primitives) > single mesh collider
+// ✅ 复合碰撞体（多个基础碰撞体）> 单个网格碰撞体
 ```
 
 ---
 
-## Raycasting
+## 射线检测
 
-### Efficient Raycasting (Avoid Allocations)
+### 高效射线检测（避免分配）
 
 ```csharp
-// ✅ Non-allocating raycast
+// ✅ 非分配射线检测
 if (Physics.Raycast(origin, direction, out RaycastHit hit, maxDistance)) {
-    Debug.Log($"Hit: {hit.collider.name}");
+    Debug.Log($"命中：{hit.collider.name}");
 }
 
-// ✅ Multiple hits (non-allocating)
+// ✅ 多命中（非分配）
 RaycastHit[] results = new RaycastHit[10];
 int hitCount = Physics.RaycastNonAlloc(origin, direction, results, maxDistance);
 for (int i = 0; i < hitCount; i++) {
-    Debug.Log($"Hit {i}: {results[i].collider.name}");
+    Debug.Log($"命中 {i}：{results[i].collider.name}");
 }
 
-// ❌ Avoid: RaycastAll (allocates array every call)
-RaycastHit[] hits = Physics.RaycastAll(origin, direction); // GC allocation!
+// ❌ 避免：RaycastAll（每次调用都分配数组）
+RaycastHit[] hits = Physics.RaycastAll(origin, direction); // GC 分配！
 ```
 
-### LayerMask for Selective Raycasting
+### 使用 LayerMask 过滤射线
 
 ```csharp
-// ✅ Use LayerMask to filter collisions
+// ✅ 使用 LayerMask 过滤碰撞
 int layerMask = 1 << LayerMask.NameToLayer("Enemy");
 Physics.Raycast(origin, direction, out RaycastHit hit, maxDistance, layerMask);
 ```
 
 ---
 
-## Physics Queries
+## 物理查询
 
-### OverlapSphere (Check for nearby objects)
+### OverlapSphere（检测附近对象）
 
 ```csharp
-// ✅ Non-allocating version
+// ✅ 非分配版本
 Collider[] results = new Collider[10];
 int count = Physics.OverlapSphereNonAlloc(center, radius, results);
 for (int i = 0; i < count; i++) {
-    // Process results[i]
+    // 处理 results[i]
 }
 ```
 
-### SphereCast (Thick raycast)
+### SphereCast（厚射线）
 
 ```csharp
-// Useful for character controllers
+// 适用于角色控制器
 if (Physics.SphereCast(origin, radius, direction, out RaycastHit hit, maxDistance)) {
-    // Hit something with a sphere-shaped ray
+    // 用球形射线命中目标
 }
 ```
 
 ---
 
-## Collision Events
+## 碰撞事件
 
 ### OnCollisionEnter / Stay / Exit
 
 ```csharp
 void OnCollisionEnter(Collision collision) {
-    // Triggered when collision starts
-    Debug.Log($"Collided with {collision.gameObject.name}");
+    // 碰撞开始时触发
+    Debug.Log($"与 {collision.gameObject.name} 碰撞");
 
-    // Access contact points
+    // 访问接触点
     foreach (ContactPoint contact in collision.contacts) {
         Debug.DrawRay(contact.point, contact.normal, Color.red, 2f);
     }
@@ -133,7 +134,7 @@ void OnCollisionEnter(Collision collision) {
 
 ```csharp
 void OnTriggerEnter(Collider other) {
-    // Trigger collider (Is Trigger = true)
+    // 触发器碰撞体（Is Trigger = true）
     if (other.CompareTag("Pickup")) {
         Destroy(other.gameObject);
     }
@@ -142,18 +143,18 @@ void OnTriggerEnter(Collider other) {
 
 ---
 
-## Character Controllers
+## 角色控制器
 
-### CharacterController Component
+### CharacterController 组件
 
 ```csharp
 CharacterController controller = GetComponent<CharacterController>();
 
-// ✅ Move with collision detection
+// ✅ 带碰撞检测的移动
 Vector3 move = transform.forward * speed * Time.deltaTime;
 controller.Move(move);
 
-// Apply gravity manually
+// 手动施加重力
 if (!controller.isGrounded) {
     velocity.y += Physics.gravity.y * Time.deltaTime;
 }
@@ -162,66 +163,66 @@ controller.Move(velocity * Time.deltaTime);
 
 ---
 
-## Physics Materials
+## 物理材质
 
-### Friction & Bounciness
+### 摩擦力与弹性
 
 ```csharp
-// Create: Assets > Create > Physic Material
-// Assign to collider: Collider > Material
+// 创建：Assets > Create > Physic Material
+// 赋值给碰撞体：Collider > Material
 
-// PhysicMaterial settings:
-// - Dynamic Friction: 0.6 (sliding friction)
-// - Static Friction: 0.6 (starting friction)
-// - Bounciness: 0.0 - 1.0
-// - Friction Combine: Average, Minimum, Maximum, Multiply
-// - Bounce Combine: Average, Minimum, Maximum, Multiply
+// PhysicMaterial 设置：
+// - Dynamic Friction：0.6（滑动摩擦力）
+// - Static Friction：0.6（起始摩擦力）
+// - Bounciness：0.0 - 1.0
+// - Friction Combine：Average、Minimum、Maximum、Multiply
+// - Bounce Combine：Average、Minimum、Maximum、Multiply
 ```
 
 ---
 
-## Joints
+## 关节
 
-### Fixed Joint (Attach two rigidbodies)
+### Fixed Joint（连接两个刚体）
 
 ```csharp
 FixedJoint joint = gameObject.AddComponent<FixedJoint>();
 joint.connectedBody = otherRigidbody;
 ```
 
-### Hinge Joint (Door, wheel)
+### Hinge Joint（门、车轮）
 
 ```csharp
 HingeJoint hinge = gameObject.AddComponent<HingeJoint>();
-hinge.axis = Vector3.up; // Rotation axis
+hinge.axis = Vector3.up; // 旋转轴
 hinge.useLimits = true;
 hinge.limits = new JointLimits { min = -90, max = 90 };
 ```
 
 ---
 
-## Performance Optimization
+## 性能优化
 
-### Physics Layer Collision Matrix
+### 物理层碰撞矩阵
 `Edit > Project Settings > Physics > Layer Collision Matrix`
-- Disable unnecessary collision checks between layers
-- Massive performance gain
+- 禁用不必要的层间碰撞检查
+- 性能提升显著
 
 ### Fixed Timestep
 `Edit > Project Settings > Time > Fixed Timestep`
-- Default: 0.02 (50 FPS physics)
-- Lower = more accurate, higher CPU cost
-- Match game's target framerate if possible
+- 默认：0.02（50 FPS 物理）
+- 越低越精确，CPU 开销越高
+- 尽量与游戏目标帧率匹配
 
-### Simplified Collision Geometry
-- Use primitive colliders (box, sphere, capsule) over mesh colliders
-- Bake mesh colliders at build time, not runtime
+### 简化碰撞几何体
+- 使用基础碰撞体（box、sphere、capsule）代替网格碰撞体
+- 在构建时烘焙网格碰撞体，不要在运行时烘焙
 
 ---
 
-## Common Patterns
+## 常见模式
 
-### Ground Check (Character Controller)
+### 地面检测（角色控制器）
 
 ```csharp
 bool IsGrounded() {
@@ -230,7 +231,7 @@ bool IsGrounded() {
 }
 ```
 
-### Apply Explosion Force
+### 施加爆炸力
 
 ```csharp
 void ApplyExplosion(Vector3 explosionPos, float radius, float force) {
@@ -246,11 +247,11 @@ void ApplyExplosion(Vector3 explosionPos, float radius, float force) {
 
 ---
 
-## Debugging
+## 调试
 
-### Physics Debugger (Unity 6+)
+### Physics Debugger（Unity 6+）
 - `Window > Analysis > Physics Debugger`
-- Visualize colliders, contacts, queries
+- 可视化碰撞体、接触点、查询
 
 ### Gizmos
 
@@ -263,6 +264,6 @@ void OnDrawGizmos() {
 
 ---
 
-## Sources
+## 参考来源
 - https://docs.unity3d.com/6000.0/Documentation/Manual/PhysicsOverview.html
 - https://docs.unity3d.com/ScriptReference/Physics.html

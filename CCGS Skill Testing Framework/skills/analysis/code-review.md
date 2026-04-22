@@ -1,172 +1,175 @@
-# Skill Test Spec: /code-review
+# 技能测试规范：/code-review
 
-## Skill Summary
+## 技能概要
 
-`/code-review` performs an architectural code review of source files in `src/`,
-checking coding standards from `CLAUDE.md` (doc comments on public APIs,
-dependency injection over singletons, data-driven values, testability). Findings
-are advisory. No director gates are invoked. No code edits are made. Verdicts:
-APPROVED, CONCERNS, or NEEDS CHANGES.
+`/code-review` 对 `src/` 中的指定文件或文件集进行架构和质量代码审查。
+技能检查编码标准合规性（文档注释、依赖注入而非单例、数据驱动、
+可测试性），以及架构模式遵循情况（ADR 中定义的模式是否正确应用）。
 
----
-
-## Static Assertions (Structural)
-
-Verified automatically by `/skill-test static` — no fixture needed.
-
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: APPROVED, CONCERNS, NEEDS CHANGES
-- [ ] Does NOT require "May I write" language (read-only; findings are advisory output)
-- [ ] Has a next-step handoff (what to do with findings)
+技能不进行任何编辑——仅生成带有判定的代码审查报告。
+审查报告显示每个文件的问题列表，并附有严重性级别和建议。
+无 director 门控（但技能在发现关键问题时可能建议咨询首席程序员 agent）。
+判定结果：APPROVED（全部符合标准）、CONCERNS（存在小问题）
+或 NEEDS CHANGES（存在明确问题需在合并前解决）。
 
 ---
 
-## Director Gate Checks
+## 静态断言（结构性）
 
-None. Code review is a read-only advisory skill; no gates are invoked.
+由 `/skill-test static` 自动验证——无需夹具。
 
----
-
-## Test Cases
-
-### Case 1: Happy Path — Source file follows all coding standards
-
-**Fixture:**
-- `src/gameplay/health_component.gd` exists with:
-  - All public methods have doc comments (`##` notation)
-  - No singletons used; dependencies injected via constructor
-  - No hardcoded values; all constants reference `assets/data/`
-  - ADR reference in file header: `# ADR: docs/architecture/adr-004-health.md`
-  - Referenced ADR has `Status: Accepted`
-
-**Input:** `/code-review src/gameplay/health_component.gd`
-
-**Expected behavior:**
-1. Skill reads the source file
-2. Skill checks all coding standards: doc comments, DI, data-driven, ADR status
-3. All checks pass
-4. Skill outputs findings summary with all checks PASS
-5. Verdict is APPROVED
-
-**Assertions:**
-- [ ] Each coding standard check is listed in the output
-- [ ] All checks show PASS when standards are met
-- [ ] Skill reads referenced ADR to confirm its status
-- [ ] Verdict is APPROVED
-- [ ] No edits are made to any file
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含至少 2 个阶段标题
+- [ ] 包含判定关键词：APPROVED、CONCERNS、NEEDS CHANGES
+- [ ] 不包含"May I write"语言（代码审查技能不修改代码）
+- [ ] 包含下一步交接（例如 `/dev-story` 修复问题，或 `/story-done` 确认通过）
 
 ---
 
-### Case 2: Needs Changes — Missing doc comment and singleton usage
+## Director 门控检查
 
-**Fixture:**
-- `src/ui/inventory_ui.gd` has:
-  - 2 public methods without doc comments
-  - Uses `GameManager.instance` (singleton pattern)
-  - All other standards met
-
-**Input:** `/code-review src/ui/inventory_ui.gd`
-
-**Expected behavior:**
-1. Skill reads the source file
-2. Skill detects: 2 missing doc comments on public methods
-3. Skill detects: singleton usage at specific lines (e.g., line 42, line 87)
-4. Findings list the exact method names and line numbers
-5. Verdict is NEEDS CHANGES
-
-**Assertions:**
-- [ ] Missing doc comments are listed with method names
-- [ ] Singleton usage is flagged with file and line number
-- [ ] Verdict is NEEDS CHANGES when BLOCKING-level standard violations exist
-- [ ] Skill does not edit the file — findings are for the developer to act on
-- [ ] Output suggests replacing singleton with dependency injection
+无。`/code-review` 是只读分析技能，不适用 director 门控。
 
 ---
 
-### Case 3: Architecture Risk — ADR reference is Proposed, not Accepted
+## 测试用例
 
-**Fixture:**
-- `src/core/save_system.gd` has a header comment: `# ADR: docs/architecture/adr-010-save.md`
-- `adr-010-save.md` exists but has `Status: Proposed`
-- Code itself follows all other coding standards
+### 用例 1：正常路径——所有标准符合，APPROVED
 
-**Input:** `/code-review src/core/save_system.gd`
+**夹具：**
+- `src/gameplay/combat/CombatSystem.gd` 存在
+- 包含类级文档注释
+- 使用构造函数注入（无全局单例引用）
+- 伤害公式从数据文件加载（数据驱动）
+- 所有方法均可通过公共接口进行单元测试
 
-**Expected behavior:**
-1. Skill reads the source file
-2. Skill reads referenced ADR — finds `Status: Proposed`
-3. Skill flags this as ARCHITECTURE RISK (code is implementing an unaccepted ADR)
-4. Other coding standard checks pass
-5. Verdict is CONCERNS (risk flag is advisory, not a hard NEEDS CHANGES)
+**输入：** `/code-review src/gameplay/combat/CombatSystem.gd`
 
-**Assertions:**
-- [ ] Skill reads referenced ADR file to check its status
-- [ ] ARCHITECTURE RISK is flagged when ADR status is Proposed
-- [ ] Verdict is CONCERNS (not NEEDS CHANGES) for ADR risk — advisory severity
-- [ ] Output recommends resolving the ADR before the code goes to production
+**预期行为：**
+1. 技能读取 `CombatSystem.gd`
+2. 技能根据编码标准检查每个标准
+3. 所有 4 个标准均通过（文档注释、依赖注入、数据驱动、可测试性）
+4. 不发现架构问题
+5. 判定结果为 APPROVED
 
----
-
-### Case 4: Edge Case — No source files found at specified path
-
-**Fixture:**
-- User calls `/code-review src/networking/`
-- `src/networking/` directory does not exist
-
-**Input:** `/code-review src/networking/`
-
-**Expected behavior:**
-1. Skill attempts to read files in `src/networking/`
-2. Directory or files not found
-3. Skill outputs an error: "No source files found at `src/networking/`"
-4. Skill suggests checking `src/` for valid directories
-5. No verdict is emitted (nothing was reviewed)
-
-**Assertions:**
-- [ ] Skill does not crash when path does not exist
-- [ ] Output names the attempted path in the error message
-- [ ] Output suggests checking `src/` for valid file paths
-- [ ] No verdict is emitted when there is nothing to review
+**断言：**
+- [ ] 检查文档注释（类级注释存在）
+- [ ] 检查依赖注入（无单例引用）
+- [ ] 检查数据驱动模式（数据从文件加载而非硬编码）
+- [ ] 检查可测试性（方法可通过公共接口访问）
+- [ ] 0 个问题 → 判定结果为 APPROVED
+- [ ] 不修改代码文件
 
 ---
 
-### Case 5: Gate Compliance — No gate; LP may be consulted separately
+### 用例 2：缺失文档注释 + 使用单例——NEEDS CHANGES
 
-**Fixture:**
-- Source file follows most standards but has 1 CONCERNS-level finding (a magic number)
-- `review-mode.txt` contains `full`
+**夹具：**
+- `src/gameplay/ui/InventoryUI.gd` 存在：
+  - 无类级文档注释
+  - 直接引用 `GameManager` 单例：`GameManager.instance.add_item(item)`
 
-**Input:** `/code-review src/gameplay/loot_system.gd`
+**输入：** `/code-review src/gameplay/ui/InventoryUI.gd`
 
-**Expected behavior:**
-1. Skill reads and reviews the source file
-2. No director gate is invoked (code review findings are advisory)
-3. Skill presents findings with the CONCERNS verdict
-4. Output notes: "Consider requesting a Lead Programmer review for architecture concerns"
-5. Skill does not invoke any agent automatically
+**预期行为：**
+1. 技能读取 `InventoryUI.gd`
+2. 技能检测到问题：
+   - 标准 1 失败：缺少类级文档注释（MEDIUM 严重性）
+   - 标准 2 失败：单例引用 `GameManager.instance`（HIGH 严重性）
+3. 报告列出两个问题，附严重性级别和修复建议
+4. 判定结果为 NEEDS CHANGES（存在 HIGH 严重性问题）
 
-**Assertions:**
-- [ ] No director gate is invoked in any review mode
-- [ ] LP consultation is suggested (not mandated) in the output
-- [ ] No code edits are made
-- [ ] Verdict is CONCERNS for advisory-level findings
-
----
-
-## Protocol Compliance
-
-- [ ] Reads source file(s) and coding standards before reviewing
-- [ ] Lists each coding standard check in findings output
-- [ ] Does not edit any source files (read-only skill)
-- [ ] No director gates are invoked
-- [ ] Verdict is one of: APPROVED, CONCERNS, NEEDS CHANGES
+**断言：**
+- [ ] 检测到缺失文档注释（MEDIUM 严重性）
+- [ ] 检测到单例使用（HIGH 严重性）
+- [ ] 报告提供每个问题的修复建议
+- [ ] 判定结果为 NEEDS CHANGES（存在 HIGH 严重性问题）
+- [ ] 代码文件不被修改
 
 ---
 
-## Coverage Notes
+### 用例 3：ADR 状态为 Proposed（非 Accepted）——CONCERNS（架构风险）
 
-- Batch review of all files in a directory is not explicitly tested; behavior
-  is assumed to apply the same checks file by file and aggregate the verdict.
-- Test coverage checks (verifying corresponding test files exist) are a stretch
-  goal not tested here; that is primarily the domain of `/test-evidence-review`.
+**夹具：**
+- `src/networking/StateSync.gd` 实现了 ADR-007（状态同步模式）
+- `docs/architecture/adr-007-state-sync.md` 存在且状态为"Proposed"（非"Accepted"）
+
+**输入：** `/code-review src/networking/StateSync.gd`
+
+**预期行为：**
+1. 技能读取 `StateSync.gd` 并识别引用的 ADR（ADR-007）
+2. 技能读取 ADR-007 状态——Proposed，非 Accepted
+3. 技能报告架构风险："Code implements ADR-007, but ADR is still Proposed.
+   Architecture decision may change."
+4. 标记为 MEDIUM 严重性（架构问题，非代码问题）
+5. 判定结果为 CONCERNS
+
+**断言：**
+- [ ] 检测到 ADR 引用并读取 ADR 状态
+- [ ] 将 Proposed 状态标记为架构风险
+- [ ] 问题标记为 MEDIUM 严重性
+- [ ] 判定结果为 CONCERNS（存在风险但代码本身无误）
+- [ ] 代码不被修改
+
+---
+
+### 用例 4：路径未找到——报告错误信息
+
+**夹具：**
+- 提供的路径不存在：`src/gameplay/magic/SpellSystem.gd`
+
+**输入：** `/code-review src/gameplay/magic/SpellSystem.gd`
+
+**预期行为：**
+1. 技能尝试读取指定路径——未找到文件
+2. 技能输出错误信息：
+   "File not found: `src/gameplay/magic/SpellSystem.gd`. Check the path and try again."
+3. 不生成部分审查报告
+4. 技能礼貌退出
+
+**断言：**
+- [ ] 文件不存在时技能不崩溃
+- [ ] 错误信息中包含提供的路径
+- [ ] 不生成部分/无效报告
+
+---
+
+### 用例 5：门控合规性——无 director 门控；LP 咨询为建议
+
+**夹具：**
+- 包含 HIGH 严重性问题的代码文件
+
+**输入：** `/code-review src/some-system.gd`
+
+**预期行为：**
+1. 技能完成代码审查
+2. 未调用 director 门控
+3. 若发现关键问题，报告建议咨询首席程序员 agent（但不强制执行）
+
+**断言：**
+- [ ] 未调用任何 director 门控
+- [ ] 发现 HIGH 严重性问题时，报告中可选择性建议咨询首席程序员
+- [ ] 不修改任何文件
+
+---
+
+## 协议合规性
+
+- [ ] 读取指定文件（不批量扫描整个 src/ 目录，除非被明确要求）
+- [ ] 检查编码标准中定义的每个标准
+- [ ] 检测并报告 ADR 引用及其状态
+- [ ] 从不修改任何代码文件
+- [ ] 报告每个问题时附严重性级别和修复建议
+- [ ] 返回 APPROVED、CONCERNS 或 NEEDS CHANGES 判定
+
+---
+
+## 覆盖说明
+
+- 批量审查（整个目录或多个文件）此处未测试，但遵循相同的逐文件检查模式。
+- 编码标准中的具体规则在 `.claude/docs/coding-standards.md` 中定义；
+  此处对标准进行断言测试，但不对具体规则文本进行断言。
+- 跨文件的架构一致性（例如系统 A 的 API 与系统 B 期望不匹配）
+  超出单文件代码审查范围，由 `/architecture-review` 处理。
+- 测试覆盖率检查（验证相应测试文件是否存在）是扩展目标，此处未进行测试；
+  这主要属于 `/test-evidence-review` 的职责范围。

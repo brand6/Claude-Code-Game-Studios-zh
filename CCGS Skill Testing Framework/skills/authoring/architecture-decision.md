@@ -1,197 +1,228 @@
 # Skill Test Spec: /architecture-decision
 
-## Skill Summary
+## Skill 概述
 
-`/architecture-decision` guides the user through section-by-section authoring of
-a new Architecture Decision Record (ADR). Required sections are: Status, Context,
-Decision, Consequences, Alternatives, and Related ADRs. The skill also stamps the
-engine version reference from `docs/engine-reference/` into the ADR for traceability.
-
-In `full` review mode, TD-ADR (technical-director) and LP-FEASIBILITY
-(lead-programmer) gate agents spawn after the draft is complete. If both gates
-return APPROVED, the ADR status is set to Accepted. In `lean` or `solo` mode,
-both gates are skipped and the ADR is written with Status: Proposed. The skill
-asks "May I write" per section during authoring. ADRs are written to
-`docs/architecture/adr-NNN-[name].md`.
+引导逐节编写架构决策记录（ADR）。6 个必需章节：状态、上下文、决策、后果、替代方案、
+关联 ADR。引擎版本从 `docs/engine-reference/` 标注。
+完整模式：TD-ADR + LP-FEASIBILITY 门控并行 → 两者均 APPROVED 时状态为 Accepted。
+精简/独立模式：门控跳过 → 状态为 Proposed。
+输出：`docs/architecture/adr-NNN-[name].md`。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构性）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需夹具。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: ACCEPTED, PROPOSED, CONCERNS
-- [ ] Contains "May I write" collaborative protocol language (per-section approval)
-- [ ] Has a next-step handoff at the end
-- [ ] Documents gate behavior: TD-ADR + LP-FEASIBILITY in full mode; skipped in lean/solo
-- [ ] Documents that ADR status is Accepted (full, gates approve) or Proposed (otherwise)
-- [ ] Mentions engine version stamp from `docs/engine-reference/`
-
----
-
-## Director Gate Checks
-
-In `full` mode: TD-ADR (technical-director) and LP-FEASIBILITY (lead-programmer)
-spawn after the ADR draft is complete. If both return APPROVED, ADR Status is set
-to Accepted. If either returns CONCERNS or FAIL, ADR stays Proposed.
-
-In `lean` mode: both gates are skipped. ADR is written with Status: Proposed.
-Output notes: "TD-ADR skipped — lean mode" and "LP-FEASIBILITY skipped — lean mode".
-
-In `solo` mode: both gates are skipped. ADR is written with Status: Proposed.
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 明确列出 6 个必需章节：状态（Status）、上下文（Context）、决策（Decision）、后果（Consequences）、替代方案（Alternatives）、关联 ADR（Related ADRs）
+- [ ] 完整模式中 TD-ADR 和 LP-FEASIBILITY 门控并行派生
+- [ ] ADR 状态规则：仅当完整模式且两者均 APPROVED 时为 Accepted
+- [ ] 精简和独立模式中跳过门控并注明
+- [ ] 按章节询问"May I write"
+- [ ] 输出路径遵循 `docs/architecture/adr-NNN-[name].md` 模式
+- [ ] 末尾包含下一步交接：`/architecture-review` 或 `/create-control-manifest`
 
 ---
 
-## Test Cases
+## 门控检查
 
-### Case 1: Happy Path — New ADR for rendering approach, full mode, gates approve
+### TD-ADR 门控（技术总监审查）
 
-**Fixture:**
-- `docs/architecture/` exists with no existing ADR for rendering
-- `docs/engine-reference/[engine]/VERSION.md` exists
-- `production/session-state/review-mode.txt` contains `full`
+**触发条件：** 完整模式下所有 6 个章节均已起草后
 
-**Input:** `/architecture-decision rendering-approach`
+**派生 agent：** technical-director（内部门控 ID：TD-ADR）
 
-**Expected behavior:**
-1. Skill guides user through each required section (Status, Context, Decision, Consequences, Alternatives, Related ADRs)
-2. Engine version is stamped into the ADR from `docs/engine-reference/`
-3. For each section: draft shown, "May I write this section?" asked, approved
-4. After all sections: TD-ADR and LP-FEASIBILITY gates spawn in parallel
-5. Both gates return APPROVED
-6. ADR Status is set to Accepted
-7. Skill writes `docs/architecture/adr-NNN-rendering-approach.md`
-8. `docs/architecture/tr-registry.yaml` updated if new TR-IDs are defined
+**预期行为：**
+- technical-director 评审 ADR 草稿，检查技术合理性、引擎兼容性和架构一致性
+- 返回裁决：APPROVED / CONCERNS / REJECTED
 
-**Assertions:**
-- [ ] All 6 required sections are authored and written
-- [ ] Engine version reference is stamped in the ADR
-- [ ] TD-ADR and LP-FEASIBILITY spawn in parallel (not sequentially)
-- [ ] ADR Status is Accepted when both gates return APPROVED in full mode
-- [ ] "May I write" is asked per section during authoring
-- [ ] File is written to `docs/architecture/adr-NNN-[name].md`
+**断言：**
+- [ ] 仅在完整模式下派生 technical-director
+- [ ] 精简或独立模式中不派生 TD-ADR
+- [ ] TD-ADR 和 LP-FEASIBILITY 在完整模式下并行派生（同时发出 Task 调用）
 
----
+### LP-FEASIBILITY 门控（首席程序员可行性评审）
 
-### Case 2: Failure Path — TD-ADR returns CONCERNS
+**触发条件：** 完整模式下所有 6 个章节均已起草后（与 TD-ADR 并行）
 
-**Fixture:**
-- ADR draft is complete (all sections filled)
-- `production/session-state/review-mode.txt` contains `full`
-- TD-ADR gate returns CONCERNS: "The decision does not address [specific concern]"
+**派生 agent：** lead-programmer（内部门控 ID：LP-FEASIBILITY）
 
-**Input:** `/architecture-decision [topic]`
+**预期行为：**
+- lead-programmer 评估实现可行性、代码复杂度和团队能力匹配
+- 返回裁决：APPROVED / CONCERNS / REJECTED
 
-**Expected behavior:**
-1. TD-ADR gate spawns and returns CONCERNS with specific feedback
-2. Skill surfaces the concerns to the user
-3. ADR Status remains Proposed (not Accepted)
-4. User is asked: revise the decision to address concerns, or accept as Proposed
-5. ADR is written with Status: Proposed if concerns are not resolved
-
-**Assertions:**
-- [ ] TD-ADR concerns are shown to the user verbatim
-- [ ] ADR Status is Proposed (not Accepted) when TD-ADR returns CONCERNS
-- [ ] Skill does NOT set Status: Accepted while CONCERNS are unresolved
-- [ ] User is given the option to revise and re-run the gate
+**断言：**
+- [ ] 仅在完整模式下派生 lead-programmer
+- [ ] 精简或独立模式中不派生 LP-FEASIBILITY
+- [ ] LP-FEASIBILITY 和 TD-ADR 并行（同时 Task 调用）
 
 ---
 
-### Case 3: Lean Mode — Both gates skipped; ADR written as Proposed
+## 测试用例
 
-**Fixture:**
-- `production/session-state/review-mode.txt` contains `lean`
-- ADR draft is authored for a new technical decision
+### 用例 1：正常路径——完整模式，两个门控均 APPROVED，状态为 Accepted
 
-**Input:** `/architecture-decision [topic]`
+**测试夹具：**
+- 完整模式：`production/session-state/review-mode.txt` 为 `full`
+- 引擎已配置（Godot 4）
+- ADR 主题：状态机架构用于敌人 AI
+- 两个门控（TD-ADR 和 LP-FEASIBILITY）均返回 APPROVED
 
-**Expected behavior:**
-1. Skill guides user through all 6 sections
-2. After draft is complete: both TD-ADR and LP-FEASIBILITY are skipped
-3. Output notes: "TD-ADR skipped — lean mode" and "LP-FEASIBILITY skipped — lean mode"
-4. ADR is written with Status: Proposed (not Accepted, since gates did not approve)
-5. "May I write" is still asked before the final file write
+**输入：** `/architecture-decision enemy-ai-state-machine`
 
-**Assertions:**
-- [ ] Both gate skip notes appear in output
-- [ ] ADR Status is Proposed (not Accepted) in lean mode
-- [ ] "May I write" is still asked before writing the file
-- [ ] Skill writes the ADR after user approval
+**预期行为：**
+1. 上下文收集：读取现有 ADR 以确定下一个序号（NNN）
+2. 立即创建包含所有 6 个章节标题的骨架文件：`docs/architecture/adr-NNN-enemy-ai-state-machine.md`
+3. 按章节逐节引导：
+   - 提出每个章节的内容建议
+   - 逐节询问"May I write section [N]?"
+   - 用户批准后写入该章节
+4. 引擎版本从 `docs/engine-reference/` 读取后标注在 ADR 中
+5. 所有 6 个章节起草完成后，并行派生 TD-ADR 和 LP-FEASIBILITY 门控
+6. 两个门控均返回 APPROVED
+7. ADR 状态更新为 `Accepted`
+8. 输出文件保存，引用下一步：`/architecture-review` 或 `/create-control-manifest`
 
----
-
-### Case 4: Edge Case — ADR already exists for this topic
-
-**Fixture:**
-- `docs/architecture/` contains an existing ADR covering the same topic
-- The existing ADR has Status: Accepted
-
-**Input:** `/architecture-decision [same-topic]`
-
-**Expected behavior:**
-1. Skill detects an existing ADR covering the same topic
-2. Skill asks: "An ADR for [topic] already exists ([filename]). Update it, or create a new superseding ADR?"
-3. User selects update or supersede
-4. Skill does NOT silently create a duplicate ADR
-
-**Assertions:**
-- [ ] Skill detects the existing ADR before authoring begins
-- [ ] User is offered update or supersede options — no silent duplicate
-- [ ] If update: skill opens the existing ADR for section-by-section revision
-- [ ] If supersede: new ADR references the superseded one in Related ADRs section
+**断言：**
+- [ ] 骨架文件在讨论任何内容之前创建
+- [ ] 按章节逐节引导并询问"May I write"
+- [ ] 引擎版本在 ADR 中标注
+- [ ] TD-ADR 和 LP-FEASIBILITY 的 Task 调用同时发出（并行）
+- [ ] 两者均 APPROVED 时 ADR 状态为 Accepted
+- [ ] 输出路径遵循 `docs/architecture/adr-NNN-[name].md` 模式
+- [ ] 末尾引用 `/architecture-review` 或 `/create-control-manifest`
 
 ---
 
-### Case 5: Director Gate — Status set correctly based on mode and gate outcome
+### 用例 2：完整模式，一个门控返回 CONCERNS——状态保持 Proposed
 
-**Fixture:**
-- ADR draft is complete
-- Two scenarios: (a) full mode, both gates APPROVED; (b) full mode, one gate CONCERNS
+**测试夹具：**
+- 完整模式
+- TD-ADR 返回 APPROVED
+- LP-FEASIBILITY 返回 CONCERNS：实现复杂度过高，团队可能需要额外培训
 
-**Full mode, both APPROVED:**
-- ADR Status is set to Accepted
+**输入：** `/architecture-decision network-replication`（门控结果场景）
 
-**Assertions (both approved):**
-- [ ] ADR frontmatter/header shows `Status: Accepted`
-- [ ] Both TD-ADR and LP-FEASIBILITY appear as APPROVED in output
+**预期行为：**
+1. 所有 6 个章节起草完成
+2. TD-ADR 和 LP-FEASIBILITY 并行派生
+3. TD-ADR：APPROVED；LP-FEASIBILITY：CONCERNS
+4. 编排者显示：LP-FEASIBILITY 返回 CONCERNS——ADR 状态保持 Proposed
+5. 具体 CONCERNS 内容列出（实现复杂度问题）
+6. Skill 不将状态设为 Accepted（任何一个门控返回非 APPROVED 时均不 Accepted）
+7. `AskUserQuestion` 提供选项：
+   - 修订决策章节以简化实现方案，然后重新请求门控审查
+   - 保持现状，维持 Proposed 状态并记录 CONCERNS
+   - 在此停止，等待团队讨论后再继续
 
-**Full mode, one gate returns CONCERNS:**
-- ADR Status stays Proposed
+**断言（CONCERNS）：**
+- [ ] ADR 状态为 Proposed（非 Accepted）
+- [ ] CONCERNS 内容列于输出中
+- [ ] 任何一个门控返回 CONCERNS 时 Skill 不设置 Accepted 状态
+- [ ] 精简/独立模式下 ADR 状态始终为 Proposed（无论内容质量如何）
 
-**Assertions (CONCERNS):**
-- [ ] ADR frontmatter/header shows `Status: Proposed`
-- [ ] Concerns are listed in output
-- [ ] Skill does NOT set Status: Accepted when any gate returns CONCERNS
-
-**Lean/solo mode:**
-- ADR Status is always Proposed regardless of content quality
-
-**Assertions (lean/solo):**
-- [ ] ADR Status is Proposed in lean mode
-- [ ] ADR Status is Proposed in solo mode
-- [ ] No gate output appears in lean or solo mode
-
----
-
-## Protocol Compliance
-
-- [ ] All 6 required sections authored before gate review
-- [ ] Engine version stamped in ADR from `docs/engine-reference/`
-- [ ] "May I write" asked per section during authoring
-- [ ] TD-ADR and LP-FEASIBILITY spawn in parallel in full mode
-- [ ] Skipped gates noted by name and mode in lean/solo output
-- [ ] ADR Status: Accepted only when full mode AND both gates APPROVED
-- [ ] Ends with next-step handoff: `/architecture-review` or `/create-control-manifest`
+**断言（精简/独立模式）：**
+- [ ] 精简模式下 ADR 状态为 Proposed
+- [ ] 独立模式下 ADR 状态为 Proposed
+- [ ] 精简或独立模式下无门控输出
 
 ---
 
-## Coverage Notes
+### 用例 3：精简模式——两个门控均跳过，状态为 Proposed
 
-- ADR numbering (auto-incrementing NNN) is not independently fixture-tested —
-  the skill reads existing ADR filenames to assign the next number.
-- Related ADRs section linking (supersedes / related-to) is tested structurally
-  via Case 4 but not all link types are individually verified.
-- The TR-registry update (when new TR-IDs are defined in the ADR) is part of the
-  write phase — tested implicitly via Case 1.
+**测试夹具：**
+- 精简模式：`production/session-state/review-mode.txt` 为 `lean`
+
+**输入：** `/architecture-decision ui-framework`
+
+**预期行为：**
+1. 骨架文件创建
+2. 按章节逐节引导写作
+3. 6 个章节全部完成后，无门控派生
+4. 输出注明："[TD-ADR] 跳过——精简模式；[LP-FEASIBILITY] 跳过——精简模式"
+5. ADR 状态设为 Proposed
+6. 裁决：COMPLETE（精简模式下 Proposed 是正常结果）
+
+**断言：**
+- [ ] 精简模式下不派生 TD-ADR 和 LP-FEASIBILITY
+- [ ] 两个门控的跳过均明确注明（带模式名称）
+- [ ] ADR 状态为 Proposed（精简模式下的正常结果）
+- [ ] 输出中无门控内容
+
+---
+
+### 用例 4：ADR 已存在——更新或取代
+
+**测试夹具：**
+- `docs/architecture/adr-005-save-system.md` 已存在，状态为 Accepted
+- 用户希望修订保存系统架构
+
+**输入：** `/architecture-decision save-system`
+
+**预期行为：**
+1. 上下文收集：发现 `adr-005-save-system.md` 已存在
+2. 编排者在对话中注明："发现现有 ADR：adr-005-save-system.md（状态：Accepted）"
+3. `AskUserQuestion` 提供选项：
+   - 更新现有 ADR（adr-005 修订版，状态重置为 Proposed 直至重新评审）
+   - 创建取代 ADR（新 adr-NNN，`Related ADRs` 中引用"取代 adr-005"）
+4. 根据用户选择，执行相应路径
+5. 若创建取代 ADR：adr-005 的状态更新为 Superseded
+
+**断言：**
+- [ ] 发现现有 ADR 时明确注明，不被静默覆盖
+- [ ] `AskUserQuestion` 提供更新或取代的选项
+- [ ] 创建取代 ADR 时，旧 ADR 状态更新为 Superseded
+- [ ] 取代 ADR 在 `Related ADRs` 章节引用被取代的 ADR
+
+---
+
+### 用例 5：ADR 状态规则矩阵
+
+**测试夹具：** 各种模式和门控结果组合
+
+**输入：** 多个场景
+
+**状态规则矩阵：**
+
+| 模式 | TD-ADR | LP-FEASIBILITY | 预期 ADR 状态 |
+|------|--------|----------------|--------------|
+| 完整 | APPROVED | APPROVED | Accepted |
+| 完整 | APPROVED | CONCERNS | Proposed |
+| 完整 | CONCERNS | APPROVED | Proposed |
+| 完整 | REJECTED | APPROVED | Proposed |
+| 精简 | 跳过 | 跳过 | Proposed |
+| 独立 | 跳过 | 跳过 | Proposed |
+
+**断言（CONCERNS）：**
+- [ ] ADR 状态为 Proposed（frontmatter/标题中显示 `Status: Proposed`）
+- [ ] CONCERNS 列于输出中
+- [ ] 任何门控返回 CONCERNS 时 Skill 不设置 Accepted 状态
+
+**断言（精简/独立）：**
+- [ ] 精简模式下 ADR 状态为 Proposed
+- [ ] 独立模式下 ADR 状态为 Proposed
+- [ ] 精简或独立模式下无门控输出
+
+---
+
+## 协议合规性
+
+- [ ] 所有 6 个必需章节在门控审查之前完成起草
+- [ ] 引擎版本从 `docs/engine-reference/` 标注在 ADR 中
+- [ ] 起草期间按章节询问"May I write"
+- [ ] 完整模式中 TD-ADR 和 LP-FEASIBILITY 并行派生
+- [ ] 精简/独立模式跳过门控时明确注明（含模式名称）
+- [ ] ADR 状态：仅在完整模式且两者均 APPROVED 时为 Accepted
+- [ ] 末尾包含下一步交接：`/architecture-review` 或 `/create-control-manifest`
+
+---
+
+## 覆盖率说明
+
+- ADR 自动编号（自增 NNN）逻辑未独立测试——
+  Skill 通过读取现有 ADR 文件名来分配下一个编号。
+- 关联 ADR 章节的链接类型（取代/关联）通过用例 4 进行了
+  结构性测试，但并非所有链接类型均独立验证。
+- TR 注册表更新（当 ADR 中定义了新的 TR-ID 时）作为写入阶段的一部分——
+  通过用例 1 隐式测试。

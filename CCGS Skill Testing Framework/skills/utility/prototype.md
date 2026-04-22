@@ -1,178 +1,167 @@
-# Skill Test Spec: /prototype
+# 技能测试规范：/prototype
 
-## Skill Summary
+## 技能概要
 
-`/prototype` manages a rapid prototyping workflow for validating a game mechanic
-before committing to full production implementation. Prototypes are created in
-`prototypes/[mechanic-name]/` and are intentionally disposable — coding standards
-are relaxed (no ADR required, AC can be minimal, hardcoded values acceptable).
-After implementation, the skill produces a findings document summarizing what
-was learned and recommending next steps.
+`/prototype` 是快速原型验证工作流。它跳过正常标准（无需 ADR、允许硬编码），
+在 `prototypes/[机制名]/` 目录下快速验证游戏概念或机制。
 
-The skill asks "May I write to `prototypes/[name]/`?" before creating files. If a
-prototype already exists, the skill offers to extend, replace, or archive. No
-director gates apply. Verdicts: PROTOTYPE COMPLETE (prototype built and findings
-documented) or PROTOTYPE ABANDONED (mechanic found to be unworkable).
+原型完成后生成 findings 文档，记录：机制是否可行、
+发现了哪些问题，以及是否建议推进至 `/design-system`。
+若同名原型已存在，技能提供三个选项：扩展现有原型、替换原型或归档。
+
+不适用 director 门控——原型阶段意图快速实验。
+判决为 PROTOTYPE COMPLETE（机制可行）或 PROTOTYPE ABANDONED（机制不可行）。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构性）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需夹具。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: PROTOTYPE COMPLETE, PROTOTYPE ABANDONED
-- [ ] Contains "May I write" language before creating prototype files
-- [ ] Has a next-step handoff (e.g., `/design-system` to formalize, or archive)
-
----
-
-## Director Gate Checks
-
-None. Prototypes are throwaway validation artifacts. No director gates apply.
+- [ ] 包含必要的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含至少 2 个阶段标题
+- [ ] 包含判决关键词：PROTOTYPE COMPLETE、PROTOTYPE ABANDONED
+- [ ] 记录放宽的标准（允许硬编码，无需 ADR）
+- [ ] 记录三个冲突处理选项：扩展/替换/归档
 
 ---
 
-## Test Cases
+## Director 门控检查
 
-### Case 1: Happy Path — Mechanic concept prototyped, findings documented
-
-**Fixture:**
-- `prototypes/` directory exists
-- No existing prototype for "grapple-hook"
-
-**Input:** `/prototype grapple-hook`
-
-**Expected behavior:**
-1. Skill asks "May I write to `prototypes/grapple-hook/`?"
-2. After approval: creates `prototypes/grapple-hook/` directory and basic
-   implementation skeleton (main scene, player controller extension)
-3. Skill implements a minimal grapple hook mechanic (intentionally rough — no
-   polish, hardcoded values acceptable)
-4. Skill produces `prototypes/grapple-hook/findings.md` with:
-   - What was tested
-   - What worked
-   - What didn't work
-   - Recommendation (proceed / abandon / revise concept)
-5. Verdict is PROTOTYPE COMPLETE
-
-**Assertions:**
-- [ ] "May I write to `prototypes/grapple-hook/`?" is asked before any files are created
-- [ ] Implementation is isolated to `prototypes/` (not `src/`)
-- [ ] `findings.md` is created with at minimum: tested/worked/didn't-work/recommendation
-- [ ] Verdict is PROTOTYPE COMPLETE
+无。`/prototype` 是快速实验技能。不适用 director 门控。
 
 ---
 
-### Case 2: Prototype Already Exists — Offers Extend, Replace, or Archive
+## 测试用例
 
-**Fixture:**
-- `prototypes/grapple-hook/` already exists from a previous prototype session
-- It contains a basic implementation and a findings.md
+### 用例 1：正常路径——机制原型化，findings 文档，PROTOTYPE COMPLETE
 
-**Input:** `/prototype grapple-hook`
+**夹具：**
+- 不存在 `prototypes/` 目录
+- 需要原型化：力矩拉杆跳跃机制
 
-**Expected behavior:**
-1. Skill detects existing `prototypes/grapple-hook/` directory
-2. Skill reports: "Prototype already exists for grapple-hook"
-3. Skill presents 3 options:
-   - Extend: add new features to the existing prototype
-   - Replace: start fresh (asks "May I replace `prototypes/grapple-hook/`?")
-   - Archive: move to `prototypes/archive/grapple-hook/` and start fresh
-4. User selects; skill proceeds accordingly
+**输入：** `/prototype momentum-jump`
 
-**Assertions:**
-- [ ] Existing prototype is detected and reported
-- [ ] Exactly 3 options are presented (extend, replace, archive)
-- [ ] Replace path includes a "May I replace" confirmation
-- [ ] Archive path moves (not deletes) the existing prototype
+**预期行为：**
+1. 技能在 `prototypes/momentum-jump/` 创建原型目录
+2. 技能生成原型代码（允许硬编码的魔法数字）
+3. 技能询问"May I write to `prototypes/momentum-jump/`?"
+4. 用户批准；代码写入
+5. 技能生成 `prototypes/momentum-jump/findings.md`，包含：
+   - 验证的机制
+   - 发现的问题
+   - 建议：推进至 `/design-system`
+6. 判决为 PROTOTYPE COMPLETE
 
----
-
-### Case 3: Prototype Validates Mechanic — Recommends Proceeding to Production
-
-**Fixture:**
-- Prototype implementation complete
-- Findings: grapple hook mechanic is fun and technically feasible
-
-**Input:** `/prototype grapple-hook` (prototype session complete)
-
-**Expected behavior:**
-1. After prototype is built and tested, findings are summarized
-2. Recommendation in findings.md: "Mechanic validated — recommend proceeding
-   to `/design-system` for full specification"
-3. Skill handoff message explicitly suggests `/design-system grapple-hook`
-4. Verdict is PROTOTYPE COMPLETE
-
-**Assertions:**
-- [ ] `findings.md` contains an explicit recommendation
-- [ ] Recommendation references `/design-system` when mechanic is validated
-- [ ] Handoff message echoes the recommendation
-- [ ] Verdict is PROTOTYPE COMPLETE (not PROTOTYPE ABANDONED)
+**断言：**
+- [ ] 在 `prototypes/momentum-jump/` 下创建原型文件
+- [ ] 写入前询问"May I write"
+- [ ] `findings.md` 生成于原型目录内
+- [ ] `findings.md` 包含建议章节
+- [ ] 判决为 PROTOTYPE COMPLETE
 
 ---
 
-### Case 4: Prototype Reveals Mechanic is Unworkable — PROTOTYPE ABANDONED
+### 用例 2：原型已存在——提供三个选项（扩展/替换/归档）
 
-**Fixture:**
-- Prototype implemented for "procedural-dialogue"
-- After testing: the mechanic creates incoherent dialogue trees and is
-  frustrating to play
+**夹具：**
+- `prototypes/momentum-jump/` 已存在，包含之前的原型代码和 findings.md
 
-**Input:** `/prototype procedural-dialogue`
+**输入：** `/prototype momentum-jump`
 
-**Expected behavior:**
-1. Prototype is built
-2. Findings document the failure: incoherent output, player confusion, technical complexity
-3. Recommendation in findings.md: "Mechanic not viable — abandoning"
-4. `findings.md` documents the specific reasons the mechanic failed
-5. Skill suggests alternatives in the handoff (e.g., curated dialogue instead)
-6. Verdict is PROTOTYPE ABANDONED
+**预期行为：**
+1. 技能检测到 `prototypes/momentum-jump/` 已存在
+2. 技能呈现三个选项：
+   - **Extend**（扩展）：在现有原型基础上新增功能
+   - **Replace**（替换）：从头创建新原型（覆盖现有内容）
+   - **Archive**（归档）：将现有原型移至 `prototypes/archived/`，再创建新原型
+3. 用户选择一个选项
+4. 技能继续执行所选的原型工作流
 
-**Assertions:**
-- [ ] Verdict is PROTOTYPE ABANDONED (not PROTOTYPE COMPLETE)
-- [ ] `findings.md` documents specific failure reasons (not vague)
-- [ ] Alternative approaches are suggested in the handoff
-- [ ] Prototype files are retained (not deleted) for reference
-
----
-
-### Case 5: Director Gate Check — No gate; prototypes are validation artifacts
-
-**Fixture:**
-- Mechanic concept provided
-
-**Input:** `/prototype wall-jump`
-
-**Expected behavior:**
-1. Skill creates and documents the prototype
-2. No director agents are spawned
-3. No gate IDs appear in output
-
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No gate skip messages appear
-- [ ] Verdict is PROTOTYPE COMPLETE or PROTOTYPE ABANDONED — no gate verdict
+**断言：**
+- [ ] 检测到现有原型，呈现三个选项
+- [ ] 三个选项标签准确：Extend、Replace、Archive
+- [ ] 技能在用户选择后才继续（不假设任何默认选项）
+- [ ] 三条路径均到达 PROTOTYPE COMPLETE 或 PROTOTYPE ABANDONED
 
 ---
 
-## Protocol Compliance
+### 用例 3：原型验证机制——建议推进至 /design-system
 
-- [ ] Asks "May I write to `prototypes/[name]/`?" before creating any files
-- [ ] Creates all files under `prototypes/` (not `src/`)
-- [ ] Produces `findings.md` with tested/worked/didn't-work/recommendation
-- [ ] Notes that production coding standards are intentionally relaxed
-- [ ] Offers extend/replace/archive when prototype already exists
-- [ ] Verdict is PROTOTYPE COMPLETE or PROTOTYPE ABANDONED
+**夹具：**
+- 原型创建完成，机制在测试过程中表现良好
+
+**输入：** `/prototype`（用户在测试后报告结果）
+
+**预期行为：**
+1. 原型完成，用户报告正向测试结果
+2. `findings.md` 记录："Mechanism validated. Ready for full design."
+3. 技能建议运行 `/design-system [机制名]` 进行正式设计
+4. 判决为 PROTOTYPE COMPLETE
+
+**断言：**
+- [ ] `findings.md` 中的建议包含 `/design-system` 的下一步指引
+- [ ] 判决为 PROTOTYPE COMPLETE
+- [ ] 建议中包含机制名称（不是通用的"运行 /design-system"）
 
 ---
 
-## Coverage Notes
+### 用例 4：机制不可行——PROTOTYPE ABANDONED，findings 记录原因
 
-- Prototype implementation quality (code style) is intentionally not tested —
-  prototypes are throwaway artifacts and quality standards do not apply.
-- The archiving mechanism is mentioned in Case 2 but the archive format is
-  not assertion-tested in detail.
-- Engine-specific prototype scaffolding (GDScript scenes vs. C# MonoBehaviour)
-  follows the same flow with engine-appropriate file types.
+**夹具：**
+- 原型创建完成
+- 测试结果：机制导致帧率下降至 15fps，无法达到目标性能
+
+**输入：** `/prototype`（用户报告性能问题）
+
+**预期行为：**
+1. 用户报告机制在性能方面不可行
+2. `findings.md` 记录："Mechanism abandoned: performance cost too high (15fps)"
+3. 技能不建议推进至 `/design-system`
+4. 技能建议探索替代方案或取消该机制
+5. 判决为 PROTOTYPE ABANDONED
+
+**断言：**
+- [ ] `findings.md` 包含放弃原因
+- [ ] 判决为 PROTOTYPE ABANDONED（不是 PROTOTYPE COMPLETE）
+- [ ] 技能不强行建议推进至 `/design-system`
+
+---
+
+### 用例 5：Director 门控检查——无门控；prototype 为实验工具
+
+**夹具：**
+- 标准原型设置
+
+**输入：** `/prototype`
+
+**预期行为：**
+1. 技能执行原型工作流
+2. 未调用任何 director agent
+3. 输出中无门控 ID
+
+**断言：**
+- [ ] 未调用 director 门控
+- [ ] 输出中无门控跳过消息
+- [ ] 技能在不经过任何门控检查的情况下达到 PROTOTYPE COMPLETE 或 PROTOTYPE ABANDONED
+
+---
+
+## 协议合规
+
+- [ ] 在 `prototypes/[机制名]/` 目录下创建原型文件
+- [ ] 写入代码前询问"May I write"
+- [ ] 生成包含验证结论和建议的 `findings.md`
+- [ ] 同名原型已存在时，呈现扩展/替换/归档三个选项
+- [ ] 机制可行时判决为 PROTOTYPE COMPLETE，不可行时为 PROTOTYPE ABANDONED
+
+---
+
+## 覆盖说明
+
+- 放宽的标准（允许硬编码的魔法数字、无需 ADR）适用于原型阶段，
+  不适用于正式源代码；`/dev-story` 中会强制执行正式标准。
+- 原型代码生命周期（测试后丢弃）是有意为之的设计——
+  此规范不测试最终代码质量。
+- 归档路径（`prototypes/archived/[机制名]/`）在技能主体中定义；
+  此规范仅要求"归档"选项存在且可选。

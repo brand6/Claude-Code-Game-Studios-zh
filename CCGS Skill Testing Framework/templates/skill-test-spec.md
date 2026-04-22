@@ -1,142 +1,141 @@
-# Skill Spec: /[skill-name]
+# 技能规格：/[skill-name]
 
-> **Category**: [gate | review | authoring | readiness | pipeline | analysis | team | sprint | utility]
-> **Priority**: [critical | high | medium | low]
-> **Spec written**: [YYYY-MM-DD]
+> **分类**：[gate | review | authoring | readiness | pipeline | analysis | team | sprint | utility]
+> **优先级**：[critical | high | medium | low]
+> **规格编写日期**：[YYYY-MM-DD]
 
-## Skill Summary
+## 技能摘要
 
-[One paragraph describing what this skill does, what inputs it takes, and what outputs it produces.]
-
----
-
-## Static Assertions
-
-These should pass before any behavioral testing:
-
-- [ ] Frontmatter has all required fields (`name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`)
-- [ ] 2+ phase headings found
-- [ ] At least one verdict keyword present (`PASS`, `FAIL`, `CONCERNS`, `APPROVED`, `BLOCKED`, `COMPLETE`, `READY`)
-- [ ] If `allowed-tools` includes Write/Edit: `"May I write"` language present
-- [ ] Next-step handoff section present at end
+[用一段话描述该技能的功能、所需输入以及产生的输出。]
 
 ---
 
-## Director Gate Checks
+## 静态断言
 
-[Describe which director gates this skill triggers (if any), and under what review mode conditions.]
+在进行任何行为测试之前，以下内容应全部通过：
 
-- **Full mode**: [gates triggered — e.g., CD-PHASE-GATE, TD-PHASE-GATE, PR-PHASE-GATE, AD-PHASE-GATE]
-- **Lean mode**: [phase gates only — e.g., CD-PHASE-GATE only, or none]
-- **Solo mode**: [no gates — skill runs without director review]
-- **N/A**: [if this skill never triggers gates, explain why]
-
----
-
-## Test Cases
-
-### Case 1: Happy Path — [brief name]
-
-**Fixture** (assumed project state):
-- [file/condition 1]
-- [file/condition 2]
-
-**Expected behavior**:
-1. [Step 1]
-2. [Step 2]
-3. [Step 3]
-
-**Assertions**:
-- [ ] [Assertion 1]
-- [ ] [Assertion 2]
-- [ ] [Assertion 3]
-
-**Case Verdict**: PASS / FAIL / PARTIAL
+- [ ] Frontmatter 包含所有必需字段（`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`）
+- [ ] 包含 2 个以上阶段标题
+- [ ] 包含至少一个裁决关键字（`PASS`、`FAIL`、`CONCERNS`、`APPROVED`、`BLOCKED`、`COMPLETE`、`READY`）
+- [ ] 若 `allowed-tools` 包含 Write/Edit：文档中出现 `"May I write"` 表述
+- [ ] 文档末尾包含后续步骤交接节
 
 ---
 
-### Case 2: Failure / Blocked — [brief name]
+## Director 关卡检查
 
-**Fixture**:
-- [missing or invalid condition]
+[描述该技能触发哪些 director 关卡（如有），以及在何种评审模式条件下触发。]
 
-**Expected behavior**:
-1. [Skill detects the problem]
-2. [Skill reports FAIL/BLOCKED]
-3. [Skill does NOT proceed]
-
-**Assertions**:
-- [ ] Skill stops early and does not produce output
-- [ ] Correct error/block message displayed
-- [ ] No files written without user approval
-
-**Case Verdict**: PASS / FAIL / PARTIAL
+- **完整模式（full）**：[触发的关卡 — 例如 CD-PHASE-GATE、TD-PHASE-GATE、PR-PHASE-GATE、AD-PHASE-GATE]
+- **精简模式（lean）**：[仅阶段关卡 — 例如仅 CD-PHASE-GATE，或无]
+- **单机模式（solo）**：[无关卡 — 技能在没有 director 评审的情况下运行]
+- **不适用（N/A）**：[若该技能从不触发关卡，说明原因]
 
 ---
 
-### Case 3: Mode Variant — [brief name]
+## 测试用例
 
-**Fixture**:
-- [standard project state]
-- [specific mode or flag set]
+### 用例 1：正常路径 — [简短名称]
 
-**Expected behavior**:
-1. [Behavior differs from happy path because of mode]
+**测试夹具**（假定的项目状态）：
+- [文件/条件 1]
+- [文件/条件 2]
 
-**Assertions**:
-- [ ] [Mode-specific assertion]
-- [ ] [Output differs correctly from Case 1]
+**预期行为**：
+1. [步骤 1]
+2. [步骤 2]
+3. [步骤 3]
 
-**Case Verdict**: PASS / FAIL / PARTIAL
+**断言**：
+- [ ] [断言 1]
+- [ ] [断言 2]
+- [ ] [断言 3]
 
----
-
-### Case 4: Edge Case — [brief name]
-
-**Fixture**:
-- [unusual or boundary condition]
-
-**Expected behavior**:
-1. [Skill handles gracefully]
-
-**Assertions**:
-- [ ] [Edge case handled without crash or silent failure]
-- [ ] [Correct output or message]
-
-**Case Verdict**: PASS / FAIL / PARTIAL
+**用例裁决**：PASS / FAIL / PARTIAL
 
 ---
 
-### Case 5: Director Gate — [brief name]
+### 用例 2：失败 / 阻塞 — [简短名称]
 
-**Fixture**:
-- [project state that triggers a gate check]
-- Review mode: [full | lean | solo]
+**测试夹具**：
+- [缺失或无效的条件]
 
-**Expected behavior**:
-1. [Gate fires / does not fire based on mode]
-2. [Correct director agents spawned or skipped]
+**预期行为**：
+1. [技能检测到问题]
+2. [技能报告 FAIL/BLOCKED]
+3. [技能不继续执行]
 
-**Assertions**:
-- [ ] In full mode: [specific gates spawn]
-- [ ] In lean mode: [phase gates only, or skip]
-- [ ] In solo mode: no director gates spawn
-- [ ] Skill does not auto-advance past a CONCERNS or FAIL verdict
+**断言**：
+- [ ] 技能提前停止，不产生输出
+- [ ] 显示正确的错误/阻塞信息
+- [ ] 未经用户批准不写入任何文件
 
-**Case Verdict**: PASS / FAIL / PARTIAL
-
----
-
-## Protocol Compliance
-
-- [ ] Uses `"May I write"` before any file writes (or is read-only and skips this)
-- [ ] Presents findings/draft to user before requesting approval
-- [ ] Ends with a recommended next step or follow-up action
-- [ ] Does not auto-create files without user approval
+**用例裁决**：PASS / FAIL / PARTIAL
 
 ---
 
-## Coverage Notes
+### 用例 3：模式变体 — [简短名称]
 
-[Any gaps in coverage, known edge cases not tested, or conditions that would require
-a live skill run to verify.]
+**测试夹具**：
+- [标准项目状态]
+- [设置的特定模式或标志]
+
+**预期行为**：
+1. [由于模式不同，行为与正常路径不同]
+
+**断言**：
+- [ ] [特定于模式的断言]
+- [ ] [输出与用例 1 正确地存在差异]
+
+**用例裁决**：PASS / FAIL / PARTIAL
+
+---
+
+### 用例 4：边界情况 — [简短名称]
+
+**测试夹具**：
+- [异常或边界条件]
+
+**预期行为**：
+1. [技能优雅处理]
+
+**断言**：
+- [ ] [边界情况处理正常，无崩溃或静默失败]
+- [ ] [输出或提示信息正确]
+
+**用例裁决**：PASS / FAIL / PARTIAL
+
+---
+
+### 用例 5：Director 关卡 — [简短名称]
+
+**测试夹具**：
+- [触发关卡检查的项目状态]
+- 评审模式：[full | lean | solo]
+
+**预期行为**：
+1. [关卡根据模式触发或不触发]
+2. [正确的 director agents 被启动或跳过]
+
+**断言**：
+- [ ] 完整模式（full）下：[特定关卡启动]
+- [ ] 精简模式（lean）下：[仅阶段关卡，或跳过]
+- [ ] 单机模式（solo）下：无 director 关卡启动
+- [ ] 技能不自动在 CONCERNS 或 FAIL 裁决后推进
+
+**用例裁决**：PASS / FAIL / PARTIAL
+
+---
+
+## 协议合规性
+
+- [ ] 任何文件写入前使用 `"May I write"`（或为只读技能则跳过此项）
+- [ ] 在请求批准前向用户呈现发现/草稿
+- [ ] 末尾包含推荐的后续步骤或跟进操作
+- [ ] 不在未获批准的情况下自动创建文件
+
+---
+
+## 覆盖说明
+
+[任何覆盖缺口、已知的未测试边界情况，或需要实际运行技能才能验证的条件。]
