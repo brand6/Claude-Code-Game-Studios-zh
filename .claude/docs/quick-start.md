@@ -71,75 +71,75 @@ Agent 分三个层级：
 
 ### 3. 使用斜杠命令完成常见任务
 
-| 命令 | 用途 |
-|---------|-------------|
-| `/start` | 首次入门引导——询问当前所处阶段，引导至对应工作流 |
-| `/help` | 情境感知的「下一步做什么？」——读取当前阶段与产物 |
-| `/project-stage-detect` | 分析项目状态，检测阶段，识别缺口 |
-| `/setup-engine` | 配置引擎及版本，填充参考文档 |
-| `/adopt` | 棕地项目的审计与迁移计划 |
-| `/brainstorm` | 从零开始的引导式游戏概念构思 |
-| `/map-systems` | 将概念拆解为系统，绘制依赖关系，引导逐系统 GDD 创作 |
-| `/design-system` | 逐章节引导式创作单一游戏系统的 GDD |
-| `/quick-design` | 小幅变更的轻量设计规格——调参、微调、小功能添加 |
-| `/review-all-gdds` | 跨 GDD 一致性与游戏设计理论整体评审 |
-| `/propagate-design-change` | 查找受 GDD 变更影响的 ADR 和用户故事 |
-| `/ux-design` | 创作 UX 规格（界面/流程、HUD、交互模式） |
-| `/ux-review` | 验证 UX 规格的无障碍合规性与 GDD 对齐情况 |
-| `/create-architecture` | 创作游戏主架构文档 |
-| `/architecture-decision` | 创建架构决策记录（ADR） |
-| `/architecture-review` | 验证所有 ADR、依赖顺序、GDD 可追溯性 |
-| `/create-control-manifest` | 从已接受的 ADR 生成扁平化程序员规则表 |
-| `/create-epics` | 将 GDD + ADR 转化为功能模块（每个架构模块一个） |
-| `/create-stories` | 将单个功能模块拆解为可实现的用户故事文件 |
-| `/dev-story` | 读取故事并实现——路由至正确的程序员 Agent |
-| `/sprint-plan` | 创建或更新迭代计划 |
-| `/sprint-status` | 快速 30 行迭代快照 |
-| `/story-readiness` | 拾取前验证故事是否具备实现条件 |
-| `/story-done` | 实现完成后的故事验收评审——核对所有验收标准 |
-| `/estimate` | 生成结构化工作量估算 |
-| `/design-review` | 评审设计文档 |
-| `/code-review` | 评审代码质量与架构 |
-| `/balance-check` | 分析游戏平衡性数据 |
-| `/asset-audit` | 审计资产合规性 |
-| `/content-audit` | GDD 规划内容 vs. 已实现内容——查找缺口 |
-| `/scope-check` | 检测相对于计划的范围蔓延 |
-| `/perf-profile` | 性能剖析与瓶颈识别 |
-| `/tech-debt` | 扫描、追踪和排优先级的技术债务 |
-| `/gate-check` | 验证阶段就绪情况（PASS / CONCERNS / FAIL） |
-| `/consistency-check` | 扫描所有 GDD 的跨文档不一致（冲突的数值、名称、规则） |
-| `/reverse-document` | 从现有代码生成设计/架构文档 |
-| `/milestone-review` | 评审里程碑进展 |
-| `/retrospective` | 运行迭代/里程碑回顾 |
-| `/bug-report` | 创建结构化 bug 报告 |
-| `/playtest-report` | 创建或分析测试反馈 |
-| `/onboard` | 为某个角色生成入门文档 |
-| `/release-checklist` | 验证发布前检查清单 |
-| `/launch-checklist` | 完整的上线就绪验证 |
-| `/changelog` | 从 git 历史生成变更日志 |
-| `/patch-notes` | 为玩家生成补丁说明 |
-| `/hotfix` | 带审计追踪的紧急修复流程 |
-| `/prototype` | 搭建一次性原型框架 |
-| `/localize` | 本地化扫描、提取、验证 |
-| `/team-combat` | 编排完整战斗团队流水线 |
-| `/team-narrative` | 编排完整叙事团队流水线 |
-| `/team-ui` | 编排完整 UI 团队流水线 |
-| `/team-release` | 编排完整发布团队流水线 |
-| `/team-polish` | 编排完整打磨团队流水线 |
-| `/team-audio` | 编排完整音频团队流水线 |
-| `/team-level` | 编排完整关卡创作流水线 |
-| `/team-live-ops` | 编排直播运营团队（赛季、活动、上线后内容） |
-| `/team-qa` | 编排完整 QA 团队周期——测试计划、用例、冒烟测试、验收 |
-| `/qa-plan` | 为迭代或功能生成 QA 测试计划 |
-| `/bug-triage` | 重新排优先级的 bug 分级，分配至迭代，呈现系统性趋势 |
-| `/smoke-check` | 在 QA 移交前运行关键路径冒烟测试（PASS / FAIL） |
-| `/soak-test` | 为长时游戏会话生成浸泡测试协议 |
-| `/regression-suite` | 将覆盖率映射到 GDD 关键路径，标记缺口，维护回归套件 |
-| `/test-setup` | 为项目引擎搭建测试框架 + CI 流水线（仅执行一次） |
-| `/test-helpers` | 生成引擎专属测试辅助库和工厂函数 |
-| `/test-flakiness` | 从 CI 历史检测不稳定测试，标记以隔离或修复 |
-| `/test-evidence-review` | 测试文件与手动证据的质量评审——ADEQUATE / INCOMPLETE / MISSING |
-| `/skill-test` | 验证技能文件的合规性与正确性（静态 / 规格 / 审计） |
+| 命令                         | 用途                                              |
+| -------------------------- | ----------------------------------------------- |
+| `/start`                   | 首次入门引导——询问当前所处阶段，引导至对应工作流                       |
+| `/help`                    | 情境感知的「下一步做什么？」——读取当前阶段与产物                       |
+| `/project-stage-detect`    | 分析项目状态，检测阶段，识别缺口                                |
+| `/setup-engine`            | 配置引擎及版本，填充参考文档                                  |
+| `/adopt`                   | 存量项目的审计与迁移计划                                    |
+| `/brainstorm`              | 从零开始的引导式游戏概念构思                                  |
+| `/map-systems`             | 将概念拆解为系统，绘制依赖关系，引导逐系统 GDD 创作                    |
+| `/design-system`           | 逐章节引导式创作单一游戏系统的 GDD                             |
+| `/quick-design`            | 小幅变更的轻量设计规格——调参、微调、小功能添加                        |
+| `/review-all-gdds`         | 跨 GDD 一致性与游戏设计理论整体评审                            |
+| `/propagate-design-change` | 查找受 GDD 变更影响的 ADR 和用户故事                         |
+| `/ux-design`               | 创作 UX 规格（界面/流程、HUD、交互模式）                        |
+| `/ux-review`               | 验证 UX 规格的无障碍合规性与 GDD 对齐情况                       |
+| `/create-architecture`     | 创作游戏主架构文档                                       |
+| `/architecture-decision`   | 创建架构决策记录（ADR）                                   |
+| `/architecture-review`     | 验证所有 ADR、依赖顺序、GDD 可追溯性                          |
+| `/create-control-manifest` | 从已接受的 ADR 生成扁平化程序员规则表                           |
+| `/create-epics`            | 将 GDD + ADR 转化为功能模块（每个架构模块一个）                   |
+| `/create-stories`          | 将单个功能模块拆解为可实现的用户故事文件                            |
+| `/dev-story`               | 读取故事并实现——路由至正确的程序员 Agent                        |
+| `/sprint-plan`             | 创建或更新迭代计划                                       |
+| `/sprint-status`           | 快速 30 行迭代快照                                     |
+| `/story-readiness`         | 拾取前验证故事是否具备实现条件                                 |
+| `/story-done`              | 实现完成后的故事验收评审——核对所有验收标准                          |
+| `/estimate`                | 生成结构化工作量估算                                      |
+| `/design-review`           | 评审设计文档                                          |
+| `/code-review`             | 评审代码质量与架构                                       |
+| `/balance-check`           | 分析游戏平衡性数据                                       |
+| `/asset-audit`             | 审计资产合规性                                         |
+| `/content-audit`           | GDD 规划内容 vs. 已实现内容——查找缺口                        |
+| `/scope-check`             | 检测相对于计划的范围蔓延                                    |
+| `/perf-profile`            | 性能剖析与瓶颈识别                                       |
+| `/tech-debt`               | 扫描、追踪和排优先级的技术债务                                 |
+| `/gate-check`              | 验证阶段就绪情况（PASS / CONCERNS / FAIL）                |
+| `/consistency-check`       | 扫描所有 GDD 的跨文档不一致（冲突的数值、名称、规则）                   |
+| `/reverse-document`        | 从现有代码生成设计/架构文档                                  |
+| `/milestone-review`        | 评审里程碑进展                                         |
+| `/retrospective`           | 运行迭代/里程碑回顾                                      |
+| `/bug-report`              | 创建结构化 bug 报告                                    |
+| `/playtest-report`         | 创建或分析测试反馈                                       |
+| `/onboard`                 | 为某个角色生成入门文档                                     |
+| `/release-checklist`       | 验证发布前检查清单                                       |
+| `/launch-checklist`        | 完整的上线就绪验证                                       |
+| `/changelog`               | 从 git 历史生成变更日志                                  |
+| `/patch-notes`             | 为玩家生成补丁说明                                       |
+| `/hotfix`                  | 带审计追踪的紧急修复流程                                    |
+| `/prototype`               | 搭建一次性原型框架                                       |
+| `/localize`                | 本地化扫描、提取、验证                                     |
+| `/team-combat`             | 编排完整战斗团队流水线                                     |
+| `/team-narrative`          | 编排完整叙事团队流水线                                     |
+| `/team-ui`                 | 编排完整 UI 团队流水线                                   |
+| `/team-release`            | 编排完整发布团队流水线                                     |
+| `/team-polish`             | 编排完整打磨团队流水线                                     |
+| `/team-audio`              | 编排完整音频团队流水线                                     |
+| `/team-level`              | 编排完整关卡创作流水线                                     |
+| `/team-live-ops`           | 编排直播运营团队（赛季、活动、上线后内容）                           |
+| `/team-qa`                 | 编排完整 QA 团队周期——测试计划、用例、冒烟测试、验收                   |
+| `/qa-plan`                 | 为迭代或功能生成 QA 测试计划                                |
+| `/bug-triage`              | 重新排优先级的 bug 分级，分配至迭代，呈现系统性趋势                    |
+| `/smoke-check`             | 在 QA 移交前运行关键路径冒烟测试（PASS / FAIL）                 |
+| `/soak-test`               | 为长时游戏会话生成浸泡测试协议                                 |
+| `/regression-suite`        | 将覆盖率映射到 GDD 关键路径，标记缺口，维护回归套件                    |
+| `/test-setup`              | 为项目引擎搭建测试框架 + CI 流水线（仅执行一次）                     |
+| `/test-helpers`            | 生成引擎专属测试辅助库和工厂函数                                |
+| `/test-flakiness`          | 从 CI 历史检测不稳定测试，标记以隔离或修复                         |
+| `/test-evidence-review`    | 测试文件与手动证据的质量评审——ADEQUATE / INCOMPLETE / MISSING |
+| `/skill-test`              | 验证技能文件的合规性与正确性（静态 / 规格 / 审计）                    |
 
 ### 4. 使用模板创建新文档
 

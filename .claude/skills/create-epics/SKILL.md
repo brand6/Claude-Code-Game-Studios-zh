@@ -9,7 +9,8 @@ allowed-tools: Read, Glob, Grep, Write, Task, AskUserQuestion
 
 **输出：** `production/epics/[epic-slug]/EPIC.md` + `production/epics/index.md`
 
-**每个功能模块完成后的下一步：** `/create-stories [epic-slug]`
+**每个功能模
+块完成后的下一步：** `/create-stories [epic-slug]`
 
 **运行时机：** 在 `/create-control-manifest` 和 `/architecture-review` 通过后运行。
 

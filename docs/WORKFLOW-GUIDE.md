@@ -60,7 +60,7 @@ cd my-game
 - **路径 C** -- 有明确概念：路由到 `/setup-engine` 和 `/map-systems`
 - **路径 D1** -- 现有项目，文档较少：正常流程
 - **路径 D2** -- 现有项目，已有 GDD/ADR：先运行 `/project-stage-detect`
-  再运行 `/adopt` 做棕地迁移
+  再运行 `/adopt` 做存量项目迁移
 
 ### 第 3 步：验证钩子是否正常工作
 
@@ -470,7 +470,7 @@ ADR 的生命周期：拟议中 > 已接受 > 已取代/已废弃。
 
 **门禁检查前至少需要 3 条基础层 ADR。**
 
-**改造现有 ADR：** 如果棕地项目中已有 ADR：
+**改造现有 ADR：** 如果存量项目中已有 ADR：
 
 ```
 /architecture-decision retrofit docs/architecture/adr-005.md
@@ -1230,7 +1230,7 @@ Agent 使用 `AskUserQuestion` 工具进行结构化选项展示。
 由 `/sprint-status`、`/help` 和 `/story-done`（下一个故事）读取。
 消除了脆弱的 Markdown 扫描。
 
-### 棕地项目接入
+### 存量项目接入
 
 对于已有部分文档的现有项目：
 
@@ -1284,7 +1284,7 @@ Agent 使用 `AskUserQuestion` 工具进行结构化选项展示。
 
 ### 反向文档化
 
-对于代码存在但没有设计文档的情况（棕地项目接入后常见）：
+对于代码存在但没有设计文档的情况（存量项目接入后常见）：
 
 ```
 /reverse-document src/gameplay/combat/
@@ -1378,13 +1378,13 @@ Agent 使用 `AskUserQuestion` 工具进行结构化选项展示。
 
 #### 入门与导航（5 个）
 
-| 命令 | 用途 | 阶段 |
-|------|------|------|
-| `/start` | 引导式入门，路由到正确工作流 | 任意（第一次会话） |
-| `/help` | 上下文感知的"下一步做什么？" | 任意 |
-| `/project-stage-detect` | 完整项目审计以确定当前阶段 | 任意 |
-| `/setup-engine` | 配置引擎、锁定版本、设置偏好 | 1 |
-| `/adopt` | 棕地审计和迁移计划 | 任意（现有项目） |
+| 命令                      | 用途              | 阶段        |
+| ----------------------- | --------------- | --------- |
+| `/start`                | 引导式入门，路由到正确工作流  | 任意（第一次会话） |
+| `/help`                 | 上下文感知的"下一步做什么？" | 任意        |
+| `/project-stage-detect` | 完整项目审计以确定当前阶段   | 任意        |
+| `/setup-engine`         | 配置引擎、锁定版本、设置偏好  | 1         |
+| `/adopt`                | 存量项目审计和迁移计划     | 任意（现有项目）  |
 
 #### 游戏设计（6 个）
 
@@ -1428,18 +1428,18 @@ Agent 使用 `AskUserQuestion` 工具进行结构化选项展示。
 
 #### 审查与分析（10 个）
 
-| 命令 | 用途 | 阶段 |
-|------|------|------|
-| `/design-review` | 按 8 节标准验证 GDD | 1-2 |
-| `/code-review` | 架构代码审查 | 5+ |
-| `/balance-check` | 游戏平衡性公式分析 | 5-6 |
-| `/asset-audit` | 资产命名、格式、大小验证 | 6 |
-| `/content-audit` | GDD 规定内容与已实施内容对比 | 5 |
-| `/scope-check` | 范围蔓延检测 | 5 |
-| `/perf-profile` | 性能分析工作流 | 6 |
-| `/tech-debt` | 技术债务扫描和优先级排序 | 6 |
-| `/gate-check` | 含 PASS/CONCERNS/FAIL 的正式阶段门禁 | 所有转换 |
-| `/reverse-document` | 从现有代码生成设计文档 | 任意 |
+| 命令                  | 用途                           | 阶段   |
+| ------------------- | ---------------------------- | ---- |
+| `/design-review`    | 按 8 节标准验证 GDD                | 1-2  |
+| `/code-review`      | 架构代码审查                       | 5+   |
+| `/balance-check`    | 游戏平衡性公式分析                    | 5-6  |
+| `/asset-audit`      | 资产命名、格式、大小验证                 | 6    |
+| `/content-audit`    | GDD 规定内容与已实施内容对比             | 5    |
+| `/scope-check`      | 范围蔓延检测                       | 5    |
+| `/perf-profile`     | 性能分析工作流                      | 6    |
+| `/tech-debt`        | 技术债务扫描和优先级排序                 | 6    |
+| `/gate-check`       | 含 PASS/CONCERNS/FAIL 的正式阶段门禁 | 所有转换 |
+| `/reverse-document` | 从现有代码生成设计文档                  | 任意   |
 
 #### QA 与测试（9 个）
 

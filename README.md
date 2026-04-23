@@ -163,6 +163,7 @@ Agent 按照真实工作室的运作方式组织为三个层级：
    - `/brainstorm` — 从零开始探索游戏创意
    - `/setup-engine godot 4.6` — 如果已知引擎，直接配置
    - `/project-stage-detect` — 分析现有项目状态
+### 完整指南：[WORKFLOW-GUIDE.md](docs/WORKFLOW-GUIDE)
 
 ## 升级迁移
 

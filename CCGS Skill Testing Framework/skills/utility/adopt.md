@@ -29,7 +29,7 @@
 
 ## Director 门控检查
 
-无。`/adopt` 是一个棕地审查工具。不适用 director 门控。
+无。`/adopt` 是一个存量项目审查工具。不适用 director 门控。
 
 ---
 
@@ -154,7 +154,7 @@
 
 **预期行为：**
 1. 阶段 1 存在性检查发现无制品
-2. 技能推断为"全新"项目——无棕地工作需迁移
+2. 技能推断为"全新"项目——无存量项目工作需迁移
 3. 使用 `AskUserQuestion`：
    - "This looks like a fresh project — no existing artifacts found. `/adopt` is for
      projects with work to migrate. What would you like to do?"
