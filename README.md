@@ -149,7 +149,7 @@ Agent 按照真实工作室的运作方式组织为三个层级：
 1. **克隆仓库或将其作为模板使用**：
 
    ```bash
-   git clone [[https://github.com/Donchitos/Claude-Code-Game-Studios.git](https://github.com/brand6/Claude-Code-Game-Studios-zh.git)](https://github.com/brand6/Claude-Code-Game-Studios-zh.git) my-game
+   git clone https://github.com/brand6/Claude-Code-Game-Studios-zh.git my-game
    cd my-game
    ```
 2. **打开 Claude Code** 并启动会话：
